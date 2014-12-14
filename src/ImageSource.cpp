@@ -116,13 +116,16 @@ int CImageSource::streamInit()
             return openni::STATUS_ERROR;
         }
     } else if (m_depthStream.isValid()) {
+
         depthVideoMode = m_depthStream.getVideoMode();
+
         m_width = depthVideoMode.getResolutionX();
         m_height = depthVideoMode.getResolutionY();
     } else if (m_colorStream.isValid()) {
-        colorVideoMode = m_colorStream.getVideoMode();
-        m_width = colorVideoMode.getResolutionX();
-        m_height = colorVideoMode.getResolutionY();
+		colorVideoMode = m_colorStream.getVideoMode();
+
+		m_width = colorVideoMode.getResolutionX();
+		m_height = colorVideoMode.getResolutionY();
     } else {
         printf("Error - expects at least one of the streams to be valid...\n");
         return openni::STATUS_ERROR;

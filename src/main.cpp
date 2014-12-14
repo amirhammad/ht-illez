@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <thread>
+#include <armadillo>
 #include "ImageSource.h"
 #include "Processing.h"
 using namespace cv;
@@ -37,11 +38,11 @@ void processHSVFilter(const cv::Mat &orig)
 	}
 
 
-	orig.copyTo(color);
-	cvtColor(orig,image,COLOR_RGB2YCrCb);
+
+	cvtColor(orig,color,COLOR_RGB2HSV);
 	cvtColor(orig,gray,COLOR_BGR2GRAY);
-
-
+	GaussianBlur(orig,color,Size(5,5),0);
+	cvtColor(color,image,COLOR_RGB2HSV);
 	for(int i=0;i<image.rows;i++)
 	{
 		for(int j=0;j<image.cols;j++)
@@ -114,9 +115,9 @@ void processHSVFilter(const cv::Mat &orig)
 			color.at<uint8_t>(i,j*3+2)=mask.at<uint8_t>(i,j)*color.at<uint8_t>(i,j*3+2);
 		}//CYCLE
 	}
-	medianBlur(mask*255,mask,5);
+	medianBlur(mask*255,mask,9);
 	imshow("median",mask);
-	imshow("main",orig);
+	imshow("main",color);
 	Canny(mask,canny,params[6],params[7]);
 //		imshow("black",color);
 	imshow("CANNY", canny);
@@ -147,7 +148,7 @@ void process1()
 		const Mat &depth = g_kinect.getDepthMat();
 
 		g_processing.process(color, depth);
-//		processHSVFilter(color);
+		processHSVFilter(color);
 
 
 		int k = waitKey(1) ;

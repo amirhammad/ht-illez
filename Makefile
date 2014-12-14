@@ -7,7 +7,7 @@ BIN_DIR = Bin
 INC_DIRS = \
 	../../Include \
 	../Common
-
+CXX=g++-4.8
 SRC_FILES = *.cpp
 objects = $(patsubst src/%.cpp, build/%.o, $(wildcard src/*.cpp))
 USED_LIBS += OpenNI2
@@ -21,7 +21,7 @@ CFLAGS += -I"$(OPENNI2_INCLUDE)"
 CFLAGS += -Iinclude 
 LDFLAGS += -L/usr/local/lib -lopencv_highgui -lopencv_imgproc -lopencv_core -lopencv_imgcodecs -pthread 
 LDFLAGS += -L$(OPENNI2_REDIST) -lOpenNI2 
-
+LDFLAGS += -larmadillo
 #ifndef OPENNI2_INCLUDE
 #    $(error OPENNI2_INCLUDE is not defined. Please define it or 'source' the OpenNIDevEnvironment file from the installation)
 #else ifndef OPENNI2_REDIST
@@ -35,10 +35,10 @@ INC_DIRS += $(OPENNI2_INCLUDE)
 all:	$(objects) build/out.elf
 build/%.o: src/%.cpp
 	@printf "CC\t$@\n"
-	$(Q)g++ $(CFLAGS) $(LDFLAGS) -c -o $@  src/$*.cpp
+	$(Q)$(CXX) $(CFLAGS) $(LDFLAGS) -c -o $@  src/$*.cpp
 build/out.elf: $(objects)
 	@printf "LD\t$@\n"
-	$(Q)g++ $(CFLAGS) -o $@ $(objects) $(LDFLAGS)
+	$(Q)$(CXX) $(CFLAGS) -o $@ $(objects) $(LDFLAGS)
 exportlibpaths:
 	echo export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(OPENNI2_REDIST)
 clean:
