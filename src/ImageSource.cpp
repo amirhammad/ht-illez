@@ -6,9 +6,10 @@ using namespace cv;
 
 #define SAMPLE_XML_PATH "SamplesConfig.xml"
 
-CImageSource::CImageSource(void)
+CImageSource::CImageSource(int fps)
 :	m_width(640)
 ,	m_height(480)
+,	m_fps(fps)
 {
 
 }
@@ -16,8 +17,6 @@ CImageSource::CImageSource(void)
 
 CImageSource::~CImageSource(void)
 {
-	m_depthStream.destroy();
-	m_colorStream.destroy();
 	openni::OpenNI::shutdown();
 }
 
@@ -34,7 +33,7 @@ int CImageSource::deviceInit(void)
     {
         printf("SimpleViewer: Device open failed:\n%s\n", openni::OpenNI::getExtendedError());
         openni::OpenNI::shutdown();
-        return 1;
+        return openni::STATUS_ERROR;
     }
 
     rc = m_depthStream.create(device, openni::SENSOR_DEPTH);
@@ -71,17 +70,20 @@ int CImageSource::deviceInit(void)
     {
         printf("SimpleViewer: No valid streams. Exiting\n");
         openni::OpenNI::shutdown();
-        return 2;
+        return openni::STATUS_ERROR;
     }
 
     return 0;
-    //SampleViewer sampleViewer("Simple Viewer", device, depth, color);
 }
 
 int CImageSource::init(void)
 {
-	deviceInit();
-	streamInit();
+	if (openni::STATUS_ERROR == deviceInit()) {
+		return -1;
+	}
+	if (openni::STATUS_ERROR == streamInit()) {
+		return -1;
+	}
 
 	m_depthMat.create(m_height, m_width, CV_16UC1);
 	m_colorMat.create(m_height, m_width, CV_8UC3);
@@ -98,8 +100,6 @@ int CImageSource::streamInit()
     {
         depthVideoMode = m_depthStream.getVideoMode();
         colorVideoMode = m_colorStream.getVideoMode();
-        depthVideoMode.setPixelFormat(openni::PIXEL_FORMAT_DEPTH_1_MM);
-        m_colorStream.setVideoMode(colorVideoMode);
 
         int depthWidth = depthVideoMode.getResolutionX();
         int depthHeight = depthVideoMode.getResolutionY();

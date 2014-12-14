@@ -7,17 +7,12 @@
 #include "ImageSource.h"
 #include "Processing.h"
 using namespace cv;
-iez::CImageSource g_kinect;
+iez::CImageSource g_kinect(1);
 iez::CProcessing g_processing;
 
 
 static int params[20]={11, 139, 0, 255, 95, 169, 174, 118};
-static int trackbar_h = 8;
-static int trackbar_s = 14;
-static int trackbar_v = 15;
-static int trackbar_h_range = 26;
-static int trackbar_s_range = 28;
-static int trackbar_v_range = 6;
+
 void processHSVFilter(const cv::Mat &orig)
 {
 	using namespace cv;
@@ -131,32 +126,19 @@ void kinect_update(std::string msg)
 {
 	while(1) {
 		g_kinect.update();
-		usleep(15000);
 	}
 }
 
 void process1()
 {
 	using namespace std;
-	g_kinect.init();
-	int i;
-//	for (i=0;i<6;i++)
-//	{
-//		std::stringstream stream;
-//		stream<<"P";
-//		stream<<i;
-//		std::string s = stream.str();
-//		createTrackbar(s,"main", &params[i], 255);
-//	}
-//	for(i=6;i<8;i++)
-//	{
-//		std::stringstream stream;
-//		stream<<"P";
-//		stream<<i;
-//		std::string s = stream.str();
-//		createTrackbar(s,"CANNY", &params[i], 255);
-//	}
-	std::thread kinectThread(kinect_update, "ahoj");
+	int err;
+	err = g_kinect.init();
+	if (err) {
+		return;
+	}
+
+	thread kinectThread(kinect_update, "ahoj");
 	while (1)
 	{
 		Mat rgb = g_kinect.getColorMat();
@@ -165,7 +147,7 @@ void process1()
 		const Mat &depth = g_kinect.getDepthMat();
 
 		g_processing.process(color, depth);
-		processHSVFilter(color);
+//		processHSVFilter(color);
 
 
 		int k = waitKey(1) ;
@@ -175,7 +157,14 @@ void process1()
 			string xd = string("image.bmp");
 			//imwrite(xd.data(), X);
 			//imwrite("depth.bmp",g_kinect.getDepthMat());
-			cout<<"writing image"<<xd<<endl;
+			cout<<"writing image: '"<<xd<<"'"<<endl;
+		}
+			break;
+
+		case 'f': /// find hand
+		{
+			g_processing.findHandFromCenter(color, depth);
+
 		}
 			break;
 
@@ -189,6 +178,5 @@ void process1()
 int main() 
 {
 	process1();
-	system("pause");
 	return 0;
 }

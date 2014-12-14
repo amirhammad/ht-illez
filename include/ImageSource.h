@@ -9,7 +9,7 @@ namespace iez {
 class CImageSource
 {
 public:
-	CImageSource(void);
+	CImageSource(int fps = 30);
 	~CImageSource(void);
 	int init(void);
 
@@ -56,6 +56,7 @@ private:
 	std::mutex depth_mutex;
 	std::mutex color_mutex;
 
+	const int m_fps;
 };
 
 

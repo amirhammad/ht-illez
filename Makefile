@@ -16,7 +16,7 @@ USED_LIBS += OpenNI2
 
 Q=@
 
-CFLAGS += -Wall -g -std=c++0x
+CFLAGS += -Wall -g -std=c++0x -O2
 CFLAGS += -I"$(OPENNI2_INCLUDE)"
 CFLAGS += -Iinclude 
 LDFLAGS += -L/usr/local/lib -lopencv_highgui -lopencv_imgproc -lopencv_core -lopencv_imgcodecs -pthread 
