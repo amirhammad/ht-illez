@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <QtCore>
 #include <QtGui>
+#include "qcustomplot.h"
 
 namespace iez {
 class CWindow : public QLabel {
@@ -35,6 +36,7 @@ public:
 		CWindow *widget;
 		QVector<double> x;
 		QVector<double> y;
+		QCustomPlot *customPlot;
 	};
 	std::map<const char *, struct plotMapData> m_plotMap;
 

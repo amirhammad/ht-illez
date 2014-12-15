@@ -34,10 +34,13 @@ void CWindowManager::on_plot(const char *name)
 		connect(widget, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
 		connect(widget, SIGNAL(closed()), this, SLOT(closeEvent()));
 		m_plotMap[name].widget = widget;
+
+
+		m_plotMap[name].customPlot = new QCustomPlot(data->widget);
+
 	}
-
-	QCustomPlot *customPlot = new QCustomPlot(data->widget);
-
+	QCustomPlot *customPlot = m_plotMap[name].customPlot;
+	customPlot->clearGraphs();
 //	customPlot->setViewport(QRect(QPoint(0,0), QSize(640,480)));
 //	customPlot->setBaseSize(QSize(640,480);
 	customPlot->setFixedSize(640, 480);
@@ -50,8 +53,8 @@ void CWindowManager::on_plot(const char *name)
 	customPlot->xAxis->setLabel("x");
 	customPlot->yAxis->setLabel("y");
 	// set axes ranges, so we see all data:
-	customPlot->xAxis->setRange(-1, 1);
-	customPlot->yAxis->setRange(0, 1);
+	customPlot->xAxis->setRange(0, 640);
+	customPlot->yAxis->setRange(0, 1000);
 	customPlot->replot();
 	data->widget->show();
 }
@@ -84,7 +87,7 @@ CWindowManager::CWindowManager()
 	qRegisterMetaType<const char*>("const char*");
 }
 
-void CWindowManager::on_imShow(const char * str)
+void CWindowManager::on_imShow(const char *str)
 {
 	m_mutex.lock();
 	if (!m_imShowMap[str].first) {

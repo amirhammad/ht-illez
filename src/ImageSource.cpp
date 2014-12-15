@@ -19,6 +19,8 @@ CImageSource::CImageSource(int fps)
 
 CImageSource::~CImageSource(void)
 {
+	m_depthStream.stop();
+	m_colorStream.stop();
 	terminate();
 	openni::OpenNI::shutdown();
 }
@@ -154,7 +156,7 @@ void CImageSource::update()
     {
     	depth_mutex.lock();
         m_depthStream.readFrame(&m_depthFrame);
-       	m_sequence = max<int>(m_sequence, m_depthFrame.getFrameIndex());//bug
+       	m_sequence = max<int>(m_sequence, m_depthFrame.getFrameIndex());//bug(overflow in ~700 days)
         depth_mutex.unlock();
     }
     	break;
@@ -162,7 +164,7 @@ void CImageSource::update()
     {
     	color_mutex.lock();
         m_colorStream.readFrame(&m_colorFrame);
-        m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug
+        m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug(overflow in ~700 days)
         color_mutex.unlock();
     }
     	break;

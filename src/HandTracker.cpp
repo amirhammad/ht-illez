@@ -77,15 +77,19 @@ void CHandTracker::extend(cv::Mat& hand, const cv::Mat& img, cv::Point2f center,
 	if (depth>20) {
 		return;
 	}
+	QVector<double> x,y;
+	int i;
 	if (hand.at<uint8_t>(center))
 	for (float angle = 0; angle < 2*M_PI; angle += M_PI/5) {
 		const float step_c = 1;
-		const float maxHandSize_c = 50; //in pixels
+		const float maxHandSize_c = 240; //in pixels
 		float dx = std::cos(angle);
 		float dy = std::sin(angle);
 
+
 		// center, img
-		for (float step = step_c, i = 1; step<maxHandSize_c; step+=step_c, ++i) {
+		float step;
+		for (step = step_c, i = 1; step<maxHandSize_c; step+=step_c, ++i) {
 
 			Point2f currPoint(center.x+dx*step, center.y+dy*step);
 			if (currPoint.x > img.cols
@@ -100,12 +104,15 @@ void CHandTracker::extend(cv::Mat& hand, const cv::Mat& img, cv::Point2f center,
 
 			// if current gradient in that direction is bigger than threshold, save border point
 			Point3f currColor = interpolateToColor(img, currPoint);
-//			const Point3f prevColor = interpolateToColor(img, prevPoint);
+			const Point3f prevColor = interpolateToColor(img, prevPoint);
 //			const Point3f nextColor = interpolateToColor(img, nextPoint);
 
 //			const float gradient = calculateGradientInDirection(prevColor, nextColor);
-			const float gradient = calculateGradientInDirection(meanColor, currColor);
-
+			const float gradient = calculateGradientInDirection(prevColor, currColor);
+			if (angle == 0) {
+				x.append(currPoint.x);
+				y.append(gradient);
+			}
 
 //			meanColor = (meanColor*i + currColor)/(i+1);
 			hand.at<uint8_t>(currPoint.y, currPoint.x) = static_cast<uint8_t>(std::min<float>(255,gradient))*0 + 0;
@@ -118,7 +125,7 @@ void CHandTracker::extend(cv::Mat& hand, const cv::Mat& img, cv::Point2f center,
 //					}
 //					cv::waitKey(1);
 
-					extend(hand, img, (currPoint), meanColor, depth);
+//					extend(hand, img, (currPoint), meanColor, depth);
 				} else {
 					continue;
 				}
@@ -126,6 +133,7 @@ void CHandTracker::extend(cv::Mat& hand, const cv::Mat& img, cv::Point2f center,
 			}
 		}
 	}
+	m_window.plot("X1", x, y);
 }
 
 

@@ -93,6 +93,7 @@ void iez::CProcessing::run()
 			continue;
 		}
 		sequence = seq;
+
 		cv::Mat rgb = imageSource.getColorMat();
 		cv::Mat color;
 		cv::cvtColor(rgb, color,cv::COLOR_RGB2BGR);
@@ -104,30 +105,6 @@ void iez::CProcessing::run()
 			handTracker.findHandFromCenter(color,depth);
 			calculateHandTracker = false;
 		}
-
-//		int k = waitKey(1) ;
-//		switch (k) {
-//		case 's':
-//		{
-//			string xd = string("image.bmp");
-//			//imwrite(xd.data(), X);
-//			//imwrite("depth.bmp",g_kinect.getDepthMat());
-//			cout<<"writing image: '"<<xd<<"'"<<endl;
-//		}
-//			break;
-//
-//		case 'f': /// find hand
-//		{
-//			g_processing.findHandFromCenter(color, depth);
-//
-//		}
-//			break;
-//
-//		case 'q':
-//			return;
-//		}
-//		std::cout<<"ahoj\n";
-
 	}
 }
 static int params[20]={11, 139, 0, 255, 95, 169, 174, 118};
@@ -242,7 +219,6 @@ void CProcessing::processHSVFilter(const cv::Mat &orig)
 
 void CProcessing::keyPressEvent(QKeyEvent* keyEvent)
 {
-	std::cout<<keyEvent->key()<<std::endl;
 	switch (keyEvent->key()) {
 	case Qt::Key_Escape:
 		::exit(0);
