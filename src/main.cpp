@@ -1,183 +1,74 @@
+
+// opencv
 #include <opencv2/opencv.hpp>
+
 #include <time.h>
+
+// STL
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <thread>
+
+// armadillo
 #include <armadillo>
+
+// Qt
+//#include <QThread>
+//#include <QApplication>
+#include <QtCore>
+#include <QtGui>
+#include <thread>
+// Custom
 #include "ImageSource.h"
 #include "Processing.h"
+#include "main.h"
 using namespace cv;
-iez::CImageSource g_kinect(1);
-iez::CProcessing g_processing;
 
 
-static int params[20]={11, 139, 0, 255, 95, 169, 174, 118};
+//void qplottest()
+//{
+//	QMainWindow *w = new QMainWindow();
+//	w->setFixedSize(QSize(640, 480));
+//	QWidget *l = new QWidget();
+//	w->setCentralWidget(l);
+//
+//	QCustomPlot *customPlot = new QCustomPlot(l);
+////	customPlot->setViewport(QRect(QPoint(0,0), QSize(640,480)));
+////	customPlot->setBaseSize(QSize(640,480);
+//	customPlot->setFixedSize(640,480);
+//	// generate some data:
+//	QVector<double> x(101), y(101); // initialize with entries 0..100
+//	for (int i=0; i<101; ++i)
+//	{
+//	  x[i] = i/50.0 - 1; // x goes from -1 to 1
+//	  y[i] = x[i]*x[i]*std::cos(x[i]); // let's plot a quadratic function
+//	}
+//	// create graph and assign data to it:
+//	customPlot->addGraph();
+//	customPlot->graph(0)->setData(x, y);
+//	// give the axes some labels:
+//	customPlot->xAxis->setLabel("x");
+//	customPlot->yAxis->setLabel("y");
+//	// set axes ranges, so we see all data:
+//	customPlot->xAxis->setRange(-1, 1);
+//	customPlot->yAxis->setRange(0, 1);
+//	customPlot->replot();
+//	w->show();
+//}
 
-void processHSVFilter(const cv::Mat &orig)
+int main(int argc, char *argv[])
 {
-	using namespace cv;
-	Mat color,gray,image,canny;
+	QApplication app(argc, argv);
 
-	Mat mask(orig.rows, orig.cols, CV_8UC1);
-	for (int i=0;i<6;i++)
-	{
-		std::stringstream stream;
-		stream<<"P";
-		stream<<i;
-		std::string s = stream.str();
-		createTrackbar(s,"main", &params[i], 255);
-	}
-	for(int i=6;i<8;i++)
-	{
-		std::stringstream stream;
-		stream<<"P";
-		stream<<i;
-		std::string s = stream.str();
-		createTrackbar(s,"CANNY", &params[i], 255);
-	}
+//	qplottest();
+//	iez::CMainWindow mainWindow;
+//	mainWindow.init();
+	iez::CImageSource kinect(30);
+	iez::CProcessing processing(kinect);
+	kinect.init();
+//	while(kinect.getColorMat().data[30] == 0);
+	processing.init();
 
-
-
-	cvtColor(orig,color,COLOR_RGB2HSV);
-	cvtColor(orig,gray,COLOR_BGR2GRAY);
-	GaussianBlur(orig,color,Size(5,5),0);
-	cvtColor(color,image,COLOR_RGB2HSV);
-	for(int i=0;i<image.rows;i++)
-	{
-		for(int j=0;j<image.cols;j++)
-		{
-
-			//cout<<image.cols;
-			//image.at<uchar>(Point(i,j)) = 0;
-			//std::cout<<image.at<uint8_t>(Point(i,j))<<std::endl;
-			Point3_<uint8_t> hsv;
-			hsv = image.at<Point3_<uint8_t> >(i,j);
-			if(
-				(
-					params[0]	<= params[1]
-				&&	hsv.x		>= params[0]
-				&&	hsv.x		<= params[1]
-				)
-			||
-				(
-					params[0]	> params[1]
-				&&	(hsv.x		>= params[0]
-				||	hsv.x		<= params[1])
-
-				)
-			)
-			{
-				if(
-					(
-						params[2]	<= params[3]
-					&&	hsv.y		>= params[2]
-					&&	hsv.y		<= params[3]
-					)	
-				||
-					(
-						params[2]	> params[3]
-					&&	(hsv.y		>= params[2]
-					||	hsv.y		<= params[3])
-
-					)
-				)
-				{
-					if(
-						(
-							params[4]	<= params[5]
-						&&	hsv.z		>= params[4]
-						&&	hsv.z		<= params[5]
-						)	
-					||
-						(
-							params[4]	> params[5]
-						&&	(hsv.z		>= params[4]
-						||	hsv.z		<= params[5])
-
-						)
-					)
-					{
-						mask.at<uint8_t>(i,j)=0;
-					}
-					else
-						mask.at<uint8_t>(i,j)=1;
-				}
-				else
-					mask.at<uint8_t>(i,j)=1;
-			}
-			else
-				mask.at<uint8_t>(i,j)=1;
-
-			//gray.at<uint8_t>(i,j) = mask.at<uint8_t>(i,j)*gray.at<uint8_t>(i,j);
-			color.at<uint8_t>(i,j*3)=mask.at<uint8_t>(i,j)*color.at<uint8_t>(i,j*3);
-			color.at<uint8_t>(i,j*3+1)=mask.at<uint8_t>(i,j)*color.at<uint8_t>(i,j*3+1);
-			color.at<uint8_t>(i,j*3+2)=mask.at<uint8_t>(i,j)*color.at<uint8_t>(i,j*3+2);
-		}//CYCLE
-	}
-	medianBlur(mask*255,mask,9);
-	imshow("median",mask);
-	imshow("main",color);
-	Canny(mask,canny,params[6],params[7]);
-//		imshow("black",color);
-	imshow("CANNY", canny);
-}
-
-void kinect_update(std::string msg)
-{
-	while(1) {
-		g_kinect.update();
-	}
-}
-
-void process1()
-{
-	using namespace std;
-	int err;
-	err = g_kinect.init();
-	if (err) {
-		return;
-	}
-
-	thread kinectThread(kinect_update, "ahoj");
-	while (1)
-	{
-		Mat rgb = g_kinect.getColorMat();
-		Mat color;
-		cvtColor(rgb, color, COLOR_RGB2BGR);
-		const Mat &depth = g_kinect.getDepthMat();
-
-		g_processing.process(color, depth);
-		processHSVFilter(color);
-
-
-		int k = waitKey(1) ;
-		switch (k) {
-		case 's':
-		{
-			string xd = string("image.bmp");
-			//imwrite(xd.data(), X);
-			//imwrite("depth.bmp",g_kinect.getDepthMat());
-			cout<<"writing image: '"<<xd<<"'"<<endl;
-		}
-			break;
-
-		case 'f': /// find hand
-		{
-			g_processing.findHandFromCenter(color, depth);
-
-		}
-			break;
-
-		case 'q':
-			return;
-		}
-
-	}
-}
-
-int main() 
-{
-	process1();
-	return 0;
+	return QApplication::exec();
 }

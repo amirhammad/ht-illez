@@ -3,11 +3,12 @@
 #include <opencv2/opencv.hpp>
 #include "ImageSourceCalibration.h"
 #include <OpenNI.h>
-
+#include <QtCore>
 
 namespace iez {
-class CImageSource
+class CImageSource:private QThread
 {
+	Q_OBJECT
 public:
 	CImageSource(int fps = 30);
 	~CImageSource(void);
@@ -40,8 +41,17 @@ public:
 		return m_colorMat;
 	}
 
+	int sequence() { return m_sequence; }
+
 	CImageSourceCalibration calibration;
 private:
+	void run() {
+		while(1) {
+			update();
+			yieldCurrentThread();
+			msleep(1);
+		}
+	}
 	int deviceInit(void);
 	int streamInit(void);
 	int m_width, m_height;
@@ -56,6 +66,7 @@ private:
 	std::mutex depth_mutex;
 	std::mutex color_mutex;
 
+	int m_sequence;
 	const int m_fps;
 };
 

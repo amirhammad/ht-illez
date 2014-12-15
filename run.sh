@@ -1,3 +1,3 @@
 #!/bin/sh
-make && \
+make -C build && \
 optirun build/out.elf

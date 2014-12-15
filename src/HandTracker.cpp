@@ -22,7 +22,7 @@ void CHandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
 	Mat img;
 //	img.create(bgr.rows, bgr.cols, CV_8UC3);
 	medianBlur(bgr,img,11);
-	imshow("img", img);
+	m_window.imShow("img", img);
 //	bgr.copyTo(img);
 
 	cvtColor(bgr, hand, COLOR_BGR2GRAY);
@@ -30,7 +30,7 @@ void CHandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
 //	bgr.copyTo(hand);
 	Point3f meanColor = img.at<Point3_<uint8_t> >(center.y, center.x);
 	extend(hand, img, center, meanColor, 0);
-	imshow("hand", hand);
+	m_window.imShow("hand", hand);
 }
 
 cv::Point3f CHandTracker::interpolateToColor(const cv::Mat &bgr, cv::Point2f &coord)
@@ -112,7 +112,7 @@ void CHandTracker::extend(cv::Mat& hand, const cv::Mat& img, cv::Point2f center,
 			if (gradient > 200) {
 				Point2f d(currPoint-center);
 				if (sqrt(d.dot(d)) > 10 ) {
-					imshow("hand", hand);
+					m_window.imShow("hand", hand);
 //					if (cv::waitKey(0) != 'n') {
 //						return;
 //					}
@@ -129,4 +129,12 @@ void CHandTracker::extend(cv::Mat& hand, const cv::Mat& img, cv::Point2f center,
 }
 
 
-}// Namespace iez
+
+
+CHandTracker::CHandTracker(CWindowManager &window)
+:	m_window(window)
+{
+
+}
+
+} // Namespace iez

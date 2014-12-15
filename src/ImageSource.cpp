@@ -10,13 +10,16 @@ CImageSource::CImageSource(int fps)
 :	m_width(640)
 ,	m_height(480)
 ,	m_fps(fps)
+,	m_sequence(0)
 {
-
+	m_depthMat.create(m_height, m_width, CV_16UC1);
+	m_colorMat.create(m_height, m_width, CV_8UC3);
 }
 
 
 CImageSource::~CImageSource(void)
 {
+	terminate();
 	openni::OpenNI::shutdown();
 }
 
@@ -79,15 +82,12 @@ int CImageSource::deviceInit(void)
 int CImageSource::init(void)
 {
 	if (openni::STATUS_ERROR == deviceInit()) {
-		return -1;
+		exit(-1);
 	}
 	if (openni::STATUS_ERROR == streamInit()) {
-		return -1;
+		exit(-1);
 	}
-
-	m_depthMat.create(m_height, m_width, CV_16UC1);
-	m_colorMat.create(m_height, m_width, CV_8UC3);
-
+	start();
 	return 0;
 }
 
@@ -146,12 +146,15 @@ void CImageSource::update()
         printf("Wait failed\n");
         return;
     }
+
+
     using namespace std;
     switch (changedIndex) {
     case 0:
     {
     	depth_mutex.lock();
         m_depthStream.readFrame(&m_depthFrame);
+       	m_sequence = max<int>(m_sequence, m_depthFrame.getFrameIndex());//bug
         depth_mutex.unlock();
     }
     	break;
@@ -159,6 +162,7 @@ void CImageSource::update()
     {
     	color_mutex.lock();
         m_colorStream.readFrame(&m_colorFrame);
+        m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug
         color_mutex.unlock();
     }
     	break;
