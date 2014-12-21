@@ -16,15 +16,16 @@ void CWindowManager::plot(const char *name,
 {
 //	QMainWindow *w = new QMainWindow();
 //	w->setFixedSize(QSize(640, 480));
-
-	m_plotMap[name].x = x;
-	m_plotMap[name].y = y;
-
+	m_mutex.lock();
+	m_plotMap[name].x = QVector<double>(x);
+	m_plotMap[name].y = QVector<double>(y);
+	m_mutex.unlock();
 	QMetaObject::invokeMethod(this, "on_plot", Qt::QueuedConnection, QGenericArgument("const char*", &name));
 }
 
 void CWindowManager::on_plot(const char *name)
 {
+	m_mutex.lock();
 	struct plotMapData *data= &m_plotMap[name];
 
 	if (!data->widget) {
@@ -48,15 +49,33 @@ void CWindowManager::on_plot(const char *name)
 
 	// create graph and assign data to it:
 	customPlot->addGraph();
+
+	double min[2],max[2];
+	min[1]=std::numeric_limits<double>::max();
+	max[1]=0;
+	foreach(double val, data->y) {
+		if (val > max[1] ) max[1] = val;
+		if (val < min[1] ) min[1] = val;
+	}
+	min[0]=std::numeric_limits<double>::max();
+	max[0]=0;
+	foreach(double val, data->x) {
+		if (val > max[0] ) max[0] = val;
+		if (val < min[0] ) min[0] = val;
+	}
+
+
 	customPlot->graph(0)->setData(data->x, data->y);
 	// give the axes some labels:
 	customPlot->xAxis->setLabel("x");
 	customPlot->yAxis->setLabel("y");
+//	std::cout<<"["<<min[0]<<" "<<min[1]<<"]["<<max[0]<<" "<<max[1]<<"]"<<std::endl;
 	// set axes ranges, so we see all data:
-	customPlot->xAxis->setRange(0, 640);
-	customPlot->yAxis->setRange(0, 1000);
+	customPlot->xAxis->setRange(min[0], max[0]);
+	customPlot->yAxis->setRange(0, 1);
 	customPlot->replot();
 	data->widget->show();
+	m_mutex.unlock();
 }
 QImage CWindowManager::Mat2QImage(cv::Mat const& src)
 {
@@ -93,7 +112,7 @@ void CWindowManager::on_imShow(const char *str)
 	if (!m_imShowMap[str].first) {
 		CWindow *mapLabel = new CWindow();
 
-		mapLabel->setFixedSize(640,480);
+		mapLabel->setFixedSize(m_imShowMap[str].second.width(),m_imShowMap[str].second.height());
 		mapLabel->setWindowTitle(str);
 		mapLabel->show();
 		connect(mapLabel, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));

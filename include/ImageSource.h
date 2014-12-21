@@ -1,9 +1,10 @@
 #pragma once
-#include <mutex>
 #include <opencv2/opencv.hpp>
-#include "ImageSourceCalibration.h"
+
 #include <OpenNI.h>
-#include <QtCore>
+
+#include <QtCore/qthread.h>
+#include <QtCore/qmutex.h>
 
 namespace iez {
 class CImageSource:private QThread
@@ -14,8 +15,8 @@ public:
 	~CImageSource(void);
 	int init(void);
 
+	bool isInitialized();
 	void update(void);
-
 
 	cv::Mat getDepthMat()
 	{
@@ -43,7 +44,6 @@ public:
 
 	int sequence() { return m_sequence; }
 
-	CImageSourceCalibration calibration;
 private:
 	void run() {
 		while(1) {
@@ -54,6 +54,7 @@ private:
 	}
 	int deviceInit(void);
 	int streamInit(void);
+
 	int m_width, m_height;
 	cv::Mat m_depthMat;
 	cv::Mat m_colorMat;
@@ -63,11 +64,12 @@ private:
 	openni::VideoStream *m_streams[2];
 	openni::VideoFrameRef m_depthFrame, m_colorFrame;
 
-	std::mutex depth_mutex;
-	std::mutex color_mutex;
+	QMutex depth_mutex;
+	QMutex color_mutex;
 
 	int m_sequence;
 	const int m_fps;
+	bool m_initialized;
 };
 
 

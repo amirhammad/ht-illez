@@ -43,9 +43,10 @@ void CProcessing::process(const cv::Mat &bgr, const cv::Mat &depth)
 	filterDepth(color, depth, 500, 2000);
 
 	window.imShow("Original", bgr);
-	window.imShow("color/depth", color);
+//	window.imShow("color/depth", color);
 //	waitKey(1);
-	window.imShow("filtered", gray);
+//	window.imShow("filtered", gray);
+	/*
 	QVector<double> x(101), y(101); // initialize with entries 0..100
 	for (int i=0; i<101; ++i)
 	{
@@ -54,6 +55,8 @@ void CProcessing::process(const cv::Mat &bgr, const cv::Mat &depth)
 	}
 
 	window.plot("hello", x,y);
+	*/
+	handTracker.findHandFromCenter(bgr, depth);
 }
 
 void CProcessing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int far)

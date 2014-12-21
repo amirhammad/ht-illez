@@ -1,5 +1,4 @@
 #include "ImageSource.h"
-#include <OpenNI.h>
 
 using namespace iez;
 using namespace cv;
@@ -11,9 +10,9 @@ CImageSource::CImageSource(int fps)
 ,	m_height(480)
 ,	m_fps(fps)
 ,	m_sequence(0)
+,	m_initialized(false)
 {
-	m_depthMat.create(m_height, m_width, CV_16UC1);
-	m_colorMat.create(m_height, m_width, CV_8UC3);
+
 }
 
 
@@ -21,6 +20,8 @@ CImageSource::~CImageSource(void)
 {
 	m_depthStream.stop();
 	m_colorStream.stop();
+//	m_depthMat.deallocate();
+//	m_colorMat.deallocate();
 	terminate();
 	openni::OpenNI::shutdown();
 }
@@ -79,18 +80,6 @@ int CImageSource::deviceInit(void)
     }
 
     return 0;
-}
-
-int CImageSource::init(void)
-{
-	if (openni::STATUS_ERROR == deviceInit()) {
-		exit(-1);
-	}
-	if (openni::STATUS_ERROR == streamInit()) {
-		exit(-1);
-	}
-	start();
-	return 0;
 }
 
 int CImageSource::streamInit()
@@ -171,4 +160,32 @@ void CImageSource::update()
     default:
         printf("Error in wait\n");
     }
+}
+
+
+int CImageSource::init(void)
+{
+	if (m_initialized) {
+		return 0;
+	}
+
+	m_depthMat.create(m_height, m_width, CV_16UC1);
+	m_colorMat.create(m_height, m_width, CV_8UC3);
+
+	if (openni::STATUS_ERROR == deviceInit()) {
+		m_initialized = false;
+		return -1;
+	}
+	if (openni::STATUS_ERROR == streamInit()) {
+		m_initialized = false;
+		return -1;
+	}
+	m_initialized = true;
+	start();
+
+	return 0;
+}
+
+bool CImageSource::isInitialized() {
+	return m_initialized;
 }

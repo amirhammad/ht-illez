@@ -1,7 +1,7 @@
 #pragma once
 #include <opencv2/opencv.hpp>
-#include <QtCore>
-#include <QtGui>
+#include <QtGui/qlabel.h>
+#include <QtCore/qmutex.h>
 #include "qcustomplot.h"
 
 namespace iez {
@@ -26,12 +26,16 @@ class CWindowManager: public QObject {
 	Q_OBJECT
 public:
 	CWindowManager();
-//	virtual ~CWindowManager(){}
+
 	void imShow(const char *str, const cv::Mat &image);
 	void plot(const char *name,	const QVector<double> &x, const QVector<double> &y);
 
+	static cv::Mat QImage2Mat(QImage const& src);
+	static QImage Mat2QImage(cv::Mat const& src);
+
+private:
 	std::map<const char *, std::pair<CWindow*, QImage> > m_imShowMap;
-	QMutex m_mutex;
+
 	struct plotMapData {
 		CWindow *widget;
 		QVector<double> x;
@@ -40,8 +44,7 @@ public:
 	};
 	std::map<const char *, struct plotMapData> m_plotMap;
 
-	static cv::Mat QImage2Mat(QImage const& src);
-	static QImage Mat2QImage(cv::Mat const& src);
+	QMutex m_mutex;
 
 public slots:
 	void on_imShow(const char * name);
@@ -58,4 +61,5 @@ signals:
 	void closed();
 };
 }
+
 Q_DECLARE_METATYPE(const char*)
