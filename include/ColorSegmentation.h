@@ -1,53 +1,28 @@
 #pragma once
 #include<QtCore>
+#include <opencv2/opencv.hpp>
+#include <QtGui/qimage.h>
 
-class CColorSegmentation {
+namespace iez {
+
+class ColorSegmentation {
 public:
-	CColorSegmentation()
+	ColorSegmentation()
 :	m_CrCbCountAll()
 ,	m_CrCbCountSkin()
+, 	maxSkin(0)
+,	maxAll(0)
 	{
 
 	}
 
-	bool buildDatabase(const char * path) {
-		QFile file(path);
-		if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-         return false;
+	bool buildDatabaseFromRGBS(const char * path);
 
-		 QTextStream in(&file);
-		 if (in.atEnd()) {
-			 return false;
-		 }
-		 do {
-			 QString line = in.readLine();
-			 if (line.count('\t', Qt::CaseInsensitive) != 3) {
-				 return false;
-			 }
+	bool buildDatabaseFromSingleImage(const cv::Mat &img);
 
-			bool ok = true;
+	std::list<QPolygon> polygonsFromFile(const QString &imagePath);
 
-			int red = line.section('\t',0,0).toInt(&ok);
-			int green = line.section('\t',1,1).toInt(&ok);
-			int blue = line.section('\t',2,2).toInt(&ok);
-			bool skin = line.section('\t',3,3).toInt(&ok)==1;
-
-
-
-			QVector<int> YCrCb(YCrCbFromRGB(red, green, blue));
-			if (skin) {
-				m_CrCbCountSkin[YCrCb[1]][YCrCb[2]]++;
-			}
-
-			m_CrCbCountAll[YCrCb[1]][YCrCb[2]]++;
-//			if (m_CrCbCountAll[YCrCb[1]][YCrCb[2]] != m_CrCbCountSkin[YCrCb[1]][YCrCb[2]]) {
-//				if (m_CrCbCountSkin[YCrCb[1]][YCrCb[2]])
-//					qDebug("[%d %d]: %d %d", YCrCb[1], YCrCb[2], m_CrCbCountSkin[YCrCb[1]][YCrCb[2]], m_CrCbCountAll[YCrCb[1]][YCrCb[2]]);
-//			}
-
-		 } while (!in.atEnd());
-		 return true;
-	}
+	bool buildDatabaseFromFiles(const QString &path);
 
 	static QVector<int> YCrCbFromRGB(uint8_t red, uint8_t green, uint8_t blue)
 	{
@@ -58,6 +33,11 @@ public:
 		YCrCb[2] = -0.148*red - 0.291*green + 0.439*blue + 128;
 
  		return YCrCb;
+	};
+
+	static QVector<int> YCrCbFromRGB(const cv::Point3_<uint8_t> bgr)
+	{
+ 		return YCrCbFromRGB(bgr.z, bgr.y, bgr.x);
 	};
 
 	inline double getProbability(uint8_t u, uint8_t v)
@@ -71,7 +51,7 @@ public:
 	inline double getProbability(uint8_t red, uint8_t green, uint8_t blue)
 	{
 		QVector<int> uv = YCrCbFromRGB(red, green, blue);
-		return getProbability(uv[0], uv[1]);
+		return getProbability(uv[1], uv[2]);
 	}
 
 	inline double getProbability(const cv::Point3_<uint8_t> bgr)
@@ -79,14 +59,19 @@ public:
 		return getProbability(bgr.z, bgr.y, bgr.x);
 	}
 
-	void scanNewImage() {
-		// TODO:
-		// Format: 	* RGB bitmap 8+8+8
-		// 			* Metadata consisting of vertices of lines in image (convex regions)
-		//				Region1: (x1,y1), (x2,y2), ..., (xn,yn)\n
-		//				Region2: ...
-	}
+	/**
+	 * Separate Skin/Non-skin color in row
+	 * return list of areas
+	 */
+	const std::vector<int> separateSkinNonskinColorInRow(int row, const std::list<QPolygon> polygonList);
 
+	void loadNewImage(const char *imagePath);
+	void scanNewImage(const cv::Mat &image, const std::list<QPolygon> polygonList);
+
+	uint32_t maxAll;
+	uint32_t maxSkin;
 	uint32_t m_CrCbCountAll[256][256];
 	uint32_t m_CrCbCountSkin[256][256];
 };
+
+}

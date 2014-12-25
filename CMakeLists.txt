@@ -20,7 +20,7 @@ SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11")
 SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-std=c++11 ")
 #QT
 find_package(Qt COMPONENTS QtCore QtOpenGL REQUIRED)
-
+find_package(OpenCV REQUIRED)
 SET(QT_USE_QTOPENGL TRUE)
 INCLUDE(${QT_USE_FILE})
 include_directories(${QT_INCLUDES})
@@ -28,5 +28,6 @@ QT4_WRAP_CPP(out_HEADERS_MOC ${out_HEADERS} ${QCustomPlot_HEADERS})
 ADD_DEFINITIONS(${QT_DEFINITIONS})
 
 add_executable(${outputname} ${QCustomPlot_SOURCES} ${out_SOURCES} ${out_HEADERS_MOC})
-target_link_libraries(${outputname} ${QT_LIBRARIES} glut GLU armadillo opencv_core opencv_highgui opencv_imgproc opencv_imgcodecs OpenNI2 -pthread -lX11)
+target_link_libraries(${outputname} ${QT_LIBRARIES} glut GLU armadillo  OpenNI2 -pthread)
+target_link_libraries(${outputname} ${OpenCV_LIBRARIES})
 

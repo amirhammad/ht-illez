@@ -77,7 +77,7 @@ void CWindowManager::on_plot(const char *name)
 	data->widget->show();
 	m_mutex.unlock();
 }
-QImage CWindowManager::Mat2QImage(cv::Mat const& src)
+QImage CWindowManager::Mat2QImage(const cv::Mat& src)
 {
 	using namespace cv;
      cv::Mat temp; // make the same cv::Mat

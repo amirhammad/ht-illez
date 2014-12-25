@@ -14,7 +14,7 @@ private:
 		const cv::Point3f &nextColor);
 	void extend(cv::Mat &hand, const cv::Mat &img, cv::Point2f center, cv::Point3f meanColor, int depth);
 	CWindowManager& m_window;
-	CColorSegmentation seg;
+	ColorSegmentation segmentation;
 };
 
 }
