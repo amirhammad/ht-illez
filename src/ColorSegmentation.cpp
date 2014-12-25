@@ -26,8 +26,8 @@ std::list<QPolygon> ColorSegmentation::polygonsFromFile(const QString &imagePath
 				int numberOfPoints = polyogonHeader.section(' ', 0, 0).toInt();
 				for (int j = 0; j < numberOfPoints; ++j) {
 					QString polyogonLine = imageMetaStream.readLine(64);
-					int x = polyogonLine.section(' ', 0, 0).toInt();
-					int y = polyogonLine.section(' ', 1, 1).toInt();
+					int y = polyogonLine.section(' ', 0, 0).toInt();
+					int x = polyogonLine.section(' ', 1, 1).toInt();
 					polygon.push_back(QPoint(x,y));
 				}
 				polygonList.push_back(polygon);
@@ -152,10 +152,10 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 {
 	for (int i = 0; i< image.rows; i++) {
 		const std::vector<int> &areas = separateSkinNonskinColorInRow(i, polygonList);
-//		qDebug("areas: %d:", areas.size());
-//		foreach (int p, areas) {
-//
-//		}
+		qDebug("areas: %d:", areas.size());
+		foreach (int p, areas) {
+			qDebug("%d", p);
+		}
 		int index = 0;
 		bool skin = false;
 		bool end = false;	//indicates last area
@@ -204,50 +204,42 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
  */
 const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row, const std::list<QPolygon> polygonList)
 {
-	std::vector<int> edgePointsVector(40, 0);
+	std::vector<int> edgePointsVector(10, 0);
 
 	int index = 0;
 	foreach (QPolygon polygon, polygonList) {
 
-		if (row == polygon.at(0).y()) {
-			// add curr.x
-//			edgePointsVector[index++] = polygon.at(0).x();
-//			edgePointsVector.push_back(polygon.at(0).x());
-			qDebug("p1");
-		}
-
 		for (int i = 0; i < polygon.size()-1; ++i) {
 			const QPoint &curr = polygon.at(i);
 			const QPoint &next = polygon.at(i+1);
-			if (curr.y() == next.y()) {
-				continue;
-			}
+
+			if (curr.y() == next.y()) continue;
+
 			if ((curr.y() < row && row < next.y())
 			|| (curr.y() > row && row > next.y())) {
 				float k = static_cast<float>(next.x()-curr.x())/(next.y() - curr.y());
 				int q = curr.x()-k*curr.y();
 				int x = k*row+q;
-				qDebug("p2");
 				edgePointsVector[index++] = x;
 			}
 		}
 
 		//and last
 
-//		const QPoint &first = polygon.at(0);
-//		const QPoint &last = polygon.at(polygon.size()-1);
-//		if ((first.y() < row && row < last.y())
-//		|| (first.y() > row && row > last.y())) {
-//			float k = static_cast<float>(last.x()-first.x())/(last.y() - first.y());
-//			int q = first.x()-k*first.y();
-//			int x = k*row+q;
-//			qDebug("p2");
-//			edgePointsVector[index++] = x;
-//		}
+		const QPoint &first = polygon.at(0);
+		const QPoint &last = polygon.at(polygon.size()-1);
+		if ((first.y() < row && row < last.y())
+		|| (first.y() > row && row > last.y())) {
+			float k = static_cast<float>(last.x()-first.x())/(last.y() - first.y());
+			int q = first.x()-k*first.y();
+			int x = k*row+q;
+			edgePointsVector[index++] = x;
+		}
 	}
 
-
+	if (index&1) index--;
 	std::sort(edgePointsVector.begin(), edgePointsVector.begin()+index);
+
 	edgePointsVector[index] = -1;
 	return edgePointsVector;
 }
