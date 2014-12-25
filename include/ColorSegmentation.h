@@ -2,6 +2,7 @@
 #include<QtCore>
 #include <opencv2/opencv.hpp>
 #include <QtGui/qimage.h>
+#include "WindowManager.h"
 
 namespace iez {
 
@@ -66,12 +67,14 @@ public:
 	const std::vector<int> separateSkinNonskinColorInRow(int row, const std::list<QPolygon> polygonList);
 
 	void loadNewImage(const char *imagePath);
-	void scanNewImage(const cv::Mat &image, const std::list<QPolygon> polygonList);
+	void scanNewImage(const cv::Mat &image, const std::list<QPolygon> &polygonList);
 
 	uint32_t maxAll;
 	uint32_t maxSkin;
 	uint32_t m_CrCbCountAll[256][256];
 	uint32_t m_CrCbCountSkin[256][256];
+
+	WindowManager windowManager;
 };
 
 }

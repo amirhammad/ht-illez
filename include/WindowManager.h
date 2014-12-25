@@ -22,12 +22,13 @@ signals:
 	void closed();
 };
 
-class CWindowManager: public QObject {
+class WindowManager: public QObject {
 	Q_OBJECT
 public:
-	CWindowManager();
+	WindowManager();
 
 	void imShow(const char *str, const cv::Mat &image);
+	void imShow(const char *name, const QImage& image);
 	void plot(const char *name,	const QVector<double> &x, const QVector<double> &y);
 
 	static cv::Mat QImage2Mat(QImage const& src);

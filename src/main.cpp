@@ -28,7 +28,7 @@ void test()
 {
 //	QThread t;
 	iez::ColorSegmentation seg;
-	seg.buildDatabaseFromFiles("colorDB_files.txt");
+	seg.buildDatabaseFromFiles("../database/colorDB_files.txt");
 //	const std::list<QPolygon> polygons = seg.polygonsFromFile("x.bmp");
 
 //	iez::ImageDescriptor imageDescriptor;

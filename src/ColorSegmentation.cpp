@@ -5,11 +5,11 @@
 #include <QtGui>
 #include <QtCore>
 namespace iez {
-
+#define DATABASE_PREFIX "../database/"
 std::list<QPolygon> ColorSegmentation::polygonsFromFile(const QString &imagePath)
 {
 	std::list<QPolygon> polygonList;
-	QFile imageMeta(QString(imagePath).append("_meta"));
+	QFile imageMeta(QString(DATABASE_PREFIX).append(QString(imagePath)).append("_meta"));
 	if (!imageMeta.open(QIODevice::ReadOnly | QIODevice::Text))
 		return polygonList;
 	QTextStream imageMetaStream(&imageMeta);
@@ -108,24 +108,33 @@ bool ColorSegmentation::buildDatabaseFromFiles(const QString &path)
 	 if (in.atEnd()) {
 		 return false;
 	 }
+
 	 do {
 		QString imagePath = in.readLine();
 		if (imagePath.startsWith('#')) {
 			continue;
 		}
+
 		QImage image;
-		if (!image.load(imagePath)) {
+		if (!image.load(QString(DATABASE_PREFIX).append(imagePath))) {
+
 			qDebug("Error: cannot load image'%s'", imagePath.toStdString().data());
 		}
+		image = image.convertToFormat(QImage::Format_RGB888);
 		const std::list<QPolygon> polygons = polygonsFromFile(imagePath);
-		foreach (QPolygon pol, polygons) {
-			qDebug("polygon");
-			foreach(QPoint pt, pol) {
-				qDebug("%d %d", pt.x(), pt.y());
-			}
-		}
+//		foreach (QPolygon pol, polygons) {
+//			qDebug("polygon");
+//			foreach(QPoint pt, pol) {
+//				qDebug("%d %d", pt.x(), pt.y());
+//			}
+//		}
 
-		scanNewImage(CWindowManager::QImage2Mat(image), polygons);
+//		windowManager.imShow("Original", image);
+//		cv::Mat cvImage = WindowManager::QImage2Mat(image);
+//		windowManager.imShow("Non-Original", cvImage);
+
+		scanNewImage(WindowManager::QImage2Mat(image), polygons);
+
 
 //			QVector<int> YCrCb(YCrCbFromRGB(red, green, blue));
 //			if (skin) {
@@ -148,18 +157,20 @@ bool ColorSegmentation::buildDatabaseFromFiles(const QString &path)
 
 
 
-void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPolygon> polygonList)
+void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPolygon> &polygonList)
 {
+	cv::Mat maskedImage;
+	image.copyTo(maskedImage);
+
 	for (int i = 0; i< image.rows; i++) {
 		const std::vector<int> &areas = separateSkinNonskinColorInRow(i, polygonList);
-		qDebug("areas: %d:", areas.size());
-		foreach (int p, areas) {
-			qDebug("%d", p);
-		}
+//		qDebug("areas: %d:", areas.size());
+//		foreach (int p, areas) {
+//			qDebug("%d", p);
+//		}
 		int index = 0;
 		bool skin = false;
 		bool end = false;	//indicates last area
-//		std::list<int>::const_iterator  it(areas.begin());
 //		qDebug("area[%d]", areas);
 		if (areas[0] < 0) {
 			end = true;
@@ -168,7 +179,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 		for (int j = 0; j < image.cols; j++) {
 			if (!end) {
 				if (j > areas[index] && areas[index] >= 0) {
-					qDebug("area[%d]", areas[index]);
+//					qDebug("area[%d]", areas[index]);
 
 					index++;
 					skin = !skin;
@@ -178,11 +189,12 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 				}
 			}
 
-			const QVector<int> &YCrCb = YCrCbFromRGB(image.at<const cv::Point3_<uint8_t> >(i,j));
+//			const QVector<int> &YCrCb = YCrCbFromRGB(image.at<const cv::Point3_<uint8_t> >(i,j));
 
 			// Categorize .. .TODO;
 			if (skin) {
-				qDebug("%d: skin pixel: %d %d", index, i, j);
+//				qDebug("%d: skin pixel: %d %d", index, i, j);
+				maskedImage.at<cv::Point3_<uint8_t> >(i,j) = cv::Point3_<uint8_t>(0, 0, 0);
 			}
 
 
@@ -190,6 +202,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 
 
 	};
+	windowManager.imShow("MASKED", maskedImage);
 	// TODO:
 	// Format: 	* RGB bitmap 8+8+8
 	// 			* Metadata consisting of vertices of lines in image (convex regions)
@@ -204,7 +217,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
  */
 const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row, const std::list<QPolygon> polygonList)
 {
-	std::vector<int> edgePointsVector(10, 0);
+	std::vector<int> edgePointsVector(20, 0);
 
 	int index = 0;
 	foreach (QPolygon polygon, polygonList) {
@@ -213,10 +226,14 @@ const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row,
 			const QPoint &curr = polygon.at(i);
 			const QPoint &next = polygon.at(i+1);
 
-			if (curr.y() == next.y()) continue;
-
-			if ((curr.y() < row && row < next.y())
-			|| (curr.y() > row && row > next.y())) {
+			if (curr.y() == next.y()) {
+//				continue;
+				edgePointsVector[index++] = curr.x();
+				if (curr.x() != next.x()) {
+					edgePointsVector[index++] = next.x();
+				}
+			} else if ((curr.y() <= row && row < next.y())
+			|| (curr.y() > row && row >= next.y())) {
 				float k = static_cast<float>(next.x()-curr.x())/(next.y() - curr.y());
 				int q = curr.x()-k*curr.y();
 				int x = k*row+q;

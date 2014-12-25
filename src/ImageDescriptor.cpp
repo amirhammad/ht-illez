@@ -87,10 +87,20 @@ void ImageDescriptorImage::keyPressEvent(QKeyEvent *ev)
 			QPolygon polygon;
 			foreach(QPoint pt, m_pointList) {
 				polygon.push_back(pt);
+				qDebug(".");
 			}
+			m_polygonList.push_back(polygon);
 
-			emit polygonSelected(polygon);
+//			emit polygonSelected(polygon);
 		}
+		break;
+	case Qt::Key_S:
+	{
+		if (!m_polygonList.size()) {
+			break;
+		}
+		emit descriptionComplete(m_image, m_polygonList);
+	}
 		break;
 
 	}
@@ -108,7 +118,8 @@ ImageDescriptor::ImageDescriptor()
 	QPushButton *resetButton = new QPushButton("load image");
 	m_backgroundImage = new ImageDescriptorImage();
 	connect(resetButton, SIGNAL(clicked()), m_backgroundImage, SLOT(refresh()));
-	connect(m_backgroundImage, SIGNAL(polygonSelected(QPolygon)), this, SLOT(on_polygonSelected(QPolygon)));
+//	connect(m_backgroundImage, SIGNAL(polygonSelected(QPolygon)), this, SLOT(on_polygonSelected(QPolygon)));
+	connect(m_backgroundImage, SIGNAL(descriptionComplete(const QImage&, const std::list<QPolygon>&)), this, SLOT(on_descriptionComplete(const QImage&, const std::list<QPolygon>&)));
 
 	QVBoxLayout *polygonLayout = new QVBoxLayout(m_polygonsWidget);
 	mainLayout->addWidget(m_backgroundImage);
@@ -130,37 +141,71 @@ void ImageDescriptorImage::refresh()
 {
 	Mat img;
 	m_cap>>img;
-	image = iez::CWindowManager::Mat2QImage(img);
-	refresh(image);
+	m_image = iez::WindowManager::Mat2QImage(img);
+	refresh(m_image);
 }
 
 void ImageDescriptorImage::refresh(const QImage &image)
 {
 	m_image = image;
-	QFileDialog *dialog = new QFileDialog(this, "a", "/");
-	dialog->show();
-	connect(dialog, SIGNAL(fileSelected(const QString &)), this, SLOT(on_fileSelected(const QString &)));
 	setFixedSize(image.width(), image.height());
 	setPixmap(QPixmap::fromImage(image));
 }
 
-void ImageDescriptorImage::on_fileSelected(const QString &file)
+
+//void ImageDescriptor::on_polygonSelected(QPolygon polygon)
+//{
+//	foreach (QPoint pt, polygon) {
+//		qDebug("%d %d", pt.x(), pt.y());
+//	}
+//	addPolygon(polygon);
+//}
+//
+//void ImageDescriptor::addPolygon(QPolygon polygon)
+//{
+////	m_polygonList.push_back(polygon);
+////	QLabel* lbl = new QLabel("Polygon");
+////	static_cast<QVBoxLayout*>(m_polygonsWidget->layout())->addWidget(lbl, false, Qt::AlignTop);
+//}
+void ImageDescriptor::on_descriptionComplete(const QImage& image, const std::list<QPolygon> &polygonList)
 {
-	qDebug("%s", file.toAscii().constData());
-}
-void ImageDescriptor::on_polygonSelected(QPolygon polygon)
-{
-	foreach (QPoint pt, polygon) {
-		qDebug("%d %d", pt.x(), pt.y());
-	}
-	addPolygon(polygon);
+	m_image = image;
+	m_polygonList = polygonList;
+	QFileDialog *dialog = new QFileDialog(master, QString("Save Image and metadata"), QString("../database"), QString("*.bmp"));
+	dialog->show();
+	connect(dialog, SIGNAL(fileSelected(const QString &)), this, SLOT(on_descriptionFileSelected(const QString &)));
 }
 
-void ImageDescriptor::addPolygon(QPolygon polygon)
+void ImageDescriptor::on_descriptionFileSelected(const QString &file)
 {
-	m_polygonsList.push_back(polygon);
-	QLabel* lbl = new QLabel("Polygon");
-	static_cast<QVBoxLayout*>(m_polygonsWidget->layout())->addWidget(lbl, false, Qt::AlignTop);
+	QString filePath(file);
+
+	if (!file.endsWith(".bmp", Qt::CaseInsensitive)) {
+		filePath.append(".bmp");
+	}
+
+	qDebug("%s", filePath.toAscii().constData());
+
+	// save image
+	if (!m_image.save(filePath, "BMP", 100)) {
+		qDebug("Failed to save image %s", filePath.toStdString().data());
+		return;
+	}
+
+	// save points
+	QFile imageMeta(QString(filePath).append("_meta"));
+	if (!imageMeta.open(QIODevice::WriteOnly | QIODevice::Text)) {
+		qDebug("Failed to save image metadata %s", QString(filePath).append("_meta").toStdString().data());
+		return;
+	}
+	QTextStream imageMetaStream(&imageMeta);
+	imageMetaStream<<"polygons " <<  m_polygonList.size() << endl;
+	foreach (QPolygon polygon, m_polygonList) {
+		imageMetaStream << polygon.size() << endl;
+		foreach (QPoint point, polygon) {
+			imageMetaStream << point.y() << " " << point.x() << endl;
+		}
+	}
 }
 
 }// namespace iez

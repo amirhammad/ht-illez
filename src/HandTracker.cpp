@@ -188,7 +188,7 @@ void CHandTracker::extend(cv::Mat &hand, const cv::Mat& img, cv::Point2f center,
 
 
 
-CHandTracker::CHandTracker(CWindowManager &window)
+CHandTracker::CHandTracker(WindowManager &window)
 :	m_window(window)
 {
 	const char * dbPath = "/home/amir/git/amirhammad/diplomovka/Skin_NonSkin.txt";
