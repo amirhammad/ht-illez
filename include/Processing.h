@@ -11,12 +11,12 @@
 namespace iez {
 
 
-class CProcessing: private QThread
+class Processing: private QThread
 {
 	Q_OBJECT
 public:
-	explicit CProcessing(CImageSource &imgsrc);
-	~CProcessing(void);
+	explicit Processing(ImageSource &imgsrc);
+	~Processing(void);
 
 	int init();
 	void process(const cv::Mat &bgr, const cv::Mat &depth);
@@ -27,12 +27,12 @@ private:
 	void run();
 
 
-	WindowManager window;
+	WindowManager m_window;
 
-	CHandTracker handTracker;
-	CImageSource &imageSource;
+	CHandTracker m_handTracker;
+	ImageSource &m_imageSource;
 
-	bool calculateHandTracker;
+	bool m_calculateHandTracker;
 private slots:
 	void keyPressEvent(QKeyEvent *keyEvent);
 	void closeEvent();

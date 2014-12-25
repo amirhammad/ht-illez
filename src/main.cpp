@@ -41,12 +41,12 @@ int main(int argc, char *argv[])
 	QApplication app(argc, argv);
 	test();
 	return 0;
-	iez::CImageSource kinect(30);
+	iez::ImageSource kinect(30);
 	kinect.init();
 	if (!kinect.isInitialized()) {
 		return -1;
 	}
-	iez::CProcessing processing(kinect);
+	iez::Processing processing(kinect);
 	processing.init();
 
 	return QApplication::exec();

@@ -189,7 +189,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 				}
 			}
 
-//			const QVector<int> &YCrCb = YCrCbFromRGB(image.at<const cv::Point3_<uint8_t> >(i,j));
+			const QVector<int> &YCrCb = YCrCbFromRGB(image.at<const cv::Point3_<uint8_t> >(i,j));
 
 			// Categorize .. .TODO;
 			if (skin) {
@@ -201,13 +201,8 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 		}
 
 
-	};
-	windowManager.imShow("MASKED", maskedImage);
-	// TODO:
-	// Format: 	* RGB bitmap 8+8+8
-	// 			* Metadata consisting of vertices of lines in image (convex regions)
-	//				Region1: (x1,y1), (x2,y2), ..., (xn,yn)\n
-	//				Region2: ...
+	}
+	windowManager.imShow("MASK", maskedImage);
 }
 
 
@@ -227,13 +222,12 @@ const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row,
 			const QPoint &next = polygon.at(i+1);
 
 			if (curr.y() == next.y()) {
-//				continue;
 				edgePointsVector[index++] = curr.x();
 				if (curr.x() != next.x()) {
 					edgePointsVector[index++] = next.x();
 				}
 			} else if ((curr.y() <= row && row < next.y())
-			|| (curr.y() > row && row >= next.y())) {
+					|| (curr.y() > row && row >= next.y())) {
 				float k = static_cast<float>(next.x()-curr.x())/(next.y() - curr.y());
 				int q = curr.x()-k*curr.y();
 				int x = k*row+q;

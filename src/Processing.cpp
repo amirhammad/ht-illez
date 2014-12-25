@@ -11,24 +11,24 @@
 //using namespace cv;
 namespace iez {
 
-CProcessing::CProcessing(CImageSource &imgsrc)
-: imageSource(imgsrc)
-, window()
-, handTracker(window)
-, calculateHandTracker(false)
+Processing::Processing(ImageSource &imgsrc)
+: m_imageSource(imgsrc)
+, m_window()
+, m_handTracker(m_window)
+, m_calculateHandTracker(false)
 {
-	connect(&window, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
-	connect(&window, SIGNAL(closed()), this, SLOT(closeEvent()));
+	connect(&m_window, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
+	connect(&m_window, SIGNAL(closed()), this, SLOT(closeEvent()));
 }
 
 
-CProcessing::~CProcessing(void)
+Processing::~Processing(void)
 {
 	terminate();
 }
 
 
-void CProcessing::process(const cv::Mat &bgr, const cv::Mat &depth)
+void Processing::process(const cv::Mat &bgr, const cv::Mat &depth)
 {
 	assert(bgr.rows == depth.rows);
 	assert(bgr.cols == depth.cols);
@@ -42,7 +42,7 @@ void CProcessing::process(const cv::Mat &bgr, const cv::Mat &depth)
 
 	filterDepth(color, depth, 500, 2000);
 
-	window.imShow("Original", bgr);
+	m_window.imShow("Original", bgr);
 //	window.imShow("color/depth", color);
 //	waitKey(1);
 //	window.imShow("filtered", gray);
@@ -56,10 +56,10 @@ void CProcessing::process(const cv::Mat &bgr, const cv::Mat &depth)
 
 	window.plot("hello", x,y);
 	*/
-	handTracker.findHandFromCenter(bgr, depth);
+	m_handTracker.findHandFromCenter(bgr, depth);
 }
 
-void CProcessing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int far)
+void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int far)
 {
 	assert(dst.rows == depth.rows);
 	assert(dst.cols == depth.cols);
@@ -79,39 +79,39 @@ void CProcessing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int 
 	}
 }
 
-int CProcessing::init()
+int Processing::init()
 {
 	start();
 	setPriority(IdlePriority);
 }
 
-void iez::CProcessing::run()
+void iez::Processing::run()
 {
 	int sequence = 0;
 	while (1)
 	{
-		int seq = imageSource.sequence();
+		int seq = m_imageSource.sequence();
 		if (sequence == seq) {
 			yieldCurrentThread();
 			continue;
 		}
 		sequence = seq;
 
-		cv::Mat rgb = imageSource.getColorMat();
+		cv::Mat rgb = m_imageSource.getColorMat();
 		cv::Mat color;
 		cv::cvtColor(rgb, color,cv::COLOR_RGB2BGR);
-		cv::Mat depth = imageSource.getDepthMat();
+		cv::Mat depth = m_imageSource.getDepthMat();
 
 		process(color, depth);
 		processHSVFilter(color);
-		if (calculateHandTracker) {
-			handTracker.findHandFromCenter(color,depth);
-			calculateHandTracker = false;
+		if (m_calculateHandTracker) {
+			m_handTracker.findHandFromCenter(color,depth);
+			m_calculateHandTracker = false;
 		}
 	}
 }
 static int params[20]={11, 139, 0, 255, 95, 169, 174, 118};
-void CProcessing::processHSVFilter(const cv::Mat &orig)
+void Processing::processHSVFilter(const cv::Mat &orig)
 {
 	using namespace cv;
 	Mat color,gray,image,canny;
@@ -220,19 +220,19 @@ void CProcessing::processHSVFilter(const cv::Mat &orig)
 //	imshow("CANNY", canny);
 }
 
-void CProcessing::keyPressEvent(QKeyEvent* keyEvent)
+void Processing::keyPressEvent(QKeyEvent* keyEvent)
 {
 	switch (keyEvent->key()) {
 	case Qt::Key_Escape:
 		::exit(0);
 		break;
 	case Qt::Key_F:
-		calculateHandTracker = true;
+		m_calculateHandTracker = true;
 		break;
 	}
 }
 
-void CProcessing::closeEvent()
+void Processing::closeEvent()
 {
 	::exit(0);
 }

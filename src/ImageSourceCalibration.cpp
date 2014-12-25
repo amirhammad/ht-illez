@@ -24,19 +24,19 @@ using namespace cv;
 #define p2_d 5.0350940090814270e-03
 #define k3_d -1.3053628089976321e+00
 
-CImageSourceCalibration::CImageSourceCalibration(void)
+ImageSourceCalibration::ImageSourceCalibration(void)
 {
 	
 }
 
 
-CImageSourceCalibration::~CImageSourceCalibration(void)
+ImageSourceCalibration::~ImageSourceCalibration(void)
 {
 
 }
 
 
-void CImageSourceCalibration::calibratePixel(const Mat depth, int y, int x, int *rgb_x, int *rgb_y)
+void ImageSourceCalibration::calibratePixel(const Mat depth, int y, int x, int *rgb_x, int *rgb_y)
 {
 	Point3_<uint16_t> ret;
 	uint16_t d = depth.at<uint16_t>(y,x);
@@ -52,7 +52,7 @@ static float raw_depth_to_meters(int raw_depth)
   return 0;
 }
 
-void CImageSourceCalibration::calibrate(Mat &calibratedImage ,const Mat &depth, const Mat &image)
+void ImageSourceCalibration::calibrate(Mat &calibratedImage ,const Mat &depth, const Mat &image)
 {
 	int y;
 	int x;

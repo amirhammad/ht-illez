@@ -5,7 +5,7 @@ using namespace cv;
 
 #define SAMPLE_XML_PATH "SamplesConfig.xml"
 
-CImageSource::CImageSource(int fps)
+ImageSource::ImageSource(int fps)
 :	m_width(640)
 ,	m_height(480)
 ,	m_fps(fps)
@@ -16,17 +16,15 @@ CImageSource::CImageSource(int fps)
 }
 
 
-CImageSource::~CImageSource(void)
+ImageSource::~ImageSource(void)
 {
 	m_depthStream.stop();
 	m_colorStream.stop();
-//	m_depthMat.deallocate();
-//	m_colorMat.deallocate();
 	terminate();
 	openni::OpenNI::shutdown();
 }
 
-int CImageSource::deviceInit(void)
+int ImageSource::deviceInit(void)
 {
 	openni::Status rc = openni::STATUS_OK;
 
@@ -82,7 +80,7 @@ int CImageSource::deviceInit(void)
     return 0;
 }
 
-int CImageSource::streamInit()
+int ImageSource::streamInit()
 {
 	openni::VideoMode depthVideoMode;
     openni::VideoMode colorVideoMode;
@@ -128,7 +126,7 @@ int CImageSource::streamInit()
     return 0;
 }
 
-void CImageSource::update() 
+void ImageSource::update() 
 {
 	int changedIndex;
 
@@ -163,7 +161,7 @@ void CImageSource::update()
 }
 
 
-int CImageSource::init(void)
+int ImageSource::init(void)
 {
 	if (m_initialized) {
 		return 0;
@@ -186,6 +184,38 @@ int CImageSource::init(void)
 	return 0;
 }
 
-bool CImageSource::isInitialized() {
+bool ImageSource::isInitialized()
+{
 	return m_initialized;
+}
+
+cv::Mat ImageSource::getDepthMat()
+{
+	depth_mutex.lock();
+	if (m_depthFrame.isValid()) {
+		memcpy(m_depthMat.data, m_depthFrame.getData(), m_depthFrame.getDataSize());
+	}
+	depth_mutex.unlock();
+	return m_depthMat;
+}
+
+
+
+cv::Mat ImageSource::getColorMat()
+{
+	color_mutex.lock();
+	if (m_colorFrame.isValid()) {
+		memcpy(m_colorMat.data, m_colorFrame.getData(), m_colorFrame.getDataSize());
+	}
+	color_mutex.unlock();
+	return m_colorMat;
+}
+
+void ImageSource::run()
+{
+	while(1) {
+		update();
+		yieldCurrentThread();
+		msleep(1);
+	}
 }
