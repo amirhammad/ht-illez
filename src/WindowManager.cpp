@@ -4,7 +4,7 @@ namespace iez {
 void WindowManager::imShow(const char *name, const cv::Mat& image)
 {
 	m_mutex.lock();
-	m_imShowMap[name].second = Mat2QImage(image);
+	m_imShowMap[name].image = Mat2QImage(image);
 	m_mutex.unlock();
 	QMetaObject::invokeMethod(this, "on_imShow", Qt::QueuedConnection, QGenericArgument("const char*", &name));
 }
@@ -12,7 +12,7 @@ void WindowManager::imShow(const char *name, const cv::Mat& image)
 void WindowManager::imShow(const char *name, const QImage& image)
 {
 	m_mutex.lock();
-	m_imShowMap[name].second = image;
+	m_imShowMap[name].image = image;
 	m_mutex.unlock();
 	QMetaObject::invokeMethod(this, "on_imShow", Qt::QueuedConnection, QGenericArgument("const char*", &name));
 }
@@ -117,18 +117,18 @@ WindowManager::WindowManager()
 void WindowManager::on_imShow(const char *str)
 {
 	m_mutex.lock();
-	if (!m_imShowMap[str].first) {
+	if (!m_imShowMap[str].widget) {
 		CWindow *mapLabel = new CWindow();
 
-		mapLabel->setFixedSize(m_imShowMap[str].second.width(),m_imShowMap[str].second.height());
+		mapLabel->setFixedSize(m_imShowMap[str].image.width(),m_imShowMap[str].image.height());
 		mapLabel->setWindowTitle(str);
 		mapLabel->show();
 		connect(mapLabel, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
 		connect(mapLabel, SIGNAL(closed()), this, SLOT(closeEvent()));
-		m_imShowMap[str].first = mapLabel;
+		m_imShowMap[str].widget = mapLabel;
 	}
 
-	m_imShowMap[str].first->setPixmap(QPixmap::fromImage(m_imShowMap[str].second));
+	m_imShowMap[str].widget->setPixmap(QPixmap::fromImage(m_imShowMap[str].image));
 	m_mutex.unlock();
 }
 

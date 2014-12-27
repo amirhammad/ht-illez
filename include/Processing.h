@@ -27,8 +27,6 @@ private:
 	void run();
 
 
-	WindowManager m_window;
-
 	CHandTracker m_handTracker;
 	ImageSource &m_imageSource;
 

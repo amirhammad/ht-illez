@@ -1,13 +1,28 @@
 #include "ImageDescriptor.h"
+#include "ImageSourceFreenect.h"
+#include "ColorSegmentation.h"
 #include <opencv2/opencv.hpp>
 using namespace cv;
 
 namespace iez {
 
-ImageDescriptorImage::ImageDescriptorImage()
-:	m_cap(0)
+//ImageDescriptorImage::ImageDescriptorImage()
+//,	QLabel("x")
+//{
+//	setWindowTitle("Image Description");
+//	setText("a");
+//	setMouseTracking(true);
+//	setFocusPolicy(Qt::ClickFocus);
+//	setCursor(Qt::CrossCursor);
+//}
+
+ImageDescriptorImage::ImageDescriptorImage(ImageSourceFreenect *kinect)
+:	m_kinect(kinect)
 ,	QLabel("x")
 {
+	if (!kinect) {
+		m_cap.open(0);
+	}
 	setWindowTitle("Image Description");
 	setText("a");
 	setMouseTracking(true);
@@ -50,17 +65,24 @@ void ImageDescriptorImage::mouseReleaseEvent(QMouseEvent *ev)
 
 void ImageDescriptorImage::paintEvent(QPaintEvent *ev)
 {
+	const int circleSize = 5;
+
 	QLabel::paintEvent(ev);
+
 	QPainter painter(this);
 	if (m_pointList.size()==1) {
-		painter.drawPoint(m_pointList.back());
+		painter.drawEllipse(*m_pointList.begin(), circleSize, circleSize);
+//		painter.drawPoint(m_pointList.back());
 	}
-	if (m_pointList.size()>1) {
 
+
+	if (m_pointList.size()>1) {
+		painter.drawEllipse(*m_pointList.begin(), circleSize, circleSize);
 		for (std::list<QPoint>::iterator it = ++m_pointList.begin(); it != m_pointList.end(); it++) {
 			std::list<QPoint>::iterator prev = it;
 			prev--;
 			painter.drawLine(*prev, *it);
+			painter.drawEllipse(*it, circleSize, circleSize);
 		}
 
 
@@ -73,7 +95,7 @@ void ImageDescriptorImage::keyPressEvent(QKeyEvent *ev)
 {
 	int key = ev->key();
 	switch (key){
-	case Qt::Key_Escape:
+	case Qt::Key_C:
 		m_pointList.clear();
 		break;
 	case Qt::Key_U:
@@ -87,7 +109,6 @@ void ImageDescriptorImage::keyPressEvent(QKeyEvent *ev)
 			QPolygon polygon;
 			foreach(QPoint pt, m_pointList) {
 				polygon.push_back(pt);
-				qDebug(".");
 			}
 			m_polygonList.push_back(polygon);
 
@@ -110,24 +131,35 @@ void ImageDescriptorImage::keyPressEvent(QKeyEvent *ev)
 }
 
 
-ImageDescriptor::ImageDescriptor()
+ImageDescriptor::ImageDescriptor(ImageSourceFreenect *kinect)
 {
 	master = new QWidget();
+	master->setWindowTitle("Image Descriptor");
+
 	m_polygonsWidget = new QWidget(master);
 	QHBoxLayout *mainLayout = new QHBoxLayout(master);
-	QPushButton *resetButton = new QPushButton("load image");
-	m_backgroundImage = new ImageDescriptorImage();
-	connect(resetButton, SIGNAL(clicked()), m_backgroundImage, SLOT(refresh()));
-//	connect(m_backgroundImage, SIGNAL(polygonSelected(QPolygon)), this, SLOT(on_polygonSelected(QPolygon)));
+
+	m_backgroundImage = new ImageDescriptorImage(kinect);
 	connect(m_backgroundImage, SIGNAL(descriptionComplete(const QImage&, const std::list<QPolygon>&)), this, SLOT(on_descriptionComplete(const QImage&, const std::list<QPolygon>&)));
+
+//	QPushButton *resetButton = new QPushButton("load image");
+//	connect(resetButton, SIGNAL(clicked()), m_backgroundImage, SLOT(refresh()));
+
+	QPushButton *pauseButton = new QPushButton("Pause");
+	connect(pauseButton, SIGNAL(clicked()), this, SLOT(pause()));
+
+
 
 	QVBoxLayout *polygonLayout = new QVBoxLayout(m_polygonsWidget);
 	mainLayout->addWidget(m_backgroundImage);
 	mainLayout->addWidget(m_polygonsWidget);
-	static_cast<QVBoxLayout*>(m_polygonsWidget->layout())->addWidget(resetButton, false, Qt::AlignTop);
+//	static_cast<QVBoxLayout*>(m_polygonsWidget->layout())->addWidget(resetButton, false, Qt::AlignTop);
+	static_cast<QVBoxLayout*>(m_polygonsWidget->layout())->addWidget(pauseButton, false, Qt::AlignTop);
 	master->setLayout(mainLayout);
 
-
+	//Timer
+	connect(&m_timer, SIGNAL(timeout()), this, SLOT(refresh()));
+	m_timer.start(30);
 
 	master->show();
 }
@@ -140,7 +172,14 @@ ImageDescriptor::~ImageDescriptor()
 void ImageDescriptorImage::refresh()
 {
 	Mat img;
-	m_cap>>img;
+	if (m_kinect) {
+		img = m_kinect->getColorMat();
+	} else {
+		m_cap>>img;
+
+	}
+
+	ColorSegmentation::buildDatabaseFromSingleImage(img);
 	m_image = iez::WindowManager::Mat2QImage(img);
 	refresh(m_image);
 }
@@ -205,6 +244,15 @@ void ImageDescriptor::on_descriptionFileSelected(const QString &file)
 		foreach (QPoint point, polygon) {
 			imageMetaStream << point.y() << " " << point.x() << endl;
 		}
+	}
+}
+
+void ImageDescriptor::pause()
+{
+	if (m_timer.isActive()) {
+		m_timer.stop();
+	} else {
+		m_timer.start();
 	}
 }
 

@@ -13,12 +13,10 @@ namespace iez {
 
 Processing::Processing(ImageSource &imgsrc)
 : m_imageSource(imgsrc)
-, m_window()
-, m_handTracker(m_window)
 , m_calculateHandTracker(false)
 {
-	connect(&m_window, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
-	connect(&m_window, SIGNAL(closed()), this, SLOT(closeEvent()));
+//	connect(&m_window, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
+//	connect(&m_window, SIGNAL(closed()), this, SLOT(closeEvent()));
 }
 
 
@@ -42,7 +40,7 @@ void Processing::process(const cv::Mat &bgr, const cv::Mat &depth)
 
 	filterDepth(color, depth, 500, 2000);
 
-	m_window.imShow("Original", bgr);
+	WindowManager::getInstance().imShow("Original", bgr);
 //	window.imShow("color/depth", color);
 //	waitKey(1);
 //	window.imShow("filtered", gray);

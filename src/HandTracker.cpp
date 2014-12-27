@@ -42,7 +42,7 @@ void CHandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
 //			} else {
 //				hand.at<uint8_t>(i, j) = 255;
 //			}
-			double probability = segmentation.getProbability(bgr.at<Point3_<uint8_t> >(i,j));
+			double probability = 0;//segmentation.getProbability(bgr.at<Point3_<uint8_t> >(i,j));
 			if (probability > 0.1) {
 				img.at<Point3_<uint8_t> > (i,j).x = 0;
 				img.at<Point3_<uint8_t> > (i,j).y = 0;
@@ -56,17 +56,17 @@ void CHandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
 	ColorSegmentation seg;
 	seg.buildDatabaseFromSingleImage(img);
 	Mat all;
-	qDebug("MAX ALL: %d", seg.maxAll);
+//	qDebug("MAX ALL: %d", seg.maxAll);
 	all.create(256,256,CV_8UC1);
 	for (int i = 0; i < 256; i++) {
 		for (int j = 0; j<256; j++) {
-				all.at<uint8_t>(i,j) = std::min<int>(255, seg.m_CrCbCountAll[i][j]/10);
+//				all.at<uint8_t>(i,j) = std::min<int>(255, seg.m_CrCbCountAll[i][j]/10);
 //				skin.at<uint8_t>(i,j) = std::min<int>(255, seg.m_CrCbCountSkin[i][j]);
 		}
 	}
 //		window.imShow("ColorSegmentation: all", all);
-	m_window.imShow("Pure img", img);
-	m_window.imShow("ALL histogram", all);
+	WindowManager::getInstance().imShow("Pure img", img);
+	WindowManager::getInstance().imShow("ALL histogram", all);
 //	extend(hand, img, center, Point3f(0.34f,0.42f,0.24), 4);
 //	m_window.imShow("hand", hand);
 }
@@ -181,15 +181,14 @@ void CHandTracker::extend(cv::Mat &hand, const cv::Mat& img, cv::Point2f center,
 	}
 
 	if (depth == -2) {
-		m_window.plot("X1", x, y);
+		WindowManager::getInstance().plot("X1", x, y);
 	}
 }
 
 
 
 
-CHandTracker::CHandTracker(WindowManager &window)
-:	m_window(window)
+CHandTracker::CHandTracker()
 {
 	const char * dbPath = "/home/amir/git/amirhammad/diplomovka/Skin_NonSkin.txt";
 	if (segmentation.buildDatabaseFromRGBS(dbPath)) {
@@ -199,12 +198,12 @@ CHandTracker::CHandTracker(WindowManager &window)
 		skin.create(256, 256, CV_8UC1);
 		for (int i = 0; i < 256; i++) {
 			for (int j = 0; j<256; j++) {
-				all.at<uint8_t>(i,j) = std::min<int>(255, segmentation.m_CrCbCountAll[i][j]);
-				skin.at<uint8_t>(i,j) = std::min<int>(255, segmentation.m_CrCbCountSkin[i][j]);
+//				all.at<uint8_t>(i,j) = std::min<int>(255, segmentation.m_CrCbCountAll[i][j]);
+//				skin.at<uint8_t>(i,j) = std::min<int>(255, segmentation.m_CrCbCountSkin[i][j]);
 			}
 		}
-		window.imShow("ColorSegmentation: all", all);
-		window.imShow("ColorSegmentation: skin", skin);
+		WindowManager::getInstance().imShow("ColorSegmentation: all", all);
+		WindowManager::getInstance().imShow("ColorSegmentation: skin", skin);
 	} else {
 		qDebug("failed to build database");
 	}

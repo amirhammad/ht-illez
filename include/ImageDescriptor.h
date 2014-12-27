@@ -3,16 +3,18 @@
 #include <iostream>
 #include <list>
 #include "WindowManager.h"
+#include "ImageSourceFreenect.h"
 #include <opencv2/opencv.hpp>
 
 namespace iez {
 class ImageDescriptorImage : public QLabel {
 	Q_OBJECT
 public:
-	ImageDescriptorImage();
+	ImageDescriptorImage(ImageSourceFreenect *kinect = 0);
 
 private:
 	cv::VideoCapture m_cap;
+	iez::ImageSourceFreenect *m_kinect;
 //	QImage image;
 	std::list<QPoint> m_pointList;
 	int m_pointListCurrent;
@@ -20,9 +22,10 @@ private:
 
 	QImage m_image;
 	std::list<QPolygon> m_polygonList;
+	void refresh(const QImage &image);
 public slots:
 	void refresh();
-	void refresh(const QImage &image);
+
 private slots:
 	void mousePressEvent(QMouseEvent *ev);
 	void mouseReleaseEvent(QMouseEvent *ev);
@@ -39,7 +42,7 @@ signals:
 class ImageDescriptor : private QObject {
 	Q_OBJECT
 public:
-	ImageDescriptor();
+	ImageDescriptor(ImageSourceFreenect *kinect = 0);
 	~ImageDescriptor();
 
 public slots:
@@ -50,6 +53,7 @@ public slots:
 private slots:
 	void on_descriptionComplete(const QImage& image, const std::list<QPolygon> &polygonList);
 	void on_descriptionFileSelected(const QString &file);
+	void pause();
 //	void on_polygonSelected(QPolygon polygon);
 
 private:
@@ -61,6 +65,8 @@ private:
 
 	QImage m_image;
 	std::list<QPolygon> m_polygonList;
+
+	QTimer m_timer;
 
 //private slots:
 

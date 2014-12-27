@@ -1,0 +1,144 @@
+#include "ImageSourceFreenect_private.h"
+#include "ImageSourceFreenect.h"
+//using namespace iez_private;
+using namespace cv;
+
+#define SAMPLE_XML_PATH "SamplesConfig.xml"
+
+iez_private::ImageSourceFreenectDevice_private::ImageSourceFreenectDevice_private(freenect_context *_ctx, int _index)
+:	FreenectDevice(_ctx, _index)
+,	m_fps(30)
+,	m_sequence(0)
+,	m_initialized(false)
+{
+
+}
+
+
+iez_private::ImageSourceFreenectDevice_private::~ImageSourceFreenectDevice_private(void)
+{
+	stopVideo();
+
+	stopDepth();
+	setLed(LED_OFF);
+}
+
+int iez_private::ImageSourceFreenectDevice_private::deviceInit(void)
+{
+
+    return 0;
+}
+
+int iez_private::ImageSourceFreenectDevice_private::streamInit(freenect_resolution resolution)
+{
+	m_initialized = false;
+
+	setVideoFormat(FREENECT_VIDEO_RGB, resolution);
+	freenect_resolution reso = getVideoResolution();
+	switch (reso) {
+	case FREENECT_RESOLUTION_HIGH:
+		m_width = 1280;
+		m_height = 1024;
+		break;
+	case FREENECT_RESOLUTION_MEDIUM:
+		m_width = 640;
+		m_height = 480;
+		break;
+	default:
+		qDebug("OTHER RESOLUTION");
+	}
+
+	m_depthMat.create(m_height, m_width, CV_16UC1);
+	m_colorMat.create(m_height, m_width, CV_8UC3);
+	startVideo();
+
+
+
+    for (int i=0; i<2048; i++) {
+        float v = i/2048.0;
+        v = powf(v, 3)* 6;
+        m_t_gamma[i] = v*6*256;
+    }
+	setDepthFormat(FREENECT_DEPTH_11BIT, resolution);
+
+	startDepth();
+	setFlag(FREENECT_RAW_COLOR, FREENECT_ON);
+	setFlag(FREENECT_AUTO_EXPOSURE, FREENECT_OFF);
+	setFlag(FREENECT_AUTO_WHITE_BALANCE, FREENECT_OFF);
+	setLed(LED_GREEN);
+    return 0;
+}
+
+void iez_private::ImageSourceFreenectDevice_private::update()
+{
+
+}
+
+
+int iez_private::ImageSourceFreenectDevice_private::init(void)
+{
+	if (m_initialized) {
+		return 0;
+	}
+
+//	m_depthMat.create(m_height, m_width, CV_16UC1);
+//	m_colorMat.create(m_height, m_width, CV_8UC3);
+
+	if (deviceInit()) {
+		m_initialized = false;
+		return -1;
+	}
+//	if (streamInit()) {
+//		m_initialized = false;
+//		return -1;
+//	}
+	m_initialized = true;
+
+	return 0;
+}
+
+bool iez_private::ImageSourceFreenectDevice_private::isInitialized()
+{
+	return m_initialized;
+}
+
+cv::Mat iez_private::ImageSourceFreenectDevice_private::getDepthMat()
+{
+	QMutexLocker locker(&depth_mutex);
+//	depth_mutex.lock();
+//	if (m_depthFrame.isValid()) {
+//		memcpy(m_depthMat.data, m_depthFrame.getData(), m_depthFrame.getDataSize());
+//	}
+//	depth_mutex.unlock();
+	return m_depthMat;
+}
+
+
+cv::Mat iez_private::ImageSourceFreenectDevice_private::getColorMat()
+{
+	QMutexLocker locker(&color_mutex);
+	cv::Mat ret;
+	m_colorMat.copyTo(ret);
+	return ret;
+}
+
+cv::Mat iez::ImageSourceFreenect::getColorMat()
+{
+	return device->getColorMat();
+}
+
+cv::Mat iez::ImageSourceFreenect::getDepthMat()
+{
+	return device->getDepthMat();
+}
+
+iez::ImageSourceFreenect::ImageSourceFreenect(const int index)
+{
+	device = &freenect.createDevice<iez_private::ImageSourceFreenectDevice_private>(index);
+
+}
+void iez::ImageSourceFreenect::streamInit(freenect_resolution resolution)
+{
+	device->streamInit(resolution);
+}
+

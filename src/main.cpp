@@ -9,11 +9,15 @@
 // armadillo
 //#include <armadillo>
 
+// libfreenect
+#include <libfreenect/libfreenect.hpp>
+
 // Qt
 //#include <QThread>
 //#include <QApplication>
 // Custom
 #include "ImageSource.h"
+#include "ImageSourceFreenect.h"
 #include "Processing.h"
 #include "WindowManager.h"
 #include "main.h"
@@ -31,8 +35,11 @@ void test()
 	seg.buildDatabaseFromFiles("../database/colorDB_files.txt");
 //	const std::list<QPolygon> polygons = seg.polygonsFromFile("x.bmp");
 
-//	iez::ImageDescriptor imageDescriptor;
-//	imageDescriptor.refresh();
+
+	iez::ImageSourceFreenect kinect(0);
+	kinect.streamInit(FREENECT_RESOLUTION_MEDIUM);
+	iez::ImageDescriptor imageDescriptor(&kinect);
+	imageDescriptor.refresh();
 //	imageDescriptor.moveToThread(&t);
 	QApplication::exec();
 }
