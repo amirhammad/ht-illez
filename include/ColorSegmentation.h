@@ -9,21 +9,22 @@ namespace iez {
 class ImageStatistics {
 public:
 	ImageStatistics();
-	static QVector<int> YCrCbFromRGB(uint8_t red, uint8_t green, uint8_t blue)
+	ImageStatistics(const cv::Mat &img);
+	static QVector<int> YCrCbFromRGB(float red, float green, float blue)
 	{
 		QVector<int> YCrCb(3);
 
-		YCrCb[0] = 0.257*red + 0.504*green + 0.098*blue + 16;
-		YCrCb[1] = 0.439*red - 0.368*green - 0.071*blue + 128;
-		YCrCb[2] = -0.148*red - 0.291*green + 0.439*blue + 128;
+		YCrCb[0] = 0.257f*red + 0.504f*green + 0.098f*blue + 16.f;
+		YCrCb[1] = 0.439f*red - 0.368f*green - 0.071f*blue + 128.f;
+		YCrCb[2] = -0.148f*red - 0.291f*green + 0.439f*blue + 128.f;
 
  		return YCrCb;
-	};
+	}
 
-	static QVector<int> YCrCbFromRGB(const cv::Point3_<uint8_t> bgr)
+	static QVector<int> YCrCbFromRGB(const cv::Point3_<uint8_t> &bgr)
 	{
- 		return YCrCbFromRGB(bgr.z, bgr.y, bgr.x);
-	};
+ 		return YCrCbFromRGB(float(bgr.z), float(bgr.y), float(bgr.x));
+	}
 
 	double getProbability(uint8_t u, uint8_t v)
 	{
@@ -37,38 +38,38 @@ public:
 			return 0;
 		}
 	}
+
 	double getProbability(uint8_t red, uint8_t green, uint8_t blue)
 	{
 		QVector<int> uv = YCrCbFromRGB(red, green, blue);
 		return getProbability(uv[1], uv[2]);
 	}
 
-	double getProbability(const cv::Point3_<uint8_t> bgr)
+	double getProbability(const cv::Point3_<uint8_t> &bgr)
 	{
 		return getProbability(bgr.z, bgr.y, bgr.x);
 	}
 
-
-	cv::Mat getCountAllMapNormalized();
+	cv::Mat getCountAllMapNormalized() const;
 	cv::Mat getCountSkinMapNormalized();
-	void processPixel(const cv::Point3_<uint8_t> bgr, bool skin);
+	void processPixel(const cv::Point3_<uint8_t> &bgr, bool skin = false);
 	void finalize();
 
+
+
 private:
-
-
-	uint32_t m_CrCbCountAll[256][256];
-	uint32_t m_CrCbCountSkin[256][256];
-	uint32_t m_pixelCounter;
-	uint32_t m_maxCountSkin;
-	uint32_t m_maxCountAll;
+	long m_CrCbCountAll[256][256];
+	long m_CrCbCountSkin[256][256];
+	long m_pixelCounter;
+	long m_maxCountSkin;
+	long m_maxCountAll;
 };
 
 class ColorSegmentation {
 public:
 	bool buildDatabaseFromRGBS(const char * path);
 
-	static bool buildDatabaseFromSingleImage(const cv::Mat &img);
+
 
 	std::list<QPolygon> polygonsFromFile(const QString &imagePath);
 

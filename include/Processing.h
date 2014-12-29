@@ -5,7 +5,7 @@
 #include <QtGui>
 #include <string>
 #include "HandTracker.h"
-#include "ImageSource.h"
+#include "ImageSourceFreenect.h"
 #include "WindowManager.h"
 
 namespace iez {
@@ -15,7 +15,7 @@ class Processing: private QThread
 {
 	Q_OBJECT
 public:
-	explicit Processing(ImageSource &imgsrc);
+	explicit Processing(ImageSourceFreenect &imgsrc);
 	~Processing(void);
 
 	int init();
@@ -27,8 +27,8 @@ private:
 	void run();
 
 
-	CHandTracker m_handTracker;
-	ImageSource &m_imageSource;
+//	CHandTracker m_handTracker;
+	ImageSourceFreenect &m_imageSource;
 
 	bool m_calculateHandTracker;
 private slots:
@@ -36,12 +36,12 @@ private slots:
 	void closeEvent();
 };
 
-class CWorker: private QThread {
-public:
-	CWorker(){};
-private:
-	void run(){};
-};
+//class CWorker: private QThread {
+//public:
+//	CWorker(){};
+//private:
+//	void run(){};
+//};
 
 }
 

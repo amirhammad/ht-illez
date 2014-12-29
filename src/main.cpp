@@ -40,21 +40,23 @@ void test()
 	kinect.streamInit(FREENECT_RESOLUTION_MEDIUM);
 	iez::ImageDescriptor imageDescriptor(&kinect);
 	imageDescriptor.refresh();
-//	imageDescriptor.moveToThread(&t);
+
 	QApplication::exec();
 }
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
-	test();
-	return 0;
-	iez::ImageSource kinect(30);
-	kinect.init();
-	if (!kinect.isInitialized()) {
-		return -1;
-	}
-	iez::Processing processing(kinect);
-	processing.init();
+//	test();
+//	return 0;
+	iez::ImageSourceFreenect kinect(0);
+	kinect.streamInit(FREENECT_RESOLUTION_MEDIUM);
+
+	iez::ImageDescriptor imageDescriptor(&kinect);
+	iez::ColorSegmentation seg;
+//	seg.buildDatabaseFromFiles("../database/colorDB_files.txt");
+
+	iez::Processing *processing = new iez::Processing(kinect);
+	processing->init();
 
 	return QApplication::exec();
 }

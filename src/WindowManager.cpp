@@ -1,23 +1,23 @@
 #include "WindowManager.h"
 #include "qcustomplot.h"
+#include <QCoreApplication>
+
 namespace iez {
-void WindowManager::imShow(const char *name, const cv::Mat& image)
+void WindowManager::imShow(const QString name, const cv::Mat& image)
 {
-	m_mutex.lock();
-	m_imShowMap[name].image = Mat2QImage(image);
-	m_mutex.unlock();
-	QMetaObject::invokeMethod(this, "on_imShow", Qt::QueuedConnection, QGenericArgument("const char*", &name));
+	imShow(name, Mat2QImage(image));
 }
 
-void WindowManager::imShow(const char *name, const QImage& image)
+void WindowManager::imShow(const QString name, const QImage& image)
 {
 	m_mutex.lock();
-	m_imShowMap[name].image = image;
+	struct imShowMapData * data = &m_imShowMap[name];//.image = image;
+	data->image = image;
 	m_mutex.unlock();
-	QMetaObject::invokeMethod(this, "on_imShow", Qt::QueuedConnection, QGenericArgument("const char*", &name));
+	QMetaObject::invokeMethod(this, "on_imShow", Qt::AutoConnection, QGenericArgument("const QString", &name));
 }
 
-void WindowManager::plot(const char *name,
+void WindowManager::plot(const QString name,
 		const QVector<double> &x,
 		const QVector<double> &y)
 {
@@ -27,10 +27,10 @@ void WindowManager::plot(const char *name,
 	m_plotMap[name].x = QVector<double>(x);
 	m_plotMap[name].y = QVector<double>(y);
 	m_mutex.unlock();
-	QMetaObject::invokeMethod(this, "on_plot", Qt::QueuedConnection, QGenericArgument("const char*", &name));
+	QMetaObject::invokeMethod(this, "on_plot", Qt::AutoConnection, QGenericArgument("const QString", &name));
 }
 
-void WindowManager::on_plot(const char *name)
+void WindowManager::on_plot(const QString name)
 {
 	m_mutex.lock();
 	struct plotMapData *data= &m_plotMap[name];
@@ -39,15 +39,15 @@ void WindowManager::on_plot(const char *name)
 		CWindow *widget = new CWindow();
 		widget->setWindowTitle(name);
 		widget->setFixedSize(QSize(640, 480));
-		connect(widget, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
-		connect(widget, SIGNAL(closed()), this, SLOT(closeEvent()));
-		m_plotMap[name].widget = widget;
-
+//		connect(widget, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
+//		connect(widget, SIGNAL(closed()), this, SLOT(closeEvent()));
+		data->widget = widget;
 
 		m_plotMap[name].customPlot = new QCustomPlot(data->widget);
 
 	}
 	QCustomPlot *customPlot = m_plotMap[name].customPlot;
+	customPlot->moveToThread(QCoreApplication::instance()->thread());
 	customPlot->clearGraphs();
 //	customPlot->setViewport(QRect(QPoint(0,0), QSize(640,480)));
 //	customPlot->setBaseSize(QSize(640,480);
@@ -111,24 +111,24 @@ cv::Mat WindowManager::QImage2Mat(QImage const& src)
 
 WindowManager::WindowManager()
 {
-	qRegisterMetaType<const char*>("const char*");
+	moveToThread(QCoreApplication::instance()->thread());
 }
 
-void WindowManager::on_imShow(const char *str)
+void WindowManager::on_imShow(const QString str)
 {
 	m_mutex.lock();
 	if (!m_imShowMap[str].widget) {
 		CWindow *mapLabel = new CWindow();
-
-		mapLabel->setFixedSize(m_imShowMap[str].image.width(),m_imShowMap[str].image.height());
-		mapLabel->setWindowTitle(str);
-		mapLabel->show();
-		connect(mapLabel, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
-		connect(mapLabel, SIGNAL(closed()), this, SLOT(closeEvent()));
+//		mapLabel->moveToThread(QCoreApplication::instance()->thread());
 		m_imShowMap[str].widget = mapLabel;
 	}
 
-	m_imShowMap[str].widget->setPixmap(QPixmap::fromImage(m_imShowMap[str].image));
+	CWindow *mapLabel = m_imShowMap[str].widget;
+	mapLabel->setFixedSize(m_imShowMap[str].image.width(),m_imShowMap[str].image.height());
+	mapLabel->setWindowTitle(str);
+	mapLabel->show();
+
+	mapLabel->setPixmap(QPixmap::fromImage(m_imShowMap[str].image));
 	m_mutex.unlock();
 }
 

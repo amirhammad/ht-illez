@@ -4,9 +4,11 @@
 #include <QtCore/qmutex.h>
 #include <libfreenect/libfreenect.hpp>
 
+namespace iez_private {
+	class ImageSourceFreenectDevice_private;
+}
 namespace iez {
-#include "../src/ImageSourceFreenect_private.h"
-//class ImageSourceFreenectDevice_private;
+
 class ImageSourceFreenect
 {
 public:

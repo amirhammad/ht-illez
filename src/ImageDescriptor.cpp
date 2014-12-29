@@ -75,7 +75,12 @@ void ImageDescriptorImage::paintEvent(QPaintEvent *ev)
 //		painter.drawPoint(m_pointList.back());
 	}
 
-
+	foreach (QPolygon p, m_polygonList) {
+		QBrush brush;
+		brush.setColor(QColor::fromRgb(255,0,0));
+		painter.setBrush(brush);
+		painter.drawConvexPolygon(p);
+	}
 	if (m_pointList.size()>1) {
 		painter.drawEllipse(*m_pointList.begin(), circleSize, circleSize);
 		for (std::list<QPoint>::iterator it = ++m_pointList.begin(); it != m_pointList.end(); it++) {
@@ -84,8 +89,6 @@ void ImageDescriptorImage::paintEvent(QPaintEvent *ev)
 			painter.drawLine(*prev, *it);
 			painter.drawEllipse(*it, circleSize, circleSize);
 		}
-
-
 	}
 	painter.end();
 
@@ -97,6 +100,7 @@ void ImageDescriptorImage::keyPressEvent(QKeyEvent *ev)
 	switch (key){
 	case Qt::Key_C:
 		m_pointList.clear();
+		m_polygonList.clear();
 		break;
 	case Qt::Key_U:
 		if (!m_pointList.empty()) {
@@ -106,12 +110,12 @@ void ImageDescriptorImage::keyPressEvent(QKeyEvent *ev)
 
 	case Qt::Key_A:
 		if (m_pointList.size() >= 3) {
-			QPolygon polygon;
+			QPolygon polygon(0);
 			foreach(QPoint pt, m_pointList) {
 				polygon.push_back(pt);
 			}
+			m_pointList.clear();
 			m_polygonList.push_back(polygon);
-
 //			emit polygonSelected(polygon);
 		}
 		break;
@@ -140,7 +144,7 @@ ImageDescriptor::ImageDescriptor(ImageSourceFreenect *kinect)
 	QHBoxLayout *mainLayout = new QHBoxLayout(master);
 
 	m_backgroundImage = new ImageDescriptorImage(kinect);
-	connect(m_backgroundImage, SIGNAL(descriptionComplete(const QImage&, const std::list<QPolygon>&)), this, SLOT(on_descriptionComplete(const QImage&, const std::list<QPolygon>&)));
+	connect(m_backgroundImage, SIGNAL(descriptionComplete(const QImage&, const std::list<QPolygon>)), this, SLOT(on_descriptionComplete(const QImage&, const std::list<QPolygon>)));
 
 //	QPushButton *resetButton = new QPushButton("load image");
 //	connect(resetButton, SIGNAL(clicked()), m_backgroundImage, SLOT(refresh()));
@@ -171,15 +175,17 @@ ImageDescriptor::~ImageDescriptor()
 
 void ImageDescriptorImage::refresh()
 {
+	qDebug("dt: %ld",(clock()-m_fpsCounter)/1000);
+	m_fpsCounter = clock();
 	Mat img;
 	if (m_kinect) {
 		img = m_kinect->getColorMat();
+		cvtColor(img,img, COLOR_RGB2BGR);
 	} else {
 		m_cap>>img;
-
 	}
 
-	ColorSegmentation::buildDatabaseFromSingleImage(img);
+	ImageStatistics stats(img);
 	m_image = iez::WindowManager::Mat2QImage(img);
 	refresh(m_image);
 }
@@ -191,22 +197,7 @@ void ImageDescriptorImage::refresh(const QImage &image)
 	setPixmap(QPixmap::fromImage(image));
 }
 
-
-//void ImageDescriptor::on_polygonSelected(QPolygon polygon)
-//{
-//	foreach (QPoint pt, polygon) {
-//		qDebug("%d %d", pt.x(), pt.y());
-//	}
-//	addPolygon(polygon);
-//}
-//
-//void ImageDescriptor::addPolygon(QPolygon polygon)
-//{
-////	m_polygonList.push_back(polygon);
-////	QLabel* lbl = new QLabel("Polygon");
-////	static_cast<QVBoxLayout*>(m_polygonsWidget->layout())->addWidget(lbl, false, Qt::AlignTop);
-//}
-void ImageDescriptor::on_descriptionComplete(const QImage& image, const std::list<QPolygon> &polygonList)
+void ImageDescriptor::on_descriptionComplete(const QImage& image, const std::list<QPolygon> polygonList)
 {
 	m_image = image;
 	m_polygonList = polygonList;

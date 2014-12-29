@@ -11,7 +11,7 @@
 //using namespace cv;
 namespace iez {
 
-Processing::Processing(ImageSource &imgsrc)
+Processing::Processing(ImageSourceFreenect &imgsrc)
 : m_imageSource(imgsrc)
 , m_calculateHandTracker(false)
 {
@@ -22,12 +22,13 @@ Processing::Processing(ImageSource &imgsrc)
 
 Processing::~Processing(void)
 {
-	terminate();
+
 }
 
 
 void Processing::process(const cv::Mat &bgr, const cv::Mat &depth)
 {
+//	qDebug("%d %d %d %d3 ", bgr.rows, depth.rows, bgr.cols, depth.cols);
 	assert(bgr.rows == depth.rows);
 	assert(bgr.cols == depth.cols);
 
@@ -36,25 +37,16 @@ void Processing::process(const cv::Mat &bgr, const cv::Mat &depth)
 
 	bgr.copyTo(color);
 	cv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);
-//	gray.create(bgr.rows, bgr.cols, CV_8UC1);
 
-	filterDepth(color, depth, 500, 2000);
+	filterDepth(color, depth, 500, 800);
 
-	WindowManager::getInstance().imShow("Original", bgr);
-//	window.imShow("color/depth", color);
-//	waitKey(1);
-//	window.imShow("filtered", gray);
-	/*
-	QVector<double> x(101), y(101); // initialize with entries 0..100
-	for (int i=0; i<101; ++i)
-	{
-	  x[i] = i/50.0 - 1; // x goes from -1 to 1
-	  y[i] = x[i]*x[i]*std::cos(x[i]); // let's plot a quadratic function
-	}
+//	WindowManager::getInstance().imShow("Original", bgr);
+	WindowManager::getInstance().imShow("CD mask", color);
 
-	window.plot("hello", x,y);
-	*/
-	m_handTracker.findHandFromCenter(bgr, depth);
+	const ImageStatistics stats(color);
+	WindowManager::getInstance().imShow("CD mask : statistics", stats.getCountAllMapNormalized());
+	const ImageStatistics stats2(bgr);
+	WindowManager::getInstance().imShow("CD non-mask : statistics", stats2.getCountAllMapNormalized());
 }
 
 void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int far)
@@ -80,32 +72,25 @@ void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int f
 int Processing::init()
 {
 	start();
-	setPriority(IdlePriority);
 }
 
 void iez::Processing::run()
 {
 	int sequence = 0;
-	while (1)
-	{
-		int seq = m_imageSource.sequence();
-		if (sequence == seq) {
-			yieldCurrentThread();
-			continue;
-		}
-		sequence = seq;
+	while (1) {
+		const cv::Mat &rgb = m_imageSource.getColorMat();
 
-		cv::Mat rgb = m_imageSource.getColorMat();
-		cv::Mat color;
-		cv::cvtColor(rgb, color,cv::COLOR_RGB2BGR);
-		cv::Mat depth = m_imageSource.getDepthMat();
+		cv::Mat bgr;
+		cv::cvtColor(rgb, bgr,cv::COLOR_RGB2BGR);
+		const cv::Mat &depth = m_imageSource.getDepthMat();
 
-		process(color, depth);
-		processHSVFilter(color);
+		process(bgr, depth);
+//		processHSVFilter(color);
 		if (m_calculateHandTracker) {
-			m_handTracker.findHandFromCenter(color,depth);
+//			m_handTracker.findHandFromCenter(color,depth);
 			m_calculateHandTracker = false;
 		}
+		msleep(30);
 	}
 }
 static int params[20]={11, 139, 0, 255, 95, 169, 174, 118};

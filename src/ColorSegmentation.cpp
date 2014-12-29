@@ -66,47 +66,28 @@ bool ColorSegmentation::buildDatabaseFromRGBS(const char * path)
 
 
 		stats.processPixel(cv::Point3_<uint8_t>(blue, green, red), skin);
-//		QVector<int> YCrCb(YCrCbFromRGB(red, green, blue));
-//		if (skin) {
-//			m_CrCbCountSkin[YCrCb[1]][YCrCb[2]]++;
-//
-//			if (maxSkin < m_CrCbCountSkin[YCrCb[1]][YCrCb[2]]) {
-//				maxSkin = m_CrCbCountSkin[YCrCb[1]][YCrCb[2]];
-//			}
-//		}
-//
-//		m_CrCbCountAll[YCrCb[1]][YCrCb[2]]++;
-//		if (maxAll < m_CrCbCountAll[YCrCb[1]][YCrCb[2]]) {
-//			maxAll = m_CrCbCountAll[YCrCb[1]][YCrCb[2]];
-//		}
 
 	 } while (!in.atEnd());
 	 return true;
 }
 
 
-bool ColorSegmentation::buildDatabaseFromSingleImage(const cv::Mat &img)
+ImageStatistics::ImageStatistics(const cv::Mat &img)
+:	ImageStatistics()
 {
-	cv::Mat filtered;
-	cv::cvtColor(img, filtered, cv::COLOR_BGR2GRAY);
-	filtered.create(img.rows, img.cols, CV_8UC1);
-	ImageStatistics stats;
+	cv::Mat chroma;
+	cv::cvtColor(img, chroma, cv::COLOR_BGR2Lab);
+//	cv::cvtColor(img, chroma, cv::COLOR_BGR2YUV_I420);
+
 	for (int i = 0; i < img.rows; i++) {
 		for (int j = 0; j < img.cols; j++) {
-			const cv::Point3_<uint8_t> &point = img.at<cv::Point3_<uint8_t> >(i,j);
-			stats.processPixel(point, false);
-//			if (m_statsFile.getProbability(point) > 0.000000000000005) {
-//				filtered.at<uint8_t> (i,j) = 0;
-//			} else {
-//
-//			}
+			const cv::Point3_<uint8_t> &point = chroma.at<cv::Point3_<uint8_t> >(i,j);
+//			const QVector<int> &vec(YCrCbFromRGB(img.at<cv::Point3_<uint8_t> >(i,j)));
+//			const cv::Point3_<uint8_t> point(vec[0], vec[1], vec[2]);
+			if (point.x > 50)
+			processPixel(point, false);
 		}
 	}
-
-	WindowManager::getInstance().imShow("statistics", stats.getCountAllMapNormalized());
-//	WindowManager().imShow("statistics", stats.getCountAllMapNormalized());
-//	WindowManager::getInstance().imShow("filtered", filtered);
-	return true;
 }
 
 bool ColorSegmentation::buildDatabaseFromFiles(const QString &path)
@@ -165,6 +146,7 @@ void ColorSegmentation::saveStats(QString path) {
 
 void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPolygon> &polygonList)
 {
+	static int id = 0;
 	cv::Mat maskedImage;
 	image.copyTo(maskedImage);
 	for (int i = 0; i< image.rows; i++) {
@@ -206,13 +188,13 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 
 
 	}
-//	WindowManager::getInstance().imShow("x", maskedImage);
+	WindowManager::getInstance().imShow(QString("segmented: %1").arg(id++), maskedImage);
 
-	cv::Mat bigger(768, 768, CV_8UC1);
-	cv::resize(m_statsFile.getCountAllMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);
-	WindowManager::getInstance().imShow("statsFile", bigger);
-	cv::resize(m_statsFile.getCountSkinMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);
-	WindowManager::getInstance().imShow("statsFileSkin", bigger);
+//	cv::Mat bigger(768, 768, CV_8UC1);
+//	cv::resize(m_statsFile.getCountAllMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);
+//	WindowManager::getInstance().imShow("statsFile", bigger);
+//	cv::resize(m_statsFile.getCountSkinMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);
+//	WindowManager::getInstance().imShow("statsFileSkin", bigger);
 }
 
 
@@ -222,7 +204,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
  */
 const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row, const std::list<QPolygon> polygonList)
 {
-	std::vector<int> edgePointsVector(20, 0);
+	std::vector<int> edgePointsVector(30, 0);
 
 	int index = 0;
 	foreach (QPolygon polygon, polygonList) {
@@ -232,15 +214,14 @@ const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row,
 			const QPoint &next = polygon.at(i+1);
 
 			if (curr.y() == next.y()) {
-				edgePointsVector[index++] = curr.x();
-				if (curr.x() != next.x()) {
-					edgePointsVector[index++] = next.x();
-				}
+				continue;
+//				edgePointsVector[index++] = curr.x();
+//				edgePointsVector[index++] = next.x();
 			} else if ((curr.y() <= row && row < next.y())
 					|| (curr.y() > row && row >= next.y())) {
 				float k = static_cast<float>(next.x()-curr.x())/(next.y() - curr.y());
-				int q = curr.x()-k*curr.y();
-				int x = k*row+q;
+				float q = curr.x()-k*curr.y();
+				float x = k*row+q;
 				edgePointsVector[index++] = x;
 			}
 		}
@@ -267,11 +248,11 @@ const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row,
 
 
 
-void ImageStatistics::processPixel(const cv::Point3_<uint8_t> bgr, bool skin)
+void ImageStatistics::processPixel(const cv::Point3_<uint8_t> &YCrCb, bool skin)
 {
-	QVector<int> YCrCb(YCrCbFromRGB(bgr));
-	uint32_t &counterSkin = m_CrCbCountSkin[YCrCb[1]][YCrCb[2]];
-	uint32_t &counterAll = m_CrCbCountAll[YCrCb[1]][YCrCb[2]];
+//	const cv::Point3_<uint8_t> &YCrCb = YCrCbFromRGB(bgr);
+	long &counterSkin = m_CrCbCountSkin[YCrCb.y][YCrCb.z];
+	long &counterAll = m_CrCbCountAll[YCrCb.y][YCrCb.z];
 
 	if (skin) {
 		counterSkin++;
@@ -279,21 +260,23 @@ void ImageStatistics::processPixel(const cv::Point3_<uint8_t> bgr, bool skin)
 
 	counterAll++;
 
+	if (YCrCb.y == 128 && YCrCb.z == 128) {
+	} else {
 	// Find max
-	m_maxCountSkin = std::max<uint32_t>(m_maxCountSkin, counterSkin);
-	m_maxCountAll = std::max<uint32_t>(m_maxCountAll, counterAll);
-
+		m_maxCountSkin = std::max<long>(m_maxCountSkin, counterSkin);
+		m_maxCountAll = std::max<long>(m_maxCountAll, counterAll);
+	}
 	m_pixelCounter++;
 }
 
-cv::Mat ImageStatistics::getCountAllMapNormalized()
+cv::Mat ImageStatistics::getCountAllMapNormalized() const
 {
 	cv::Mat map;
 	map.create(256, 256, CV_8UC1);
 	for (int i = 0; i < 256; i++) {
 		for (int j = 0; j < 256; j++) {
 			const uint32_t &counterAll = m_CrCbCountAll[i][j];
-			double val = static_cast<double>(counterAll)/m_maxCountAll;
+			double val = std::min<double>(1.0, static_cast<double>(counterAll)/m_maxCountAll);
 			map.at<uint8_t>(i,j) = val*255;
 		}
 	}
@@ -320,16 +303,8 @@ ImageStatistics::ImageStatistics()
 ,	m_maxCountSkin(0)
 ,	m_maxCountAll(0)
 {
-	for (int i = 0; i < 256; i++) {
-		for (int j = 0; j < 256; j++) {
-			uint32_t &counterAll = m_CrCbCountAll[i][j];
-			counterAll = 0;
-			uint32_t &counterSkin = m_CrCbCountSkin[i][j];
-			counterSkin = 0;
-//			double val = static_cast<double>(counterAll);///m_maxCountAll;
-//			map.at<uint8_t>(i,j) = val;
-		}
-	}
+	memset(m_CrCbCountAll, 0, 256*256*sizeof(m_CrCbCountSkin[0][0]));
+	memset(m_CrCbCountSkin, 0, 256*256*sizeof(m_CrCbCountSkin[0][0]));
 }
 
 void ImageStatistics::finalize()

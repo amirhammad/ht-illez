@@ -53,8 +53,7 @@ void CHandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
 		}
 	}
 
-	ColorSegmentation seg;
-	seg.buildDatabaseFromSingleImage(img);
+	ImageStatistics x(img);
 	Mat all;
 //	qDebug("MAX ALL: %d", seg.maxAll);
 	all.create(256,256,CV_8UC1);
