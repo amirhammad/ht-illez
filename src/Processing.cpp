@@ -17,36 +17,53 @@ Processing::Processing(ImageSourceFreenect &imgsrc)
 {
 //	connect(&m_window, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
 //	connect(&m_window, SIGNAL(closed()), this, SLOT(closeEvent()));
+	m_segmentation = new ColorSegmentation();
+	start();
 }
 
 
 Processing::~Processing(void)
 {
-
+	delete m_segmentation;
 }
 
 
 void Processing::process(const cv::Mat &bgr, const cv::Mat &depth)
 {
-//	qDebug("%d %d %d %d3 ", bgr.rows, depth.rows, bgr.cols, depth.cols);
+//	qDebug("%d %d %d %d ", bgr.rows, depth.rows, bgr.cols, depth.cols);
 	assert(bgr.rows == depth.rows);
 	assert(bgr.cols == depth.cols);
 
-	cv::Mat gray;
-	cv::Mat color;
+//	processDepthFiltering(bgr, depth);
+	cv::Mat segmentedBGR;
+	bgr.copyTo(segmentedBGR);
+	cv::Mat probabilities = ColorSegmentation::m_statsFile.getProbabilitiesMapFromImage(bgr);
+	for (int y = 0; y < bgr.rows; ++y) {
+		for (int x = 0; x < bgr.cols; ++x) {
+			float p = probabilities.at<float>(y,x);
+			if (p > m_segmentation->getTMax()) {
+				segmentedBGR.at<cv::Point3_<uint8_t> >(y,x) = cv::Point3_<uint8_t>(0,0,0);
+			}
+		}
+	}
 
-	bgr.copyTo(color);
-	cv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);
+	WindowManager::getInstance().imShow("Segmented BGR (with db)", segmentedBGR);
+}
 
-	filterDepth(color, depth, 500, 800);
+void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth)
+{
+	cv::Mat bgrDepthMasked;
 
-//	WindowManager::getInstance().imShow("Original", bgr);
-	WindowManager::getInstance().imShow("CD mask", color);
+	bgr.copyTo(bgrDepthMasked);
+	filterDepth(bgrDepthMasked, depth, 500, 800);
 
-	const ImageStatistics stats(color);
-	WindowManager::getInstance().imShow("CD mask : statistics", stats.getCountAllMapNormalized());
-	const ImageStatistics stats2(bgr);
-	WindowManager::getInstance().imShow("CD non-mask : statistics", stats2.getCountAllMapNormalized());
+	WindowManager::getInstance().imShow("Original", bgr);
+	WindowManager::getInstance().imShow("CD mask", bgrDepthMasked);
+
+//	const ImageStatistics stats(bgrDepthMasked);
+//	WindowManager::getInstance().imShow("CD mask : statistics", stats.getCountAllMapNormalized());
+//	const ImageStatistics stats2(bgr);
+//	WindowManager::getInstance().imShow("CD non-mask : statistics", stats2.getCountAllMapNormalized());
 }
 
 void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int far)
@@ -56,27 +73,22 @@ void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int f
 
 	for (int y = 0; y < dst.rows; ++y) {
 		for (int x = 0; x < dst.cols; ++x) {
-
-			int val = depth.at<uint16_t>(y,x);
+			const uint16_t val = depth.at<uint16_t>(y,x);
 
 			if (val > near && val < far) {
 				// keep color
 			} else {
 				dst.at<cv::Point3_<uint8_t> >(y,x) = cv::Point3_<uint8_t>(0,0,0);
-
 			}
 		}
 	}
 }
 
-int Processing::init()
-{
-	start();
-}
-
 void iez::Processing::run()
 {
 	int sequence = 0;
+
+
 	while (1) {
 		const cv::Mat &rgb = m_imageSource.getColorMat();
 
@@ -85,11 +97,6 @@ void iez::Processing::run()
 		const cv::Mat &depth = m_imageSource.getDepthMat();
 
 		process(bgr, depth);
-//		processHSVFilter(color);
-		if (m_calculateHandTracker) {
-//			m_handTracker.findHandFromCenter(color,depth);
-			m_calculateHandTracker = false;
-		}
 		msleep(30);
 	}
 }

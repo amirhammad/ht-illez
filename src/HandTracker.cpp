@@ -53,7 +53,7 @@ void CHandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
 		}
 	}
 
-	ImageStatistics x(img);
+//	ImageStatistics x(img);
 	Mat all;
 //	qDebug("MAX ALL: %d", seg.maxAll);
 	all.create(256,256,CV_8UC1);
@@ -189,23 +189,23 @@ void CHandTracker::extend(cv::Mat &hand, const cv::Mat& img, cv::Point2f center,
 
 CHandTracker::CHandTracker()
 {
-	const char * dbPath = "/home/amir/git/amirhammad/diplomovka/Skin_NonSkin.txt";
-	if (segmentation.buildDatabaseFromRGBS(dbPath)) {
-		qDebug("database built");
-		Mat all,skin;
-		all.create(256, 256, CV_8UC1);
-		skin.create(256, 256, CV_8UC1);
-		for (int i = 0; i < 256; i++) {
-			for (int j = 0; j<256; j++) {
-//				all.at<uint8_t>(i,j) = std::min<int>(255, segmentation.m_CrCbCountAll[i][j]);
-//				skin.at<uint8_t>(i,j) = std::min<int>(255, segmentation.m_CrCbCountSkin[i][j]);
-			}
-		}
-		WindowManager::getInstance().imShow("ColorSegmentation: all", all);
-		WindowManager::getInstance().imShow("ColorSegmentation: skin", skin);
-	} else {
-		qDebug("failed to build database");
-	}
+//	const char * dbPath = "/home/amir/git/amirhammad/diplomovka/Skin_NonSkin.txt";
+//	if (segmentation.buildDatabaseFromRGBS(dbPath)) {
+//		qDebug("database built");
+//		Mat all,skin;
+//		all.create(256, 256, CV_8UC1);
+//		skin.create(256, 256, CV_8UC1);
+//		for (int i = 0; i < 256; i++) {
+//			for (int j = 0; j<256; j++) {
+////				all.at<uint8_t>(i,j) = std::min<int>(255, segmentation.m_CrCbCountAll[i][j]);
+////				skin.at<uint8_t>(i,j) = std::min<int>(255, segmentation.m_CrCbCountSkin[i][j]);
+//			}
+//		}
+//		WindowManager::getInstance().imShow("ColorSegmentation: all", all);
+//		WindowManager::getInstance().imShow("ColorSegmentation: skin", skin);
+//	} else {
+//		qDebug("failed to build database");
+//	}
 }
 
 } // Namespace iez

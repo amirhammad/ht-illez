@@ -47,7 +47,6 @@ void WindowManager::on_plot(const QString name)
 
 	}
 	QCustomPlot *customPlot = m_plotMap[name].customPlot;
-	customPlot->moveToThread(QCoreApplication::instance()->thread());
 	customPlot->clearGraphs();
 //	customPlot->setViewport(QRect(QPoint(0,0), QSize(640,480)));
 //	customPlot->setBaseSize(QSize(640,480);

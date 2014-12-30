@@ -40,54 +40,20 @@ std::list<QPolygon> ColorSegmentation::polygonsFromFile(const QString &imagePath
 }
 
 
-bool ColorSegmentation::buildDatabaseFromRGBS(const char * path)
+
+cv::Mat ImageStatistics::getProbabilitiesMapFromImage(const cv::Mat &bgr) const
 {
-	QFile file(path);
-	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-	 return false;
-
-	 QTextStream in(&file);
-	 if (in.atEnd()) {
-		 return false;
-	 }
-	 ImageStatistics stats;
-	 do {
-		 QString line = in.readLine();
-		 if (line.count('\t', Qt::CaseInsensitive) != 3) {
-			 return false;
-		 }
-
-		bool ok = true;
-
-		int red = line.section('\t',0,0).toInt(&ok);
-		int green = line.section('\t',1,1).toInt(&ok);
-		int blue = line.section('\t',2,2).toInt(&ok);
-		bool skin = line.section('\t',3,3).toInt(&ok)==1;
-
-
-		stats.processPixel(cv::Point3_<uint8_t>(blue, green, red), skin);
-
-	 } while (!in.atEnd());
-	 return true;
-}
-
-
-ImageStatistics::ImageStatistics(const cv::Mat &img)
-:	ImageStatistics()
-{
-	cv::Mat chroma;
-	cv::cvtColor(img, chroma, cv::COLOR_BGR2Lab);
-//	cv::cvtColor(img, chroma, cv::COLOR_BGR2YUV_I420);
-
-	for (int i = 0; i < img.rows; i++) {
-		for (int j = 0; j < img.cols; j++) {
-			const cv::Point3_<uint8_t> &point = chroma.at<cv::Point3_<uint8_t> >(i,j);
-//			const QVector<int> &vec(YCrCbFromRGB(img.at<cv::Point3_<uint8_t> >(i,j)));
-//			const cv::Point3_<uint8_t> point(vec[0], vec[1], vec[2]);
-			if (point.x > 50)
-			processPixel(point, false);
+	cv::Mat yuv;
+	cvtColor(bgr, yuv, cv::COLOR_BGR2YUV);
+	cv::Mat map;
+	map.create(bgr.rows, bgr.cols, CV_32F);
+	for (int i = 0; i < bgr.rows; i++) {
+		for (int j = 0; j < bgr.cols; j++) {
+			const cv::Point3_<uint8_t> &point = yuv.at<cv::Point3_<uint8_t>>(i,j);
+			map.at<float>(i,j) = getProbability(point.y, point.z);
 		}
 	}
+	return map;
 }
 
 bool ColorSegmentation::buildDatabaseFromFiles(const QString &path)
@@ -108,6 +74,9 @@ bool ColorSegmentation::buildDatabaseFromFiles(const QString &path)
 		if (imagePath.startsWith('#')) {
 			continue;
 		}
+		if (!imagePath.endsWith(".bmp", Qt::CaseInsensitive)) {
+			imagePath.append(".bmp");
+		}
 		qDebug("%s", imagePath.toStdString().data());
 		QImage image;
 		if (!image.load(QString(DATABASE_PREFIX).append(imagePath))) {
@@ -116,12 +85,14 @@ bool ColorSegmentation::buildDatabaseFromFiles(const QString &path)
 		}
 		image = image.convertToFormat(QImage::Format_RGB888);
 		const std::list<QPolygon> polygons = polygonsFromFile(imagePath);
+		const cv::Mat &bgr = WindowManager::QImage2Mat(image);
 
-		scanNewImage(WindowManager::QImage2Mat(image), polygons);
+		scanNewImage(bgr, polygons);
 
 	 } while (!in.atEnd());
 
 	 //saveStats(path);
+	 WindowManager::getInstance().imShow("FileDB statistics", m_statsFile.getProbabilitiesMap());
 
 	 return true;
 }
@@ -148,13 +119,12 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 {
 	static int id = 0;
 	cv::Mat maskedImage;
+	cv::Mat yuv;
+	cvtColor(image, yuv, cv::COLOR_BGR2YUV);
 	image.copyTo(maskedImage);
 	for (int i = 0; i< image.rows; i++) {
 		const std::vector<int> &areas = separateSkinNonskinColorInRow(i, polygonList);
-//		qDebug("areas: %d:", areas.size());
-//		foreach (int p, areas) {
-//			qDebug("%d", p);
-//		}
+
 		int index = 0;
 		bool skin = false;
 		bool end = false;	//indicates last area
@@ -176,8 +146,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 				}
 			}
 
-//			const QVector<int> &YCrCb = YCrCbFromRGB(image.at<const cv::Point3_<uint8_t> >(i,j));
-			m_statsFile.processPixel(image.at<const cv::Point3_<uint8_t> >(i,j), skin);
+			m_statsFile.processPixel(yuv.at<const cv::Point3_<uint8_t> >(i,j), skin);
 			// Categorize .. .TODO;
 			if (skin) {
 				maskedImage.at<cv::Point3_<uint8_t> >(i,j) = cv::Point3_<uint8_t>(0, 0, 0);
@@ -248,24 +217,28 @@ const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row,
 
 
 
-void ImageStatistics::processPixel(const cv::Point3_<uint8_t> &YCrCb, bool skin)
+/**
+ * \arg &tColorSpace - pixel in whatever colorspace(must be max. 3x8bit)
+ *
+ */
+void ImageStatistics::processPixel(const cv::Point3_<uint8_t> &tcsPoint, bool skin)
 {
-//	const cv::Point3_<uint8_t> &YCrCb = YCrCbFromRGB(bgr);
-	long &counterSkin = m_CrCbCountSkin[YCrCb.y][YCrCb.z];
-	long &counterAll = m_CrCbCountAll[YCrCb.y][YCrCb.z];
+	long &tcsSkinCounter = m_tcsSkinCounter[tcsPoint.y][tcsPoint.z];
+	long &tcsNonSkinCounter = m_tcsNonSkinCounter[tcsPoint.y][tcsPoint.z];
 
 	if (skin) {
-		counterSkin++;
-	}
-
-	counterAll++;
-
-	if (YCrCb.y == 128 && YCrCb.z == 128) {
+		tcsSkinCounter++;
+		m_skinCounter++;
 	} else {
-	// Find max
-		m_maxCountSkin = std::max<long>(m_maxCountSkin, counterSkin);
-		m_maxCountAll = std::max<long>(m_maxCountAll, counterAll);
+		tcsNonSkinCounter++;
 	}
+
+	if (!(tcsPoint.y == 128 && tcsPoint.z == 128)) {
+		// Find max
+		m_maxCountSkin = std::max<long>(m_maxCountSkin, tcsSkinCounter);
+		m_maxCountNonSkin = std::max<long>(m_maxCountNonSkin, tcsNonSkinCounter);
+	}
+
 	m_pixelCounter++;
 }
 
@@ -275,8 +248,8 @@ cv::Mat ImageStatistics::getCountAllMapNormalized() const
 	map.create(256, 256, CV_8UC1);
 	for (int i = 0; i < 256; i++) {
 		for (int j = 0; j < 256; j++) {
-			const uint32_t &counterAll = m_CrCbCountAll[i][j];
-			double val = std::min<double>(1.0, static_cast<double>(counterAll)/m_maxCountAll);
+			const uint32_t &counterAll = m_tcsNonSkinCounter[i][j];
+			double val = std::min<double>(1.0, static_cast<double>(counterAll)/m_maxCountNonSkin);
 			map.at<uint8_t>(i,j) = val*255;
 		}
 	}
@@ -289,7 +262,7 @@ cv::Mat ImageStatistics::getCountSkinMapNormalized()
 	map.create(256, 256, CV_8UC1);
 	for (int i = 0; i < 256; i++) {
 		for (int j = 0; j < 256; j++) {
-			const uint32_t &counter = m_CrCbCountSkin[i][j];
+			const uint32_t &counter = m_tcsSkinCounter[i][j];
 			double val = static_cast<double>(counter)/m_maxCountSkin;
 			map.at<uint8_t>(i,j) = val*255;
 		}
@@ -301,15 +274,116 @@ cv::Mat ImageStatistics::getCountSkinMapNormalized()
 ImageStatistics::ImageStatistics()
 :	m_pixelCounter(0)
 ,	m_maxCountSkin(0)
-,	m_maxCountAll(0)
+,	m_maxCountNonSkin(0)
+,	m_skinCounter(0)
 {
-	memset(m_CrCbCountAll, 0, 256*256*sizeof(m_CrCbCountSkin[0][0]));
-	memset(m_CrCbCountSkin, 0, 256*256*sizeof(m_CrCbCountSkin[0][0]));
+	memset(m_tcsNonSkinCounter, 0, 256*256*sizeof(m_tcsSkinCounter[0][0]));
+	memset(m_tcsSkinCounter, 0, 256*256*sizeof(m_tcsSkinCounter[0][0]));
+}
+
+cv::Mat ImageStatistics::getProbabilitiesMap() const
+{
+	cv::Mat map;
+	map.create(256, 256, CV_8UC1);
+	for (int i = 0; i < 256; i++) {
+		for (int j = 0; j < 256; j++) {
+			map.at<uint8_t>(i,j) = getProbability(i,j)*255;
+		}
+	}
+	return map;
 }
 
 void ImageStatistics::finalize()
 {
 
+}
+
+double ImageStatistics::getProbability(uint8_t u, uint8_t v) const
+{
+	if (!m_pixelCounter) return 0;
+//	double Pc = double(m_tcsSkinCounter[u][v] + m_tcsNonSkinCounter[u][v])/m_pixelCounter;
+	double Pc = double(m_tcsSkinCounter[u][v] + m_tcsNonSkinCounter[u][v])/double(m_pixelCounter);
+	Q_ASSERT(Pc <= 1);
+//	double Ps = double(m_skinCounter)/m_pixelCounter;
+	double Ps = double(m_tcsSkinCounter[u][v])/m_pixelCounter;
+	Q_ASSERT(Ps <= 1);
+	if (m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v] == 0) return 0.5;
+//	double Pcs = double(m_tcsSkinCounter[u][v])/(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v]);
+	double Pcs = double(m_tcsSkinCounter[u][v])/(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v]);
+///
+///
+///	double PcsDivPc = double(m_tcsSkinCounter[u][v])*m_pixelCounter;
+///	return Pcs*Ps/Pc;
+///	return Ps*pcsDivPc;
+
+	/// EXPERIMENT
+	double psDIVpc = m_skinCounter/double(m_tcsSkinCounter[u][v] + m_tcsNonSkinCounter[u][v]);
+	/// pcs*ps/pc = double(m_tcsSkinCounter[u][v])/(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v])
+	double Psc = Pcs*Ps/Pc;
+/// ~	double Psc = double(m_skinCounter)*double(m_tcsSkinCounter[u][v]);
+//	qDebug("Psc: %f %f %f %f", Psc, Pcs, Ps, Pc);
+	Q_ASSERT(Psc<=1);
+	Q_ASSERT(Psc>=0);
+
+	return Psc;
+}
+
+ColorSegmentation::ColorSegmentation()
+: 	m_TMax(0.5)
+,	m_TMin(0.15)
+,	QObject()
+{
+	m_master = new QWidget();
+	m_master->setWindowTitle("Color segmenter");
+
+	QVBoxLayout *mainLayout = new QVBoxLayout(m_master);
+
+	m_sliderTMin = new QSlider(m_master);
+	m_sliderTMax = new QSlider(m_master);
+
+	auto basicSetup = [] (QSlider *slider) {
+		slider->setMinimum(0);
+		slider->setMaximum(100);
+		slider->setOrientation(Qt::Horizontal);
+		slider->setTickInterval(10);
+		slider->setTickPosition(QSlider::TicksBelow);
+	};
+
+	basicSetup(m_sliderTMin);
+	basicSetup(m_sliderTMax);
+
+
+	m_sliderTMin->setValue(m_TMin*100);
+	m_sliderTMax->setValue(m_TMax*100);
+	mainLayout->addWidget(m_sliderTMin);
+	mainLayout->addWidget(m_sliderTMax);
+	connect(m_sliderTMin, SIGNAL(valueChanged(int)), this, SLOT(on_TMinChanged(int)));
+	connect(m_sliderTMax, SIGNAL(valueChanged(int)), this, SLOT(on_TMaxChanged(int)));
+	m_master->setLayout(mainLayout);
+
+	m_master->show();
+}
+
+void ColorSegmentation::on_TMaxChanged(int value)
+{
+	if (value < m_TMin*100)	{
+		m_sliderTMin->setValue(value);
+	}
+	m_TMax = value/100.0;
+}
+
+ColorSegmentation::~ColorSegmentation()
+{
+	delete m_master;
+}
+
+void ColorSegmentation::on_TMinChanged(int value)
+{
+	if (value > m_TMax*100) {
+		m_sliderTMax->setValue(value);
+	}
+
+	m_TMin = value/100.0;
 }
 
 }

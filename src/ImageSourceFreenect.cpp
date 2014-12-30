@@ -132,8 +132,8 @@ cv::Mat iez::ImageSourceFreenect::getDepthMat()
 iez::ImageSourceFreenect::ImageSourceFreenect(const int index)
 {
 	device = &freenect.createDevice<iez_private::ImageSourceFreenectDevice_private>(index);
-
 }
+
 void iez::ImageSourceFreenect::streamInit(freenect_resolution resolution)
 {
 	device->streamInit(resolution);

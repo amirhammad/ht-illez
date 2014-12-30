@@ -137,13 +137,14 @@ void ImageDescriptorImage::keyPressEvent(QKeyEvent *ev)
 
 ImageDescriptor::ImageDescriptor(ImageSourceFreenect *kinect)
 {
+	m_backgroundImage = new ImageDescriptorImage(kinect);
+
 	master = new QWidget();
 	master->setWindowTitle("Image Descriptor");
 
 	m_polygonsWidget = new QWidget(master);
 	QHBoxLayout *mainLayout = new QHBoxLayout(master);
 
-	m_backgroundImage = new ImageDescriptorImage(kinect);
 	connect(m_backgroundImage, SIGNAL(descriptionComplete(const QImage&, const std::list<QPolygon>)), this, SLOT(on_descriptionComplete(const QImage&, const std::list<QPolygon>)));
 
 //	QPushButton *resetButton = new QPushButton("load image");
@@ -175,7 +176,7 @@ ImageDescriptor::~ImageDescriptor()
 
 void ImageDescriptorImage::refresh()
 {
-	qDebug("dt: %ld",(clock()-m_fpsCounter)/1000);
+//	qDebug("dt: %ld",(clock()-m_fpsCounter)/1000);
 	m_fpsCounter = clock();
 	Mat img;
 	if (m_kinect) {
@@ -185,7 +186,6 @@ void ImageDescriptorImage::refresh()
 		m_cap>>img;
 	}
 
-	ImageStatistics stats(img);
 	m_image = iez::WindowManager::Mat2QImage(img);
 	refresh(m_image);
 }

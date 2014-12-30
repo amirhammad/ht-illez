@@ -18,22 +18,25 @@ public:
 	explicit Processing(ImageSourceFreenect &imgsrc);
 	~Processing(void);
 
-	int init();
-	void process(const cv::Mat &bgr, const cv::Mat &depth);
 private:
+	void processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth);
 	void filterDepth(cv::Mat &dst, const cv::Mat &src, int near, int far);
+
 
 	void processHSVFilter(const cv::Mat &orig);
 	void run();
+	void process(const cv::Mat &bgr, const cv::Mat &depth);
 
 
 //	CHandTracker m_handTracker;
 	ImageSourceFreenect &m_imageSource;
 
 	bool m_calculateHandTracker;
+	ColorSegmentation *m_segmentation;
 private slots:
 	void keyPressEvent(QKeyEvent *keyEvent);
 	void closeEvent();
+
 };
 
 //class CWorker: private QThread {
