@@ -46,9 +46,9 @@ public:
 	~ImageDescriptor();
 
 public slots:
-	void refresh() {
-		m_backgroundImage->refresh();
-	}
+//	void refresh() {
+//		m_backgroundImage->refresh();
+//	}
 
 private slots:
 	void on_descriptionComplete(const QImage& image, const std::list<QPolygon> polygonList);

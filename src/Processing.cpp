@@ -2,8 +2,8 @@
 #include "ImageSource.h"
 #include <stdint.h>
 #include <assert.h>
-#include <QtGui>
-#include <QtCore>
+//#include <QtGui>
+//#include <QtCore>
 //#include <QImage>
 #include <opencv2/imgproc.hpp>
 #include "main.h"
@@ -62,7 +62,7 @@ void Processing::process(const cv::Mat &bgr, const cv::Mat &depth)
 	cvtColor(bgrDepthFiltered, bgrDepthFilteredGray, cv::COLOR_BGR2GRAY);
 	cv::threshold(bgrDepthFilteredGray, bgrDepthFilteredBinary, 0, 255, 3);
 	std::vector<std::vector<cv::Point> > contours;
-	cv::findContours(bgrDepthFilteredBinary, contours, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+	cv::findContours(bgrDepthFilteredBinary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 	cv::Mat x;
 	bgr.copyTo(x);
 	for (int i = 0; i < contours.size(); i++) {
@@ -166,8 +166,8 @@ void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth,
 	cv::threshold(tmp, tmp2, far/16, 255, cv::THRESH_BINARY_INV);
 //	WindowManager::getInstance().imShow("tmp2", tmp2);
 	cv::Mat tmp3, tmp4;
-	cv::dilate(tmp2, tmp3, cv::Mat(), cv::Point(-1,-1), 15);
-	cv::dilate(tmp2, tmp4, cv::Mat(), cv::Point(-1,-1), 3);
+	cv::dilate(tmp2, tmp3, cv::Mat(), cv::Point(-1,-1), 0);// dilate main
+	cv::dilate(tmp2, tmp4, cv::Mat(), cv::Point(-1,-1), 3);// dilate border
 //	WindowManager::getInstance().imShow("tmp3", tmp3);
 
 //	WindowManager::getInstance().imShow("bounds", tmp3-tmp4);

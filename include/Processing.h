@@ -1,32 +1,33 @@
 #pragma once
 
 #include <opencv2/opencv.hpp>
-#include <map>
-#include <QtGui>
+#include <list>
 #include <string>
-#include <queue>
-#include "HandTracker.h"
+#include "ColorSegmentation.h"
 #include "ImageSourceFreenect.h"
 #include "WindowManager.h"
 
 namespace iez {
 
 
-class Processing: private QThread
+class Processing : private QThread
 {
 	Q_OBJECT
 public:
 	explicit Processing(ImageSourceBase *imgsrc);
 	~Processing(void);
 	static cv::Mat processSaturate(const cv::Mat &bgr, const int satIncrease);
+
 private:
-	void processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi);
+	static void filterDepth(cv::Mat &dst, const cv::Mat &src, int near, int far);
+	static void processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi);
+
 	void processColorSegmentation(const cv::Mat &bgr, const cv::Mat &depth);
 
-	void filterDepth(cv::Mat &dst, const cv::Mat &src, int near, int far);
 
 
-	void processHSVFilter(const cv::Mat &orig);
+
+	static void processHSVFilter(const cv::Mat &orig);
 	void run();
 	void process(const cv::Mat &bgr, const cv::Mat &depth);
 
@@ -42,6 +43,7 @@ private slots:
 	void closeEvent();
 
 };
+
 
 //class CWorker: private QThread {
 //public:

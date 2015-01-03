@@ -13,12 +13,10 @@ public:
 	cv::Mat getColorMat();
 	cv::Mat getDepthMat() { return cv::Mat(640, 480, CV_16UC1); }
 	void setColorMat(const cv::Mat &src);
-	int getSequence() const;
 
 private:
 	cv::Mat m_color;
 	QMutex m_mutex;
-	int m_sequence;
 };
 
 

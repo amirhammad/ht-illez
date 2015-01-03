@@ -9,7 +9,7 @@ using namespace cv;
 //using namespace std;
 namespace iez {
 
-void CHandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
+void HandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
 {
 	assert(bgr.rows == depth.rows);
 	assert(bgr.cols == depth.cols);
@@ -70,7 +70,7 @@ void CHandTracker::findHandFromCenter(const cv::Mat& bgr, const cv::Mat& depth)
 //	m_window.imShow("hand", hand);
 }
 
-cv::Point3f CHandTracker::interpolateToColor(const cv::Mat &bgr, const cv::Point2f &coord)
+cv::Point3f HandTracker::interpolateToColor(const cv::Mat &bgr, const cv::Point2f &coord)
 {
 	const int c11 = static_cast<int>(coord.x);
 	const int c12 = c11+1;
@@ -93,7 +93,7 @@ cv::Point3f CHandTracker::interpolateToColor(const cv::Mat &bgr, const cv::Point
 	return colorPixel;
 }
 
-float CHandTracker::calculateGradientInDirection(
+float HandTracker::calculateGradientInDirection(
 		const cv::Point3f &prevColor,
 		const cv::Point3f &nextColor)
 {
@@ -105,7 +105,7 @@ float CHandTracker::calculateGradientInDirection(
 	return sqrt(diffColor.x*diffColor.x + diffColor.y*diffColor.y + diffColor.z*diffColor.z);
 }
 
-void CHandTracker::extend(cv::Mat &hand, const cv::Mat& img, cv::Point2f center,
+void HandTracker::extend(cv::Mat &hand, const cv::Mat& img, cv::Point2f center,
 		cv::Point3f meanColor, int depth)
 {
 	depth--;
@@ -187,7 +187,7 @@ void CHandTracker::extend(cv::Mat &hand, const cv::Mat& img, cv::Point2f center,
 
 
 
-CHandTracker::CHandTracker()
+HandTracker::HandTracker()
 {
 //	const char * dbPath = "/home/amir/git/amirhammad/diplomovka/Skin_NonSkin.txt";
 //	if (segmentation.buildDatabaseFromRGBS(dbPath)) {

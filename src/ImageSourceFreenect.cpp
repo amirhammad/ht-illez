@@ -64,33 +64,6 @@ int iez_private::ImageSourceFreenectDevice_private::streamInit(freenect_resoluti
     return 0;
 }
 
-void iez_private::ImageSourceFreenectDevice_private::update()
-{
-
-}
-
-
-//int iez_private::ImageSourceFreenectDevice_private::init(void)
-//{
-//	if (m_initialized) {
-//		return 0;
-//	}
-//
-////	m_depthMat.create(m_height, m_width, CV_16UC1);
-////	m_colorMat.create(m_height, m_width, CV_8UC3);
-//
-//	if (deviceInit()) {
-//		m_initialized = false;
-//		return -1;
-//	}
-////	if (streamInit()) {
-////		m_initialized = false;
-////		return -1;
-////	}
-//	m_initialized = true;
-//
-//	return 0;
-//}
 
 bool iez_private::ImageSourceFreenectDevice_private::isInitialized()
 {
@@ -128,6 +101,7 @@ cv::Mat iez::ImageSourceFreenect::getDepthMat()
 iez::ImageSourceFreenect::ImageSourceFreenect(const int index)
 {
 	device = &freenect.createDevice<iez_private::ImageSourceFreenectDevice_private>(index);
+	streamInit(FREENECT_RESOLUTION_MEDIUM);
 }
 
 void iez::ImageSourceFreenect::streamInit(freenect_resolution resolution)
@@ -135,8 +109,4 @@ void iez::ImageSourceFreenect::streamInit(freenect_resolution resolution)
 	device->streamInit(resolution);
 }
 
-int iez::ImageSourceFreenect::getSequence() const
-{
-	 return device->getSequence();
-}
 

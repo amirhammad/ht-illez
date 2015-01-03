@@ -3,21 +3,14 @@
 
 #include <QtCore/qmutex.h>
 #include <libfreenect/libfreenect.hpp>
+#include "ImageSource.h"
 
 namespace iez_private {
 	class ImageSourceFreenectDevice_private;
 }
+
+
 namespace iez {
-class ImageSourceBase {
-public:
-	virtual cv::Mat getColorMat() = 0;
-	virtual cv::Mat getDepthMat() = 0;
-	virtual int getSequence() const = 0;
-
-	virtual ~ImageSourceBase(){};
-};
-
-
 class ImageSourceFreenect:public ImageSourceBase
 {
 public:
@@ -27,7 +20,6 @@ public:
 	cv::Mat getDepthMat();
 
 	~ImageSourceFreenect() { freenect.deleteDevice(0); }
-	int getSequence() const;
 private:
 	Freenect::Freenect freenect;
 	iez_private::ImageSourceFreenectDevice_private *device;

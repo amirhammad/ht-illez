@@ -14,7 +14,6 @@ class ImageSourceFreenectDevice_private:public Freenect::FreenectDevice
 //		int init(void);
 
 		bool isInitialized();
-		void update(void);
 
 		cv::Mat getDepthMat();
 		cv::Mat getColorMat();

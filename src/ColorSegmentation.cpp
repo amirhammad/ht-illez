@@ -157,7 +157,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 
 
 	}
-//	WindowManager::getInstance().imShow(QString("segmented: %1").arg(id++), maskedImage);
+	WindowManager::getInstance().imShow(QString("segmented: %1").arg(id++), maskedImage);
 
 //	cv::Mat bigger(768, 768, CV_8UC1);
 //	cv::resize(m_statsFile.getCountAllMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);

@@ -163,7 +163,7 @@ ImageDescriptor::ImageDescriptor(ImageSourceBase *kinect)
 	master->setLayout(mainLayout);
 
 	//Timer
-	connect(&m_timer, SIGNAL(timeout()), this, SLOT(refresh()));
+	connect(&m_timer, SIGNAL(timeout()), m_backgroundImage, SLOT(refresh()));
 	m_timer.start(30);
 
 	master->show();
