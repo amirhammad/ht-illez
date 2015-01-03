@@ -3,20 +3,25 @@
 #include <opencv2/opencv.hpp>
 #include <QtGui/qimage.h>
 #include <QtGui/qslider.h>
+#include <list>
 #include "WindowManager.h"
 
 namespace iez {
 class ImageStatistics {
 public:
 	ImageStatistics();
-
+	ImageStatistics(const cv::Mat &image, const bool skin = false);
 	void processPixel(const cv::Point3_<uint8_t> &tcsPoint, bool skin = false);
 	double getProbability(uint8_t u, uint8_t v) const;
-	cv::Mat getProbabilitiesMap() const;
-	cv::Mat getProbabilitiesMapFromImage(const cv::Mat &bgr) const;
+	cv::Mat getProbabilityMap() const;
+	cv::Mat getProbabilityMapComplementary(const cv::Mat &image, const std::list<ImageStatistics>& statsList, const float mul = 1);
+	cv::Mat getProbabilityMap(const cv::Mat &bgr) const;
 
-private:
 	cv::Mat getCountAllMapNormalized() const;
+	void clear();
+	long getSampleCount() const { return m_pixelCounter; }
+private:
+
 	cv::Mat getCountSkinMapNormalized();
 
 

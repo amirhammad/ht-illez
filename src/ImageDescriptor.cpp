@@ -16,7 +16,7 @@ namespace iez {
 //	setCursor(Qt::CrossCursor);
 //}
 
-ImageDescriptorImage::ImageDescriptorImage(ImageSourceFreenect *kinect)
+ImageDescriptorImage::ImageDescriptorImage(ImageSourceBase *kinect)
 :	m_kinect(kinect)
 ,	QLabel("x")
 {
@@ -135,7 +135,7 @@ void ImageDescriptorImage::keyPressEvent(QKeyEvent *ev)
 }
 
 
-ImageDescriptor::ImageDescriptor(ImageSourceFreenect *kinect)
+ImageDescriptor::ImageDescriptor(ImageSourceBase *kinect)
 {
 	m_backgroundImage = new ImageDescriptorImage(kinect);
 

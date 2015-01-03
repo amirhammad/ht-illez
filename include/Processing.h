@@ -4,6 +4,7 @@
 #include <map>
 #include <QtGui>
 #include <string>
+#include <queue>
 #include "HandTracker.h"
 #include "ImageSourceFreenect.h"
 #include "WindowManager.h"
@@ -15,11 +16,13 @@ class Processing: private QThread
 {
 	Q_OBJECT
 public:
-	explicit Processing(ImageSourceFreenect &imgsrc);
+	explicit Processing(ImageSourceBase *imgsrc);
 	~Processing(void);
-
+	static cv::Mat processSaturate(const cv::Mat &bgr, const int satIncrease);
 private:
-	void processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth);
+	void processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi);
+	void processColorSegmentation(const cv::Mat &bgr, const cv::Mat &depth);
+
 	void filterDepth(cv::Mat &dst, const cv::Mat &src, int near, int far);
 
 
@@ -28,8 +31,9 @@ private:
 	void process(const cv::Mat &bgr, const cv::Mat &depth);
 
 
+	std::list<ImageStatistics> m_statsList;
 //	CHandTracker m_handTracker;
-	ImageSourceFreenect &m_imageSource;
+	ImageSourceBase *const  m_imageSource;
 
 	bool m_calculateHandTracker;
 	ColorSegmentation *m_segmentation;

@@ -54,11 +54,6 @@ int iez_private::ImageSourceFreenectDevice_private::streamInit(freenect_resoluti
 	m_colorMat.create(m_height, m_width, CV_8UC3);
 	startVideo();
 
-//    for (int i=0; i<2048; i++) {
-//        float v = i/2048.0;
-//        v = powf(v, 3)* 6;
-//        m_t_gamma[i] = v*6*256;
-//    }
 	setDepthFormat(FREENECT_DEPTH_REGISTERED, resolution);
 
 	startDepth();
@@ -75,27 +70,27 @@ void iez_private::ImageSourceFreenectDevice_private::update()
 }
 
 
-int iez_private::ImageSourceFreenectDevice_private::init(void)
-{
-	if (m_initialized) {
-		return 0;
-	}
-
-//	m_depthMat.create(m_height, m_width, CV_16UC1);
-//	m_colorMat.create(m_height, m_width, CV_8UC3);
-
-	if (deviceInit()) {
-		m_initialized = false;
-		return -1;
-	}
-//	if (streamInit()) {
+//int iez_private::ImageSourceFreenectDevice_private::init(void)
+//{
+//	if (m_initialized) {
+//		return 0;
+//	}
+//
+////	m_depthMat.create(m_height, m_width, CV_16UC1);
+////	m_colorMat.create(m_height, m_width, CV_8UC3);
+//
+//	if (deviceInit()) {
 //		m_initialized = false;
 //		return -1;
 //	}
-	m_initialized = true;
-
-	return 0;
-}
+////	if (streamInit()) {
+////		m_initialized = false;
+////		return -1;
+////	}
+//	m_initialized = true;
+//
+//	return 0;
+//}
 
 bool iez_private::ImageSourceFreenectDevice_private::isInitialized()
 {
@@ -114,6 +109,7 @@ cv::Mat iez_private::ImageSourceFreenectDevice_private::getDepthMat()
 cv::Mat iez_private::ImageSourceFreenectDevice_private::getColorMat()
 {
 	QMutexLocker locker(&color_mutex);
+	m_sequence++;
 	cv::Mat ret;
 	m_colorMat.copyTo(ret);
 	return ret;
@@ -137,5 +133,10 @@ iez::ImageSourceFreenect::ImageSourceFreenect(const int index)
 void iez::ImageSourceFreenect::streamInit(freenect_resolution resolution)
 {
 	device->streamInit(resolution);
+}
+
+int iez::ImageSourceFreenect::getSequence() const
+{
+	 return device->getSequence();
 }
 

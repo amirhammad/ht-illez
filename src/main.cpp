@@ -27,7 +27,7 @@
 using namespace cv;
 
 
-
+iez::ImageSourceArtificial *iez::imageSourceArtificial;
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
@@ -40,12 +40,41 @@ int main(int argc, char *argv[])
 	 * Processing
 	 */
 
+
+	iez::imageSourceArtificial = new iez::ImageSourceArtificial();
 	// TODO: can edit files
-	iez::ImageDescriptor *imageDescriptor = new iez::ImageDescriptor(&kinect);
+	iez::ImageDescriptor *imageDescriptor = new iez::ImageDescriptor(iez::imageSourceArtificial);
 
 	iez::ColorSegmentation::buildDatabaseFromFiles("../database/colorDB_files.txt");
 
-	iez::Processing *processing = new iez::Processing(kinect);
+	iez::Processing *processing = new iez::Processing(&kinect);
 
 	return QApplication::exec();
+}
+
+cv::Mat iez::ImageSourceArtificial::getColorMat()
+{
+	QMutexLocker locker(&m_mutex);
+	cv::Mat ret;
+	m_color.copyTo(ret);
+	return ret;
+}
+
+iez::ImageSourceArtificial::ImageSourceArtificial()
+:	m_sequence(0)
+{
+	QMutexLocker locker(&m_mutex);
+	m_color.create(480, 640, CV_8UC3);
+}
+
+void iez::ImageSourceArtificial::setColorMat(const cv::Mat& src)
+{
+	QMutexLocker locker(&m_mutex);
+	cvtColor(src, m_color, cv::COLOR_RGB2BGR);
+	m_sequence++;
+}
+
+int iez::ImageSourceArtificial::getSequence() const
+{
+	return m_sequence;
 }

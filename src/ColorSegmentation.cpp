@@ -1,7 +1,7 @@
 
 #include "ColorSegmentation.h"
 #include "WindowManager.h"
-
+#include "Processing.h"
 #include <QtGui>
 #include <QtCore>
 namespace iez {
@@ -41,7 +41,7 @@ std::list<QPolygon> ColorSegmentation::polygonsFromFile(const QString &imagePath
 
 
 
-cv::Mat ImageStatistics::getProbabilitiesMapFromImage(const cv::Mat &bgr) const
+cv::Mat ImageStatistics::getProbabilityMap(const cv::Mat &bgr) const
 {
 	cv::Mat yuv;
 	cvtColor(bgr, yuv, cv::COLOR_BGR2YUV);
@@ -92,7 +92,7 @@ bool ColorSegmentation::buildDatabaseFromFiles(const QString &path)
 	 } while (!in.atEnd());
 
 	 //saveStats(path);
-	 WindowManager::getInstance().imShow("FileDB statistics", m_statsFile.getProbabilitiesMap());
+	 WindowManager::getInstance().imShow("FileDB statistics", m_statsFile.getProbabilityMap());
 
 	 return true;
 }
@@ -157,7 +157,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 
 
 	}
-	WindowManager::getInstance().imShow(QString("segmented: %1").arg(id++), maskedImage);
+//	WindowManager::getInstance().imShow(QString("segmented: %1").arg(id++), maskedImage);
 
 //	cv::Mat bigger(768, 768, CV_8UC1);
 //	cv::resize(m_statsFile.getCountAllMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);
@@ -271,17 +271,42 @@ cv::Mat ImageStatistics::getCountSkinMapNormalized()
 }
 
 
+void ImageStatistics::clear()
+{
+	m_pixelCounter = m_maxCountSkin = m_maxCountNonSkin = m_skinCounter = 0;
+	memset(m_tcsNonSkinCounter, 0, 256*256*sizeof(m_tcsSkinCounter[0][0]));
+	memset(m_tcsSkinCounter, 0, 256*256*sizeof(m_tcsSkinCounter[0][0]));
+}
+
 ImageStatistics::ImageStatistics()
 :	m_pixelCounter(0)
 ,	m_maxCountSkin(0)
 ,	m_maxCountNonSkin(0)
 ,	m_skinCounter(0)
 {
-	memset(m_tcsNonSkinCounter, 0, 256*256*sizeof(m_tcsSkinCounter[0][0]));
-	memset(m_tcsSkinCounter, 0, 256*256*sizeof(m_tcsSkinCounter[0][0]));
+	memset(m_tcsNonSkinCounter, 0, sizeof(m_tcsNonSkinCounter));
+	memset(m_tcsSkinCounter, 0, sizeof(m_tcsSkinCounter));
 }
 
-cv::Mat ImageStatistics::getProbabilitiesMap() const
+ImageStatistics::ImageStatistics(const cv::Mat &image, const bool skin)
+:	ImageStatistics()
+{
+	cv::Mat yuv;
+	cv::cvtColor(image, yuv, cv::COLOR_BGR2YUV);
+	for (int i = 0; i < image.rows; i++) {
+		for (int j = 0; j < image.cols; j++) {
+			const cv::Point3_<uint8_t> &pt = yuv.at<cv::Point3_<uint8_t> >(i, j);
+			const cv::Point3_<uint8_t> &ptBgr = image.at<cv::Point3_<uint8_t> >(i, j);
+			if (ptBgr.x + ptBgr.y + ptBgr.z == 0) {
+				continue;
+			} else {
+				processPixel(pt, skin);
+			}
+		}
+	}
+}
+
+cv::Mat ImageStatistics::getProbabilityMap() const
 {
 	cv::Mat map;
 	map.create(256, 256, CV_8UC1);
@@ -291,6 +316,35 @@ cv::Mat ImageStatistics::getProbabilitiesMap() const
 		}
 	}
 	return map;
+}
+
+/**
+ *
+ * \param ratio ratio between original and complementary images
+ * 			original:complementary
+ */
+cv::Mat ImageStatistics::getProbabilityMapComplementary(const cv::Mat &image
+,	const std::list<ImageStatistics>& statsList
+,	const float ratio)
+{
+
+//	const float mult = statsList.size()/ratio;
+	cv::Mat ret;
+	ImageStatistics statsSum(*this);
+	foreach (ImageStatistics stats, statsList) {
+//		statsSum.m_pixelCounter += stats.m_pixelCounter/ratio;
+//		statsSum.m_skinCounter += stats.m_skinCounter/ratio;
+		for (int i = 0; i < 256; i++) {
+			for (int j = 0; j < 256; j++) {
+//				const float mul = ((image.cols*image.rows/stats.m_pixelCounter)/ratio);
+				const long inc = stats.m_tcsSkinCounter[i][j]/ratio;
+				statsSum.m_tcsSkinCounter[i][j] += inc;
+				statsSum.m_skinCounter += inc;
+				statsSum.m_pixelCounter += inc;
+			}
+		}
+	}
+	return statsSum.getProbabilityMap(image);
 }
 
 void ImageStatistics::finalize()
@@ -305,11 +359,11 @@ double ImageStatistics::getProbability(uint8_t u, uint8_t v) const
 	double Pc = double(m_tcsSkinCounter[u][v] + m_tcsNonSkinCounter[u][v])/double(m_pixelCounter);
 	Q_ASSERT(Pc <= 1);
 //	double Ps = double(m_skinCounter)/m_pixelCounter;
-	double Ps = double(m_tcsSkinCounter[u][v])/m_pixelCounter;
+	double Ps = double(m_tcsSkinCounter[u][v])/double(m_pixelCounter);
 	Q_ASSERT(Ps <= 1);
 	if (m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v] == 0) return 0.5;
 //	double Pcs = double(m_tcsSkinCounter[u][v])/(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v]);
-	double Pcs = double(m_tcsSkinCounter[u][v])/(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v]);
+	double Pcs = double(m_tcsSkinCounter[u][v])/double(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v]);
 ///
 ///
 ///	double PcsDivPc = double(m_tcsSkinCounter[u][v])*m_pixelCounter;
@@ -317,7 +371,7 @@ double ImageStatistics::getProbability(uint8_t u, uint8_t v) const
 ///	return Ps*pcsDivPc;
 
 	/// EXPERIMENT
-	double psDIVpc = m_skinCounter/double(m_tcsSkinCounter[u][v] + m_tcsNonSkinCounter[u][v]);
+	double psDIVpc = double(m_skinCounter)/double(m_tcsSkinCounter[u][v] + m_tcsNonSkinCounter[u][v]);
 	/// pcs*ps/pc = double(m_tcsSkinCounter[u][v])/(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v])
 	double Psc = Pcs*Ps/Pc;
 /// ~	double Psc = double(m_skinCounter)*double(m_tcsSkinCounter[u][v]);
@@ -327,6 +381,8 @@ double ImageStatistics::getProbability(uint8_t u, uint8_t v) const
 
 	return Psc;
 }
+
+#define SLIDER_TICKS 1000
 
 ColorSegmentation::ColorSegmentation()
 : 	m_TMax(0.5)
@@ -343,9 +399,9 @@ ColorSegmentation::ColorSegmentation()
 
 	auto basicSetup = [] (QSlider *slider) {
 		slider->setMinimum(0);
-		slider->setMaximum(100);
+		slider->setMaximum(SLIDER_TICKS);
 		slider->setOrientation(Qt::Horizontal);
-		slider->setTickInterval(10);
+		slider->setTickInterval(SLIDER_TICKS/10);
 		slider->setTickPosition(QSlider::TicksBelow);
 	};
 
@@ -353,8 +409,8 @@ ColorSegmentation::ColorSegmentation()
 	basicSetup(m_sliderTMax);
 
 
-	m_sliderTMin->setValue(m_TMin*100);
-	m_sliderTMax->setValue(m_TMax*100);
+	m_sliderTMin->setValue(m_TMin*SLIDER_TICKS);
+	m_sliderTMax->setValue(m_TMax*SLIDER_TICKS);
 	mainLayout->addWidget(m_sliderTMin);
 	mainLayout->addWidget(m_sliderTMax);
 	connect(m_sliderTMin, SIGNAL(valueChanged(int)), this, SLOT(on_TMinChanged(int)));
@@ -366,10 +422,10 @@ ColorSegmentation::ColorSegmentation()
 
 void ColorSegmentation::on_TMaxChanged(int value)
 {
-	if (value < m_TMin*100)	{
+	if (value < m_TMin*SLIDER_TICKS)	{
 		m_sliderTMin->setValue(value);
 	}
-	m_TMax = value/100.0;
+	m_TMax = value/float(SLIDER_TICKS);
 }
 
 ColorSegmentation::~ColorSegmentation()
@@ -379,11 +435,17 @@ ColorSegmentation::~ColorSegmentation()
 
 void ColorSegmentation::on_TMinChanged(int value)
 {
-	if (value > m_TMax*100) {
+	if (value > m_TMax*SLIDER_TICKS) {
 		m_sliderTMax->setValue(value);
 	}
 
-	m_TMin = value/100.0;
+	m_TMin = value/float(SLIDER_TICKS);
 }
 
+
+
+
+
 }
+
+

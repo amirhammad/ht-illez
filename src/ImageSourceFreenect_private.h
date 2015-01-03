@@ -11,7 +11,7 @@ class ImageSourceFreenectDevice_private:public Freenect::FreenectDevice
 	public:
 		ImageSourceFreenectDevice_private(freenect_context *_ctx, int _index);
 		~ImageSourceFreenectDevice_private(void);
-		int init(void);
+//		int init(void);
 
 		bool isInitialized();
 		void update(void);
@@ -19,7 +19,7 @@ class ImageSourceFreenectDevice_private:public Freenect::FreenectDevice
 		cv::Mat getDepthMat();
 		cv::Mat getColorMat();
 
-		int sequence() { return m_sequence; }
+		int getSequence() { return m_sequence; }
 		int streamInit(freenect_resolution resolution);
 	protected:
 
