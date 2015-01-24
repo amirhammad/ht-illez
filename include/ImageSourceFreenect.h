@@ -16,8 +16,8 @@ class ImageSourceFreenect:public ImageSourceBase
 public:
 	ImageSourceFreenect(const int index = 0);
 	void streamInit(freenect_resolution resolution);
-	cv::Mat getColorMat();
-	cv::Mat getDepthMat();
+	cv::Mat getColorMat() const;
+	cv::Mat getDepthMat() const;
 
 	~ImageSourceFreenect() { freenect.deleteDevice(0); }
 private:

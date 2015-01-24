@@ -15,8 +15,8 @@ class ImageSourceFreenectDevice_private:public Freenect::FreenectDevice
 
 		bool isInitialized();
 
-		cv::Mat getDepthMat();
-		cv::Mat getColorMat();
+		cv::Mat getDepthMat() const;
+		cv::Mat getColorMat() const;
 
 		int getSequence() { return m_sequence; }
 		int streamInit(freenect_resolution resolution);
@@ -29,6 +29,7 @@ class ImageSourceFreenectDevice_private:public Freenect::FreenectDevice
 		void VideoCallback(void *video, uint32_t timestamp)
 		{
 			QMutexLocker lock(&color_mutex);
+			m_sequence++;
 			memcpy(m_colorMat.data, video, m_height*m_width*3);
 		}
 		// Do not call directly even in child
@@ -43,8 +44,8 @@ class ImageSourceFreenectDevice_private:public Freenect::FreenectDevice
 		cv::Mat m_depthMat;
 		cv::Mat m_colorMat;
 
-		QMutex depth_mutex;
-		QMutex color_mutex;
+		mutable QMutex depth_mutex;
+		mutable QMutex color_mutex;
 
 		int m_sequence;
 		const int m_fps;

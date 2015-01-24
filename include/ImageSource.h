@@ -9,8 +9,8 @@ public:
 	:	m_sequence(0) {
 
 	}
-	virtual cv::Mat getColorMat() = 0;
-	virtual cv::Mat getDepthMat() = 0;
+	virtual cv::Mat getColorMat() const = 0;
+	virtual cv::Mat getDepthMat() const = 0;
 
 	virtual ~ImageSourceBase(){};
 	int getSequence() const {

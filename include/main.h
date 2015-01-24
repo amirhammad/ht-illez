@@ -10,13 +10,13 @@ extern ImageSourceArtificial *imageSourceArtificial;
 class ImageSourceArtificial:public ImageSourceBase {
 public:
 	ImageSourceArtificial();
-	cv::Mat getColorMat();
-	cv::Mat getDepthMat() { return cv::Mat(640, 480, CV_16UC1); }
+	cv::Mat getColorMat() const;
+	cv::Mat getDepthMat() const { return cv::Mat(640, 480, CV_16UC1); }
 	void setColorMat(const cv::Mat &src);
 
 private:
 	cv::Mat m_color;
-	QMutex m_mutex;
+	mutable QMutex m_mutex;
 };
 
 

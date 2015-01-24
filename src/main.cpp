@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 	return QApplication::exec();
 }
 
-cv::Mat iez::ImageSourceArtificial::getColorMat()
+cv::Mat iez::ImageSourceArtificial::getColorMat() const
 {
 	QMutexLocker locker(&m_mutex);
 	cv::Mat ret;

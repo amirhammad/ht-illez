@@ -191,7 +191,7 @@ bool ImageSourceOpenNI::isInitialized()
 	return m_initialized;
 }
 
-cv::Mat ImageSourceOpenNI::getDepthMat()
+cv::Mat ImageSourceOpenNI::getDepthMat() const
 {
 	depth_mutex.lock();
 	if (m_depthFrame.isValid()) {
@@ -203,7 +203,7 @@ cv::Mat ImageSourceOpenNI::getDepthMat()
 
 
 
-cv::Mat ImageSourceOpenNI::getColorMat()
+cv::Mat ImageSourceOpenNI::getColorMat() const
 {
 	color_mutex.lock();
 	if (m_colorFrame.isValid()) {

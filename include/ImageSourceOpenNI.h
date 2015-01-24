@@ -18,8 +18,8 @@ public:
 	bool isInitialized();
 	void update(void);
 
-	cv::Mat getDepthMat();
-	cv::Mat getColorMat();
+	cv::Mat getDepthMat() const;
+	cv::Mat getColorMat() const;
 
 private:
 	void run(); // Overriden QThread run
@@ -37,8 +37,8 @@ private:
 	openni::VideoStream *m_streams[2];
 	openni::VideoFrameRef m_depthFrame, m_colorFrame;
 
-	QMutex depth_mutex;
-	QMutex color_mutex;
+	mutable QMutex depth_mutex;
+	mutable QMutex color_mutex;
 
 	const int m_fps;
 	bool m_initialized;

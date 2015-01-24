@@ -70,7 +70,7 @@ bool iez_private::ImageSourceFreenectDevice_private::isInitialized()
 	return m_initialized;
 }
 
-cv::Mat iez_private::ImageSourceFreenectDevice_private::getDepthMat()
+cv::Mat iez_private::ImageSourceFreenectDevice_private::getDepthMat() const
 {
 	QMutexLocker locker(&depth_mutex);
 	Mat ret;
@@ -79,21 +79,20 @@ cv::Mat iez_private::ImageSourceFreenectDevice_private::getDepthMat()
 }
 
 
-cv::Mat iez_private::ImageSourceFreenectDevice_private::getColorMat()
+cv::Mat iez_private::ImageSourceFreenectDevice_private::getColorMat() const
 {
 	QMutexLocker locker(&color_mutex);
-	m_sequence++;
 	cv::Mat ret;
 	m_colorMat.copyTo(ret);
 	return ret;
 }
 
-cv::Mat iez::ImageSourceFreenect::getColorMat()
+cv::Mat iez::ImageSourceFreenect::getColorMat() const
 {
 	return device->getColorMat();
 }
 
-cv::Mat iez::ImageSourceFreenect::getDepthMat()
+cv::Mat iez::ImageSourceFreenect::getDepthMat() const
 {
 	return device->getDepthMat();
 }
