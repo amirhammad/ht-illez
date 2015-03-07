@@ -15,6 +15,7 @@ public:
 	ImageSourceOpenNI(int fps = 30);
 	~ImageSourceOpenNI(void);
 
+	int init(void);
 	bool isInitialized();
 	void update(void);
 
@@ -26,7 +27,7 @@ public:
 private:
 	void run(); // Overriden QThread run
 
-	int init(void);
+
 	int deviceInit(void);
 	int streamInit(void);
 

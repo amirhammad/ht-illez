@@ -106,6 +106,8 @@ int main(int argc, char *argv[])
 //	iez::ImageSourceFreenect *kinectFreenect = new iez::ImageSourceFreenect(0);
 
 	iez::ImageSourceOpenNI *kinect = new iez::ImageSourceOpenNI();
+	kinect->init();
+
 	if (!kinect->isInitialized()) {
 		cerr << "cannot open kinect" << endl;
 		return -1;

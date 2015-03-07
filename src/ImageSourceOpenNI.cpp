@@ -11,7 +11,6 @@ ImageSourceOpenNI::ImageSourceOpenNI(int fps)
 ,	m_fps(fps)
 ,	m_initialized(false)
 {
-	init();
 }
 
 
