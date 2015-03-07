@@ -103,8 +103,12 @@ int main(int argc, char *argv[])
 	getOptions(argc, argv);
 	// Camera init
 //	iez::ImageSourceFreenect *kinectFreenect = new iez::ImageSourceFreenect(0);
-	iez::ImageSourceBase *kinect = new iez::ImageSourceFreenect();
 
+	iez::ImageSourceOpenNI *kinect = new iez::ImageSourceOpenNI();
+	if (!kinect->isInitialized()) {
+		cerr << "cannot open kinect" << endl;
+		return -1;
+	}
 	/**
 	 * Processing
 	 */
