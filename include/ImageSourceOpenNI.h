@@ -21,6 +21,8 @@ public:
 	cv::Mat getDepthMat() const;
 	cv::Mat getColorMat() const;
 
+	openni::VideoStream& getColorStream();
+	openni::VideoStream& getDepthStream();
 private:
 	void run(); // Overriden QThread run
 

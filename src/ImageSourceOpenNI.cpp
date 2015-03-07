@@ -221,3 +221,13 @@ void ImageSourceOpenNI::run()
 		msleep(1);
 	}
 }
+
+openni::VideoStream& iez::ImageSourceOpenNI::getColorStream()
+{
+	return m_colorStream;
+}
+
+openni::VideoStream& iez::ImageSourceOpenNI::getDepthStream()
+{
+	return m_depthStream;
+}
