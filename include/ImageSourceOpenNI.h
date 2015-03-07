@@ -16,7 +16,7 @@ public:
 	ImageSourceOpenNI(int fps = 30);
 	~ImageSourceOpenNI(void);
 
-	int init(void);
+	int init(const char* deviceURI = openni::ANY_DEVICE);
 	bool isInitialized();
 
 
@@ -29,7 +29,7 @@ private:
 //	void run(); // Overriden QThread run
 
 
-	int deviceInit(void);
+	int deviceInit(const char* deviceURI);
 	int streamInit(void);
 
 	int m_width, m_height;

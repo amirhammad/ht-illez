@@ -4,7 +4,7 @@ using namespace iez;
 using namespace cv;
 
 #define SAMPLE_XML_PATH "SamplesConfig.xml"
-
+#define FILE_PLAY_SPEED (30)
 ImageSourceOpenNI::ImageSourceOpenNI(int fps)
 :	m_width(640)
 ,	m_height(480)
@@ -24,15 +24,18 @@ ImageSourceOpenNI::~ImageSourceOpenNI(void)
 	openni::OpenNI::shutdown();
 }
 
-int ImageSourceOpenNI::deviceInit(void)
+int ImageSourceOpenNI::deviceInit(const char* deviceURI)
 {
 	openni::Status rc = openni::STATUS_OK;
-
-	const char* deviceURI = openni::ANY_DEVICE;
 
 	rc = openni::OpenNI::initialize();
 
 	rc = device.open(deviceURI);
+	if (device.isFile()) {
+		device.getPlaybackControl()->setSpeed(FILE_PLAY_SPEED);
+		device.getPlaybackControl()->setRepeatEnabled(true);
+	}
+
 	if (rc != openni::STATUS_OK)
 	{
 		printf("SimpleViewer: Device open failed:\n%s\n", openni::OpenNI::getExtendedError());
@@ -169,7 +172,7 @@ void ImageSourceOpenNI::update()
 }
 
 
-int ImageSourceOpenNI::init(void)
+int ImageSourceOpenNI::init(const char* deviceURI)
 {
 	if (m_initialized) {
 		return 0;
@@ -178,7 +181,7 @@ int ImageSourceOpenNI::init(void)
 	m_depthMat.create(m_height, m_width, CV_16UC1);
 	m_colorMat.create(m_height, m_width, CV_8UC3);
 
-	if (openni::STATUS_ERROR == deviceInit()) {
+	if (openni::STATUS_ERROR == deviceInit(deviceURI)) {
 		m_initialized = false;
 		return -1;
 	}

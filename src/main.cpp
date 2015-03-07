@@ -106,26 +106,39 @@ int main(int argc, char *argv[])
 //	iez::ImageSourceFreenect *kinectFreenect = new iez::ImageSourceFreenect(0);
 
 	iez::ImageSourceOpenNI *kinect = new iez::ImageSourceOpenNI();
-	kinect->init();
 
-	if (!kinect->isInitialized()) {
-		cerr << "cannot open kinect" << endl;
-		return -1;
+	if (options.playingRecord) {
+		kinect->init(options.recordName);
+		if (!kinect->isInitialized()) {
+			cerr << "cannot open file" << options.recordName << endl;
+			return -1;
+		}
+	} else {
+		kinect->init();
+		if (!kinect->isInitialized()) {
+			cerr << "cannot open kinect" << endl;
+			return -1;
+		}
 	}
-	/**
-	 * Processing
-	 */
 
 	iez::imageSourceArtificial = new iez::ImageSourceArtificial();
+
+
 	// TODO: can edit files
-	iez::ImageDescriptor *imageDescriptor = new iez::ImageDescriptor(iez::imageSourceArtificial);
 
+	iez::ImageRecorder *recorder;
 	if (options.recording) {
-		iez::ImageRecorder *recorder = new iez::ImageRecorder(kinect, options.recordName);
+		iez::ImageDescriptor *imageDescriptor = new iez::ImageDescriptor(kinect);
+		recorder = new iez::ImageRecorder();
+		recorder->init(kinect, options.recordName);
+	} else {
+		/**
+		 * Processing
+		 */
+		iez::Processing *processing = new iez::Processing(kinect);
 	}
-//	iez::ColorSegmentation::buildDatabaseFromFiles("../database/colorDB_files.txt");
 
-	iez::Processing *processing = new iez::Processing(kinect);
+//	iez::ColorSegmentation::buildDatabaseFromFiles("../database/colorDB_files.txt");
 
 	return QApplication::exec();
 }
