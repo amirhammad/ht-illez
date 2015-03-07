@@ -59,7 +59,7 @@ int iez_private::ImageSourceFreenectDevice_private::streamInit(freenect_resoluti
 	startDepth();
 	setFlag(FREENECT_RAW_COLOR, FREENECT_ON);
 //	setFlag(FREENECT_AUTO_EXPOSURE, FREENECT_OFF);
-//	setFlag(FREENECT_AUTO_WHITE_BALANCE, FREENECT_OFF);
+	setFlag(FREENECT_AUTO_WHITE_BALANCE, FREENECT_OFF);
 	setLed(LED_GREEN);
     return 0;
 }

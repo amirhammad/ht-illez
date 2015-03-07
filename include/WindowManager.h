@@ -47,6 +47,7 @@ public:
 	void imShow(const QString name, const cv::Mat &image);
 	void imShow(const QString name, const QImage& image);
 	void plot(const QString name, const QVector<double> &x, const QVector<double> &y);
+	void plot(const QString name, const std::vector<double> &x, const std::vector<double> &y);
 
 	static cv::Mat QImage2Mat(QImage const& src);
 	static QImage Mat2QImage(cv::Mat const& src);

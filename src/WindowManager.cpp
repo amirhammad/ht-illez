@@ -30,6 +30,14 @@ void WindowManager::plot(const QString name,
 	QMetaObject::invokeMethod(this, "on_plot", Qt::AutoConnection, QGenericArgument("const QString", &name));
 }
 
+
+void WindowManager::plot(const QString name,
+		const std::vector<double> &x,
+		const std::vector<double> &y)
+{
+	plot(name, QVector<double>::fromStdVector(x), QVector<double>::fromStdVector(y));
+}
+
 void WindowManager::on_plot(const QString name)
 {
 	m_mutex.lock();
@@ -38,7 +46,7 @@ void WindowManager::on_plot(const QString name)
 	if (!data->widget) {
 		CWindow *widget = new CWindow();
 		widget->setWindowTitle(name);
-		widget->setFixedSize(QSize(640, 480));
+		widget->setFixedSize(QSize(900, 450));
 //		connect(widget, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
 //		connect(widget, SIGNAL(closed()), this, SLOT(closeEvent()));
 		data->widget = widget;
@@ -50,7 +58,7 @@ void WindowManager::on_plot(const QString name)
 	customPlot->clearGraphs();
 //	customPlot->setViewport(QRect(QPoint(0,0), QSize(640,480)));
 //	customPlot->setBaseSize(QSize(640,480);
-	customPlot->setFixedSize(640, 480);
+	customPlot->setFixedSize(800, 400);
 	// generate some data:
 
 	// create graph and assign data to it:
@@ -77,8 +85,8 @@ void WindowManager::on_plot(const QString name)
 	customPlot->yAxis->setLabel("y");
 //	std::cout<<"["<<min[0]<<" "<<min[1]<<"]["<<max[0]<<" "<<max[1]<<"]"<<std::endl;
 	// set axes ranges, so we see all data:
-	customPlot->xAxis->setRange(min[0], max[0]);
-	customPlot->yAxis->setRange(0, 1);
+	customPlot->xAxis->setRange(0, 1);
+	customPlot->yAxis->setRange(-5, 5);
 	customPlot->replot();
 	data->widget->show();
 	m_mutex.unlock();

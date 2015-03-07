@@ -3,6 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include <list>
 #include <string>
+#include "main.h"
 #include "ColorSegmentation.h"
 #include "ImageSourceFreenect.h"
 #include "WindowManager.h"
@@ -16,6 +17,10 @@ public:
 	explicit Processing(ImageSourceBase *imgsrc);
 	~Processing(void);
 	static cv::Mat processSaturate(const cv::Mat &bgr, const int satIncrease);
+	static std::vector<cv::Point> smoothPoints(const std::vector<cv::Point> &vec, const int range);
+	static float pointDistance(const cv::Point &pt1, const cv::Point &pt2);
+	static void processHSVFilter(const cv::Mat &orig);
+
 
 private:
 	static void filterDepth(cv::Mat &dst, const cv::Mat &src, int near, int far);
@@ -23,18 +28,41 @@ private:
 
 	void processColorSegmentation(const cv::Mat &bgr, const cv::Mat &depth);
 
-	static void processHSVFilter(const cv::Mat &orig);
+	void processContourTracing(const cv::Mat &bgr, const cv::Mat &depth, const cv::Mat &bgrDepthFiltered);
+	static cv::Point calculateWeightedMean(const std::vector<cv::Point>&);
+	static cv::Point calculateMean(const std::vector<cv::Point>&);
+	static cv::Point calculateMeanIndices(const cv::Mat&);
+
+	/// using K-means algorithm
+//	static cv::Point calculateCentroids();
+//	static std::list<cv::Point> calculate
+
+	void processContourPoints(const cv::Mat &bgr, const cv::Mat &depth, const std::vector<cv::Point>& contour);
+	std::vector<int> fingerCandidates(const std::vector<cv::Point>& contour, const std::vector<int> &hullIndices);
+	std::vector<cv::Point> fingerCandidates2(const std::vector<cv::Point>& contour,
+			const std::vector<int> &hullIndices,
+			const cv::Mat &depth);
+	std::vector<int> categorizeFingers(const std::vector<cv::Point>& contour ,const std::vector<int> &candidates);
 
 public slots:
 	void process();
 private:
 	QThread m_thread;
+
+
+
+
+
+	struct Data {
+		cv::Point center;
+	} data;
 	std::list<ImageStatistics> m_statsList;
 //	CHandTracker m_handTracker;
 	ImageSourceBase *m_imageSource;
 
 	bool m_calculateHandTracker;
 	ColorSegmentation *m_segmentation;
+	Fps m_fps;
 private slots:
 	void keyPressEvent(QKeyEvent *keyEvent);
 	void closeEvent();
@@ -42,6 +70,7 @@ private slots:
 };
 
 }
+
 
 
 

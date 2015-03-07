@@ -163,3 +163,20 @@ void iez::ImageSourceArtificial::setColorMat(const cv::Mat& src)
 	cvtColor(src, m_color, cv::COLOR_RGB2BGR);
 	m_sequence++;
 }
+
+
+
+iez::Fps::Fps()
+{
+	m_timeLast = 0;
+}
+
+void iez::Fps::tick()
+{
+	m_timeLast = clock();
+}
+
+float iez::Fps::fps() const
+{
+	return 1000000.0f/(clock() - m_timeLast);
+}

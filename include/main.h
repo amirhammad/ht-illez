@@ -19,5 +19,15 @@ private:
 	mutable QMutex m_mutex;
 };
 
+class Fps {
+public:
+	Fps();
+	void tick();
+	float fps() const;
+
+private:
+	clock_t m_timeLast;
+
+};
 
 }

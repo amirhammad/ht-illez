@@ -157,7 +157,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 
 
 	}
-	WindowManager::getInstance().imShow(QString("segmented: %1").arg(id++), maskedImage);
+//	WindowManager::getInstance().imShow(QString("segmented: %1").arg(id++), maskedImage);
 
 //	cv::Mat bigger(768, 768, CV_8UC1);
 //	cv::resize(m_statsFile.getCountAllMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);
@@ -361,7 +361,7 @@ double ImageStatistics::getProbability(uint8_t u, uint8_t v) const
 //	double Ps = double(m_skinCounter)/m_pixelCounter;
 	double Ps = double(m_tcsSkinCounter[u][v])/double(m_pixelCounter);
 	Q_ASSERT(Ps <= 1);
-	if (m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v] == 0) return 0.5;
+	if (m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v] == 0) return 0.0;
 //	double Pcs = double(m_tcsSkinCounter[u][v])/(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v]);
 	double Pcs = double(m_tcsSkinCounter[u][v])/double(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v]);
 ///
@@ -371,7 +371,7 @@ double ImageStatistics::getProbability(uint8_t u, uint8_t v) const
 ///	return Ps*pcsDivPc;
 
 	/// EXPERIMENT
-	double psDIVpc = double(m_skinCounter)/double(m_tcsSkinCounter[u][v] + m_tcsNonSkinCounter[u][v]);
+//	double psDIVpc = double(m_skinCounter)/double(m_tcsSkinCounter[u][v] + m_tcsNonSkinCounter[u][v]);
 	/// pcs*ps/pc = double(m_tcsSkinCounter[u][v])/(m_tcsSkinCounter[u][v]+m_tcsNonSkinCounter[u][v])
 	double Psc = Pcs*Ps/Pc;
 /// ~	double Psc = double(m_skinCounter)*double(m_tcsSkinCounter[u][v]);
