@@ -7,9 +7,12 @@
 namespace iez {
 class ImageRecorder {
 public:
-	ImageRecorder(iez::ImageSourceOpenNI *src, const char *path);
+	ImageRecorder();
+
+	void init(iez::ImageSourceOpenNI *src, const char *path = "_defaultOutput.oni");
+
 	~ImageRecorder();
 private:
-	openni::Recorder *m_recorder;
+	openni::Recorder m_recorder;
 };
 }
