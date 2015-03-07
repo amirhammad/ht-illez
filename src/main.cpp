@@ -25,15 +25,82 @@
 #include "WindowManager.h"
 #include "main.h"
 
+#include "unistd.h"
+#include "getopt.h"
 using namespace cv;
 
 
 iez::ImageSourceArtificial *iez::imageSourceArtificial;
 
+static struct {
+	const char * recordName;
+	bool recording;
+	bool playingRecord;
+	bool artifical;
+
+} options;
+
+static void getOptions(int argc, char *argv[])
+{
+	using namespace std;
+	options.recordName = 0;
+	options.recording = false;
+	options.playingRecord = false;
+	options.artifical = false;
+	static struct option long_options[] = {
+			{"record", optional_argument, 0, 'r'},
+			{"artifical", no_argument, 0, 'a'},
+//			{"segment", optional_argument, 0, 'a'},
+			{0, 0, 0, 0},
+	};
+	int index;
+	while (1) {
+		char c = getopt_long(argc, argv, "p:r:a", long_options, &index);
+		if (c == -1) {
+			break;
+		}
+		switch (c) {
+		case 0:
+			// long opts
+			break;
+		case 'r':
+			if (options.playingRecord) {
+				cerr << "playing record, cannot record" << endl;
+				break;
+			}
+			options.recording = true;
+			if (optarg) {
+				options.recordName = optarg;
+			} else {
+				options.recordName = "_defaultOutput.oni";
+			}
+			break;
+		case 'p':
+			if (options.recording) {
+				options.recording = false;
+				cerr << "playing record, cannot record" << endl;
+				break;
+			}
+			options.playingRecord = true;
+			if (optarg) {
+				options.recordName = optarg;
+			} else {
+				options.recordName = "_defaultInput.oni";
+			}
+			break;
+
+		}
+	}
+}
+
+
 int main(int argc, char *argv[])
 {
+	using namespace iez;
+	using namespace std;
 	QApplication app(argc, argv);
 
+	getOptions(argc, argv);
 	// Camera init
 //	iez::ImageSourceFreenect *kinectFreenect = new iez::ImageSourceFreenect(0);
 	iez::ImageSourceBase *kinect = new iez::ImageSourceFreenect();
