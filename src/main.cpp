@@ -19,6 +19,7 @@
 #include "ImageSource.h"
 #include "ImageSourceFreenect.h"
 #include "ImageSourceOpenNI.h"
+#include "ImageRecorder.h"
 #include "ColorSegmentation.h"
 #include "ImageDescriptor.h"
 #include "Processing.h"
@@ -118,6 +119,9 @@ int main(int argc, char *argv[])
 	iez::ImageDescriptor *imageDescriptor = new iez::ImageDescriptor(iez::imageSourceArtificial);
 
 	iez::ColorSegmentation::buildDatabaseFromFiles("../database/colorDB_files.txt");
+	if (options.recording) {
+		iez::ImageRecorder *recorder = new iez::ImageRecorder(kinect, options.recordName);
+	}
 
 	iez::Processing *processing = new iez::Processing(kinect);
 
