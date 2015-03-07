@@ -86,7 +86,7 @@ void Processing::process()
 
 	imageSourceArtificial->setColorMat(bgrRoi);
 
-	processColorSegmentation(bgrRoi, depth);
+//	processColorSegmentation(bgrRoi, depth);
 }
 
 void Processing::processColorSegmentation(const cv::Mat &bgr, const cv::Mat &depth)
