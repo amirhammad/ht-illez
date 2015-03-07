@@ -180,8 +180,8 @@ void ImageDescriptorImage::refresh()
 	m_fpsCounter = clock();
 	Mat img;
 	if (m_kinect) {
-		img = m_kinect->getColorMat();
-		cvtColor(img,img, COLOR_RGB2BGR);
+		const Mat &rgb = m_kinect->getColorMat();
+		cvtColor(rgb, img, COLOR_RGB2BGR);
 	} else {
 		m_cap>>img;
 	}
