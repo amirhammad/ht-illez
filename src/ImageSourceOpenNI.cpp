@@ -143,18 +143,16 @@ void ImageSourceOpenNI::update()
 	switch (changedIndex) {
 	case 0:
 	{
-		depth_mutex.lock();
+		QMutexLocker l(&depth_mutex);
 		m_depthStream.readFrame(&m_depthFrame);
 		m_sequence = max<int>(m_sequence, m_depthFrame.getFrameIndex());//bug(overflow in ~700 days)
-		depth_mutex.unlock();
 	}
 		break;
 	case 1:
 	{
-		color_mutex.lock();
+		QMutexLocker l(&color_mutex);
 		m_colorStream.readFrame(&m_colorFrame);
 		m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug(overflow in ~700 days)
-		color_mutex.unlock();
 	}
 		break;
 	default:
@@ -193,11 +191,10 @@ bool ImageSourceOpenNI::isInitialized()
 
 cv::Mat ImageSourceOpenNI::getDepthMat() const
 {
-	depth_mutex.lock();
+	QMutexLocker l(&depth_mutex);
 	if (m_depthFrame.isValid()) {
 		memcpy(m_depthMat.data, m_depthFrame.getData(), m_depthFrame.getDataSize());
 	}
-	depth_mutex.unlock();
 	return m_depthMat;
 }
 
@@ -205,11 +202,10 @@ cv::Mat ImageSourceOpenNI::getDepthMat() const
 
 cv::Mat ImageSourceOpenNI::getColorMat() const
 {
-	color_mutex.lock();
+	QMutexLocker l(&color_mutex);
 	if (m_colorFrame.isValid()) {
 		memcpy(m_colorMat.data, m_colorFrame.getData(), m_colorFrame.getDataSize());
 	}
-	color_mutex.unlock();
 	return m_colorMat;
 }
 
