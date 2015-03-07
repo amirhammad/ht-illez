@@ -88,9 +88,9 @@ QImage WindowManager::Mat2QImage(const cv::Mat& src)
 	using namespace cv;
      cv::Mat temp; // make the same cv::Mat
      if (src.type() == CV_8UC1) {
-    	cvtColor(src, temp, COLOR_GRAY2RGB); // cvtColor Makes a copy, that what i need
+	cvtColor(src, temp, COLOR_GRAY2RGB); // cvtColor Makes a copy, that what i need
      } else if (src.type() == CV_8UC3) {
-    	cvtColor(src, temp, COLOR_BGR2RGB); // cvtColor Makes a copy, that what i need
+	cvtColor(src, temp, COLOR_BGR2RGB); // cvtColor Makes a copy, that what i need
      }
 
      QImage dest((const uchar *) temp.data, temp.cols, temp.rows, temp.step, QImage::Format_RGB888);
