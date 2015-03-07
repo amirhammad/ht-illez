@@ -1,9 +1,10 @@
 #pragma once
 #include <opencv2/opencv.hpp>
-
+#include <qobject.h>
 namespace iez {
 
-class ImageSourceBase {
+class ImageSourceBase : public QObject {
+	Q_OBJECT
 public:
 	ImageSourceBase()
 	:	m_sequence(0) {
@@ -19,6 +20,8 @@ public:
 
 protected:
 	int m_sequence;
+signals:
+	void frameReceived();
 };
 
 }

@@ -10,8 +10,7 @@
 namespace iez {
 
 
-class Processing : private QThread
-{
+class Processing : QObject {
 	Q_OBJECT
 public:
 	explicit Processing(ImageSourceBase *imgsrc);
@@ -24,17 +23,15 @@ private:
 
 	void processColorSegmentation(const cv::Mat &bgr, const cv::Mat &depth);
 
-
-
-
 	static void processHSVFilter(const cv::Mat &orig);
-	void run();
-	void process(const cv::Mat &bgr, const cv::Mat &depth);
 
-
+public slots:
+	void process();
+private:
+	QThread m_thread;
 	std::list<ImageStatistics> m_statsList;
 //	CHandTracker m_handTracker;
-	ImageSourceBase *const  m_imageSource;
+	ImageSourceBase *m_imageSource;
 
 	bool m_calculateHandTracker;
 	ColorSegmentation *m_segmentation;
@@ -43,14 +40,6 @@ private slots:
 	void closeEvent();
 
 };
-
-
-//class CWorker: private QThread {
-//public:
-//	CWorker(){};
-//private:
-//	void run(){};
-//};
 
 }
 

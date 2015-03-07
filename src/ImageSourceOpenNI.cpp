@@ -11,6 +11,9 @@ ImageSourceOpenNI::ImageSourceOpenNI(int fps)
 ,	m_fps(fps)
 ,	m_initialized(false)
 {
+	moveToThread(&m_thread);
+	connect(&m_timer, SIGNAL(timeout()), this, SLOT(update()));
+	m_thread.start();
 }
 
 
@@ -18,7 +21,6 @@ ImageSourceOpenNI::~ImageSourceOpenNI(void)
 {
 	m_depthStream.stop();
 	m_colorStream.stop();
-	terminate();
 	openni::OpenNI::shutdown();
 }
 
@@ -131,32 +133,39 @@ void ImageSourceOpenNI::update()
 {
 	int changedIndex;
 
-	openni::Status rc = openni::OpenNI::waitForAnyStream(m_streams, 2, &changedIndex);
-	if (rc != openni::STATUS_OK) {
-		printf("Wait failed\n");
-		return;
-	}
+	for (int i = 0; i < 2; i++) {
+		openni::Status rc = openni::OpenNI::waitForAnyStream(m_streams, 2, &changedIndex, 0);
+		if (rc != openni::STATUS_OK) {
+			printf("Wait failed\n");
+			return;
+		}
 
-
-	using namespace std;
-	switch (changedIndex) {
-	case 0:
-	{
-		QMutexLocker l(&depth_mutex);
-		m_depthStream.readFrame(&m_depthFrame);
-		m_sequence = max<int>(m_sequence, m_depthFrame.getFrameIndex());//bug(overflow in ~700 days)
+		switch (changedIndex) {
+		case 0:
+		{
+			QWriteLocker l(&depth_rwlock);
+			m_depthStream.readFrame(&m_depthFrame);
+			m_sequence = max<int>(m_sequence, m_depthFrame.getFrameIndex());//bug(overflow in ~700 days)
+			if (m_depthFrame.isValid()) {
+				memcpy(m_depthMat.data, m_depthFrame.getData(), m_depthFrame.getDataSize());
+			}
+		}
+			break;
+		case 1:
+		{
+			QWriteLocker l(&color_rwlock);
+			m_colorStream.readFrame(&m_colorFrame);
+			m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug(overflow in ~700 days)
+			if (m_colorFrame.isValid()) {
+				memcpy(m_colorMat.data, m_colorFrame.getData(), m_colorFrame.getDataSize());
+			}
+		}
+			break;
+		default:
+			printf("Error in wait\n");
+		}
 	}
-		break;
-	case 1:
-	{
-		QMutexLocker l(&color_mutex);
-		m_colorStream.readFrame(&m_colorFrame);
-		m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug(overflow in ~700 days)
-	}
-		break;
-	default:
-		printf("Error in wait\n");
-	}
+	emit frameReceived();
 }
 
 
@@ -178,7 +187,9 @@ int ImageSourceOpenNI::init(void)
 		return -1;
 	}
 	m_initialized = true;
-	start();
+
+	m_timer.setSingleShot(false);
+	m_timer.start(1000/m_fps);
 
 	return 0;
 }
@@ -190,10 +201,7 @@ bool ImageSourceOpenNI::isInitialized()
 
 cv::Mat ImageSourceOpenNI::getDepthMat() const
 {
-	QMutexLocker l(&depth_mutex);
-	if (m_depthFrame.isValid()) {
-		memcpy(m_depthMat.data, m_depthFrame.getData(), m_depthFrame.getDataSize());
-	}
+	QReadLocker l(&depth_rwlock);
 	return m_depthMat;
 }
 
@@ -201,20 +209,8 @@ cv::Mat ImageSourceOpenNI::getDepthMat() const
 
 cv::Mat ImageSourceOpenNI::getColorMat() const
 {
-	QMutexLocker l(&color_mutex);
-	if (m_colorFrame.isValid()) {
-		memcpy(m_colorMat.data, m_colorFrame.getData(), m_colorFrame.getDataSize());
-	}
+	QReadLocker l(&color_rwlock);
 	return m_colorMat;
-}
-
-void ImageSourceOpenNI::run()
-{
-	while(1) {
-		update();
-		yieldCurrentThread();
-		msleep(1);
-	}
 }
 
 openni::VideoStream& iez::ImageSourceOpenNI::getColorStream()

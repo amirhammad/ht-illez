@@ -16,10 +16,10 @@ Processing::Processing(ImageSourceBase *imgsrc)
 , 	m_calculateHandTracker(false)
 ,	m_statsList(0)
 {
-//	connect(&m_window, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
-//	connect(&m_window, SIGNAL(closed()), this, SLOT(closeEvent()));
+	moveToThread(&m_thread);
 	m_segmentation = new ColorSegmentation();
-	start();
+	connect(imgsrc, SIGNAL(frameReceived()), this, SLOT(process()));
+	m_thread.start();
 }
 
 
@@ -29,8 +29,14 @@ Processing::~Processing(void)
 }
 
 
-void Processing::process(const cv::Mat &bgr, const cv::Mat &depth)
+void Processing::process()
 {
+	uint32_t t1 = clock();
+	const cv::Mat &depth = m_imageSource->getDepthMat();
+	const cv::Mat &rgb = m_imageSource->getColorMat();
+	cv::Mat bgr;
+	cv::cvtColor(rgb, bgr,cv::COLOR_RGB2BGR);
+
 //	qDebug("%d %d %d %d ", bgr.rows, depth.rows, bgr.cols, depth.cols);
 	assert(bgr.rows == depth.rows);
 	assert(bgr.cols == depth.cols);
@@ -195,25 +201,6 @@ void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int f
 	}
 }
 
-void iez::Processing::run()
-{
-	int sequence = 0;
-
-	while (1) {
-		if (!m_imageSource) {
-			msleep(500);
-			continue;
-		}
-		const cv::Mat &rgb = m_imageSource->getColorMat();
-
-		cv::Mat bgr;
-		cv::cvtColor(rgb, bgr,cv::COLOR_RGB2BGR);
-		const cv::Mat &depth = m_imageSource->getDepthMat();
-
-		process(bgr, depth);
-		msleep(30);
-	}
-}
 static int params[20]={11, 139, 0, 255, 95, 169, 174, 118};
 void Processing::processHSVFilter(const cv::Mat &orig)
 {

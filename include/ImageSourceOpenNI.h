@@ -5,10 +5,11 @@
 #include <OpenNI.h>
 
 #include <QtCore/qthread.h>
-#include <QtCore/qmutex.h>
+#include <QtCore/qtimer.h>
+#include <qreadwritelock.h>
 
 namespace iez {
-class ImageSourceOpenNI : private QThread, public ImageSourceBase
+class ImageSourceOpenNI : public ImageSourceBase
 {
 	Q_OBJECT
 public:
@@ -17,7 +18,7 @@ public:
 
 	int init(void);
 	bool isInitialized();
-	void update(void);
+
 
 	cv::Mat getDepthMat() const;
 	cv::Mat getColorMat() const;
@@ -25,7 +26,7 @@ public:
 	openni::VideoStream& getColorStream();
 	openni::VideoStream& getDepthStream();
 private:
-	void run(); // Overriden QThread run
+//	void run(); // Overriden QThread run
 
 
 	int deviceInit(void);
@@ -40,11 +41,15 @@ private:
 	openni::VideoStream *m_streams[2];
 	openni::VideoFrameRef m_depthFrame, m_colorFrame;
 
-	mutable QMutex depth_mutex;
-	mutable QMutex color_mutex;
+	QTimer m_timer;
+	mutable QReadWriteLock depth_rwlock;
+	mutable QReadWriteLock color_rwlock;
 
 	const int m_fps;
 	bool m_initialized;
+	QThread m_thread;
+private slots:
+	void update();
 };
 
 
