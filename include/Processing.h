@@ -23,8 +23,9 @@ public:
 
 
 private:
-	static void filterDepth(cv::Mat &dst, const cv::Mat &src, int near, int far);
-	static void processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi);
+	static void filterDepth(cv::Mat &dst, const cv::Mat &src, int near = -1, int far = -1);
+	static cv::Mat filterDepth2(const cv::Mat &src, int near = -1, int far = -1);
+	static void processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi, int near = -1);
 
 	void processColorSegmentation(const cv::Mat &bgr, const cv::Mat &depth);
 
@@ -32,6 +33,7 @@ private:
 	static cv::Point calculateWeightedMean(const std::vector<cv::Point>&);
 	static cv::Point calculateMean(const std::vector<cv::Point>&);
 	static cv::Point calculateMeanIndices(const cv::Mat&);
+
 
 	/// using K-means algorithm
 //	static cv::Point calculateCentroids();
@@ -43,6 +45,11 @@ private:
 			const std::vector<int> &hullIndices,
 			const cv::Mat &depth);
 	std::vector<int> categorizeFingers(const std::vector<cv::Point>& contour ,const std::vector<int> &candidates);
+
+	static void distanceTransform(const cv::Mat &binaryHand, cv::Mat &binaryHandFiltered, cv::Mat &handDT);
+	static void findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint);
+	static float findHandCenterRadius(const cv::Mat &binaryHandFiltered, const cv::Point &maxDTPoint);
+	static int findMin(const cv::Mat &depth);
 
 public slots:
 	void process();

@@ -53,7 +53,24 @@ void Processing::process()
 
 	processDepthFiltering(bgr, depth, o, bgrRoi);
 	bgr.copyTo(bgrDepthFiltered);
-	filterDepth(bgrDepthFiltered, depth, 500, 800);
+	filterDepth(bgrDepthFiltered, depth);
+
+	// palm highlighting
+	const cv::Mat &binaryHand = filterDepth2(depth);
+
+	cv::Mat handDT;
+	cv::Mat binaryHandFiltered;
+	distanceTransform(binaryHand, binaryHandFiltered, handDT);
+
+	cv::Point handCenter;
+	findHandCenter(handDT, handCenter);
+	float innerCircleRadius = findHandCenterRadius(binaryHandFiltered, handCenter);
+
+	cv::Mat centerHighlited = bgr.clone();
+//	innerCircleRadius /= 10;
+
+	cv::ellipse(centerHighlited, handCenter, cv::Size(innerCircleRadius, innerCircleRadius), 0, 0, 360, cv::Scalar(100, 0, 255), 10);
+	WindowManager::getInstance().imShow("handCenter", centerHighlited);
 
 	// calculate stats every 5. image
 	if (m_imageSource->getSequence()%5 == 0) {
@@ -69,7 +86,7 @@ void Processing::process()
 //		WindowManager::getInstance().imShow("MEGAFILTER", megafilter);
 //	}
 	m_fps.tick();
-	processContourTracing(bgr, depth, bgrDepthFiltered);
+//	processContourTracing(bgr, depth, bgrDepthFiltered);
 	qDebug("fps: %2.1f", m_fps.fps());
 //	return;
 //	const cv::Mat &bgrSaturated = processSaturate(bgr, 50);
@@ -268,18 +285,18 @@ void Processing::processColorSegmentation(const cv::Mat &bgr, const cv::Mat &dep
 
 	WindowManager::getInstance().imShow("Segmented BGR (with db)", segmentedBGR);
 }
-void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi)
+void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi, int near)
 {
-	const double near = 500;
-	const double far = 800;
-//	cv::Mat bgrDepthMasked;
 
 	bgr.copyTo(bgrDepthMasked);
+
+	int far = near + 100;
+
 	filterDepth(bgrDepthMasked, depth, near, far);
 
 	cv::Mat depthShowable;
 	depth.convertTo(depthShowable, CV_8UC1, 1/18.0, 0);
-	WindowManager::getInstance().imShow("depth BW", depthShowable);
+//	WindowManager::getInstance().imShow("depth BW", depthShowable);
 	WindowManager::getInstance().imShow("depth masked BGR", bgrDepthMasked);
 
 	/**
@@ -305,7 +322,7 @@ void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth,
 	cv::Mat tmp3, tmp4;
 	cv::dilate(tmp2, tmp3, cv::Mat(), cv::Point(-1,-1), 4);// dilate main
 	cv::dilate(tmp2, tmp4, cv::Mat(), cv::Point(-1,-1), 3);// dilate border
-//	WindowManager::getInstance().imShow("tmp3", tmp3);
+
 
 //	WindowManager::getInstance().imShow("bounds", tmp3-tmp4);
 //	WindowManager::getInstance().imShow("BGR roi mask", tmp3);
@@ -319,17 +336,42 @@ void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int f
 	assert(dst.rows == depth.rows);
 	assert(dst.cols == depth.cols);
 
-	for (int y = 0; y < dst.rows; ++y) {
-		for (int x = 0; x < dst.cols; ++x) {
-			const uint16_t val = depth.at<uint16_t>(y,x);
+	if (near == -1) {
+		near = findMin(depth);
+		far = near + 170;
+	}
+	const cv::Mat &mask = filterDepth2(depth, near, far);
+	WindowManager::getInstance().imShow("x", mask);
+	cv::Mat dst2;
+
+	dst.copyTo(dst2, mask);
+	WindowManager::getInstance().imShow("x2", dst2);
+	dst2.copyTo(dst);
+}
+
+cv::Mat Processing::filterDepth2(const cv::Mat &depth, int near, int far)
+{
+	cv::Mat outputMask;
+	outputMask.create(depth.rows, depth.cols, CV_8UC1);
+
+	if (near == -1) {
+		near = findMin(depth);
+		far = near + 170;
+	}
+
+	for (int y = 0; y < depth.rows; ++y) {
+		for (int x = 0; x < depth.cols; ++x) {
+			const uint16_t val = depth.at<uint16_t>(y, x);
 
 			if (val > near && val < far) {
-				// keep color
+				outputMask.at<uint8_t>(y, x) = 255;
 			} else {
-				dst.at<cv::Point3_<uint8_t> >(y,x) = cv::Point3_<uint8_t>(0,0,0);
+				outputMask.at<uint8_t>(y, x) = 0;
 			}
 		}
 	}
+
+	return outputMask;
 }
 
 static int params[20]={11, 139, 0, 255, 95, 169, 174, 118};
@@ -617,7 +659,7 @@ std::vector<int> Processing::fingerCandidates(
 	struct C{
 		C(const std::vector<cv::Point>& ax):cont(ax){};
 		const std::vector<cv::Point>& cont;
-  		bool operator() (int a, int b) {return cont[a].y < cont[b].y;};
+		bool operator() (int a, int b) {return cont[a].y < cont[b].y;};
 	} compare(contour);
 
 	std::vector<int> candidates(indicesList.begin(),  indicesList.end());
@@ -627,7 +669,7 @@ std::vector<int> Processing::fingerCandidates(
 	struct C2{
 		C2(const std::vector<cv::Point>& ax):cont(ax){};
 		const std::vector<cv::Point>& cont;
-  		bool operator() (int a, int b) {return a<b;return cont[a].x < cont[b].x;};
+		bool operator() (int a, int b) {return a<b;return cont[a].x < cont[b].x;};
 	} compare2(contour);
 	std::vector<int> candidates5(candidates.begin(), candidates.begin()+((candidates.size()>=5)?5:candidates.size()));
 	std::sort(candidates5.begin(), candidates5.end(), compare2);
@@ -753,7 +795,7 @@ std::vector<cv::Point> Processing::fingerCandidates2(
 //	struct C{
 //		C(const std::vector<cv::Point>& ax):cont(ax){};
 //		const std::vector<cv::Point>& cont;
-//  		bool operator() (int a, int b) {return cont[a].y < cont[b].y;};
+//			bool operator() (int a, int b) {return cont[a].y < cont[b].y;};
 //	} compare(contour);
 //
 //	std::vector<int> candidates(indicesList.begin(),  indicesList.end());
@@ -763,7 +805,7 @@ std::vector<cv::Point> Processing::fingerCandidates2(
 //	struct C2{
 //		C2(const std::vector<cv::Point>& ax):cont(ax){};
 //		const std::vector<cv::Point>& cont;
-//  		bool operator() (int a, int b) {return a<b;return cont[a].x < cont[b].x;};
+//			bool operator() (int a, int b) {return a<b;return cont[a].x < cont[b].x;};
 //	} compare2(contour);
 //	std::vector<int> candidates5(candidates.begin(), candidates.begin()+((candidates.size()>=5)?5:candidates.size()));
 //	std::sort(candidates5.begin(), candidates5.end(), compare2);
@@ -836,6 +878,67 @@ std::vector<int> Processing::categorizeFingers(const std::vector<cv::Point>& con
 //	categorized[0];
 //	msleep(2000);
 	return categorized;
+}
+
+void Processing::distanceTransform(const cv::Mat &binaryHand, cv::Mat &binaryHandFiltered, cv::Mat &handDT)
+{
+	cv::medianBlur(binaryHand, binaryHandFiltered, 13);
+
+	cv::distanceTransform(binaryHandFiltered, handDT, CV_DIST_L2, 3);
+
+	cv::Mat gray;
+	handDT.convertTo(gray, CV_8UC1, 10.0f);
+	WindowManager::getInstance().imShow("distanceTransform", gray);
+
+}
+
+int Processing::findMin(const cv::Mat& depth)
+{
+	int minDepth = 10000;
+
+	for (int i = 0; i < depth.rows; i++) {
+		for (int j = 0; j < depth.cols; j++) {
+			const int d = depth.at<uint16_t>(i, j);
+			if (d) {
+				minDepth = qMin<int>(minDepth, d);
+			}
+		}
+	}
+
+	return minDepth;
+}
+
+void Processing::findHandCenter(const cv::Mat &handDT,  cv::Point &maxDTPoint)
+{
+	maxDTPoint = cv::Point(-1, -1);
+	float max = 0;
+	for (int i = 0; i < handDT.rows; i++) {
+		for (int j = 0; j < handDT.cols; j++) {
+			const float d = handDT.at<float>(i, j);
+			if (d > max) {
+				max = d;
+				maxDTPoint = cv::Point(j, i);
+			}
+		}
+	}
+}
+
+float Processing::findHandCenterRadius(const cv::Mat& binaryHandFiltered,
+		const cv::Point& maxDTPoint)
+{
+	std::vector<std::vector<cv::Point> > contours;
+	cv::findContours(binaryHandFiltered, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+	float minDistance = binaryHandFiltered.rows * binaryHandFiltered.cols;
+	if (contours.size() == 0) {
+		return 0;
+	}
+	for (int i = 0; i < contours[0].size(); i++) {
+		float dist = pointDistance(maxDTPoint, contours[0][i]);
+		if ( dist < minDistance) {
+			minDistance = dist;
+		}
+	}
+	return minDistance;
 }
 
 void Processing::closeEvent()
