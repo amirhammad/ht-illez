@@ -321,7 +321,7 @@ cv::Mat ImageStatistics::getProbabilityMap() const
 /**
  *
  * \param ratio ratio between original and complementary images
- * 			original:complementary
+ *			original:complementary
  */
 cv::Mat ImageStatistics::getProbabilityMapComplementary(const cv::Mat &image
 ,	const std::list<ImageStatistics>& statsList
@@ -385,7 +385,7 @@ double ImageStatistics::getProbability(uint8_t u, uint8_t v) const
 #define SLIDER_TICKS 1000
 
 ColorSegmentation::ColorSegmentation()
-: 	m_TMax(0.5)
+:	m_TMax(0.5)
 ,	m_TMin(0.15)
 ,	QObject()
 {

@@ -94,17 +94,17 @@ void WindowManager::on_plot(const QString name)
 QImage WindowManager::Mat2QImage(const cv::Mat& src)
 {
 	using namespace cv;
-     cv::Mat temp; // make the same cv::Mat
-     if (src.type() == CV_8UC1) {
+	 cv::Mat temp; // make the same cv::Mat
+	 if (src.type() == CV_8UC1) {
 	cvtColor(src, temp, COLOR_GRAY2RGB); // cvtColor Makes a copy, that what i need
-     } else if (src.type() == CV_8UC3) {
+	 } else if (src.type() == CV_8UC3) {
 	cvtColor(src, temp, COLOR_BGR2RGB); // cvtColor Makes a copy, that what i need
-     }
+	 }
 
-     QImage dest((const uchar *) temp.data, temp.cols, temp.rows, temp.step, QImage::Format_RGB888);
-     dest.bits(); // enforce deep copy, see documentation
-     // of QImage::QImage ( const uchar * data, int width, int height, Format format )
-     return dest;
+	 QImage dest((const uchar *) temp.data, temp.cols, temp.rows, temp.step, QImage::Format_RGB888);
+	 dest.bits(); // enforce deep copy, see documentation
+	 // of QImage::QImage ( const uchar * data, int width, int height, Format format )
+	 return dest;
 }
 
 cv::Mat WindowManager::QImage2Mat(QImage const& src)

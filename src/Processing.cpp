@@ -15,8 +15,8 @@
 namespace iez {
 
 Processing::Processing(ImageSourceBase *imgsrc)
-: 	m_imageSource(imgsrc)
-, 	m_calculateHandTracker(false)
+:	m_imageSource(imgsrc)
+,	m_calculateHandTracker(false)
 ,	m_statsList(0)
 {
 	moveToThread(&m_thread);
@@ -48,6 +48,9 @@ void Processing::process()
 	cv::Mat bgrRoi;
 	cv::Mat bgrDepthFiltered;
 	cv::Mat o,mask;
+
+
+
 	processDepthFiltering(bgr, depth, o, bgrRoi);
 	bgr.copyTo(bgrDepthFiltered);
 	filterDepth(bgrDepthFiltered, depth, 500, 800);

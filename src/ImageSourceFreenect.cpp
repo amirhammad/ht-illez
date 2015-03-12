@@ -28,7 +28,7 @@ iez_private::ImageSourceFreenectDevice_private::~ImageSourceFreenectDevice_priva
 int iez_private::ImageSourceFreenectDevice_private::deviceInit(void)
 {
 
-    return 0;
+	return 0;
 }
 
 int iez_private::ImageSourceFreenectDevice_private::streamInit(freenect_resolution resolution)
@@ -61,7 +61,7 @@ int iez_private::ImageSourceFreenectDevice_private::streamInit(freenect_resoluti
 //	setFlag(FREENECT_AUTO_EXPOSURE, FREENECT_OFF);
 	setFlag(FREENECT_AUTO_WHITE_BALANCE, FREENECT_OFF);
 	setLed(LED_GREEN);
-    return 0;
+	return 0;
 }
 
 
