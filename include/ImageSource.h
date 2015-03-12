@@ -7,7 +7,7 @@ class ImageSourceBase : public QObject {
 	Q_OBJECT
 public:
 	ImageSourceBase()
-	:	m_sequence(0) {
+	:	m_sequence(-1) {
 
 	}
 	virtual cv::Mat getColorMat() const = 0;
