@@ -55,22 +55,8 @@ void Processing::process()
 	bgr.copyTo(bgrDepthFiltered);
 	filterDepth(bgrDepthFiltered, depth);
 
-	// palm highlighting
-	const cv::Mat &binaryHand = filterDepth2(depth);
+	m_handTracker.process(bgr, depth);
 
-	cv::Mat handDT;
-	cv::Mat binaryHandFiltered;
-	distanceTransform(binaryHand, binaryHandFiltered, handDT);
-
-	cv::Point handCenter;
-	findHandCenter(handDT, handCenter);
-	float innerCircleRadius = findHandCenterRadius(binaryHandFiltered, handCenter);
-
-	cv::Mat centerHighlited = bgr.clone();
-//	innerCircleRadius /= 10;
-
-	cv::ellipse(centerHighlited, handCenter, cv::Size(innerCircleRadius, innerCircleRadius), 0, 0, 360, cv::Scalar(100, 0, 255), 10);
-	WindowManager::getInstance().imShow("handCenter", centerHighlited);
 
 	// calculate stats every 5. image
 	if (m_imageSource->getSequence()%5 == 0) {
@@ -329,6 +315,22 @@ void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth,
 	bgr.copyTo(bgrRoi,tmp3);
 
 //	WindowManager::getInstance().imShow("BGR roi finished", bgrRoi);
+}
+
+int Processing::findMin(const cv::Mat& depth)
+{
+	int minDepth = 10000;
+
+	for (int i = 0; i < depth.rows; i++) {
+		for (int j = 0; j < depth.cols; j++) {
+			const int d = depth.at<uint16_t>(i, j);
+			if (d) {
+				minDepth = qMin<int>(minDepth, d);
+			}
+		}
+	}
+
+	return minDepth;
 }
 
 void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int far)
@@ -878,67 +880,6 @@ std::vector<int> Processing::categorizeFingers(const std::vector<cv::Point>& con
 //	categorized[0];
 //	msleep(2000);
 	return categorized;
-}
-
-void Processing::distanceTransform(const cv::Mat &binaryHand, cv::Mat &binaryHandFiltered, cv::Mat &handDT)
-{
-	cv::medianBlur(binaryHand, binaryHandFiltered, 13);
-
-	cv::distanceTransform(binaryHandFiltered, handDT, CV_DIST_L2, 3);
-
-	cv::Mat gray;
-	handDT.convertTo(gray, CV_8UC1, 10.0f);
-	WindowManager::getInstance().imShow("distanceTransform", gray);
-
-}
-
-int Processing::findMin(const cv::Mat& depth)
-{
-	int minDepth = 10000;
-
-	for (int i = 0; i < depth.rows; i++) {
-		for (int j = 0; j < depth.cols; j++) {
-			const int d = depth.at<uint16_t>(i, j);
-			if (d) {
-				minDepth = qMin<int>(minDepth, d);
-			}
-		}
-	}
-
-	return minDepth;
-}
-
-void Processing::findHandCenter(const cv::Mat &handDT,  cv::Point &maxDTPoint)
-{
-	maxDTPoint = cv::Point(-1, -1);
-	float max = 0;
-	for (int i = 0; i < handDT.rows; i++) {
-		for (int j = 0; j < handDT.cols; j++) {
-			const float d = handDT.at<float>(i, j);
-			if (d > max) {
-				max = d;
-				maxDTPoint = cv::Point(j, i);
-			}
-		}
-	}
-}
-
-float Processing::findHandCenterRadius(const cv::Mat& binaryHandFiltered,
-		const cv::Point& maxDTPoint)
-{
-	std::vector<std::vector<cv::Point> > contours;
-	cv::findContours(binaryHandFiltered, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-	float minDistance = binaryHandFiltered.rows * binaryHandFiltered.cols;
-	if (contours.size() == 0) {
-		return 0;
-	}
-	for (int i = 0; i < contours[0].size(); i++) {
-		float dist = pointDistance(maxDTPoint, contours[0][i]);
-		if ( dist < minDistance) {
-			minDistance = dist;
-		}
-	}
-	return minDistance;
 }
 
 void Processing::closeEvent()

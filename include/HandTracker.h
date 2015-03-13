@@ -7,13 +7,16 @@ namespace iez {
 class HandTracker {
 public:
 	HandTracker();
-	void findHandFromCenter(const cv::Mat &bgr, const cv::Mat &depth);
-private:
-	static cv::Point3f interpolateToColor(const cv::Mat &bgr, const cv::Point2f &coord);
-	static float calculateGradientInDirection(const cv::Point3f &prevColor,
-		const cv::Point3f &nextColor);
-	void extend(cv::Mat &hand, const cv::Mat &img, cv::Point2f center, cv::Point3f meanColor, int depth);
+	void process(const cv::Mat &bgr, const cv::Mat &depth);
 
+	// static methods
+	void distanceTransform(const cv::Mat &binaryHand, cv::Mat &binaryHandFiltered, cv::Mat &handDT);
+	void findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint);
+	float findHandCenterRadius(const cv::Mat &binaryHandFiltered, const cv::Point &maxDTPoint);
+
+private:
+	cv::Point m_prevHandPosition;
+	int m_prevHandDepth;
 
 };
 

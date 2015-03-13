@@ -7,6 +7,7 @@
 #include "ColorSegmentation.h"
 #include "ImageSourceFreenect.h"
 #include "WindowManager.h"
+#include "HandTracker.h"
 
 namespace iez {
 
@@ -20,11 +21,12 @@ public:
 	static std::vector<cv::Point> smoothPoints(const std::vector<cv::Point> &vec, const int range);
 	static float pointDistance(const cv::Point &pt1, const cv::Point &pt2);
 	static void processHSVFilter(const cv::Mat &orig);
-
-
-private:
 	static void filterDepth(cv::Mat &dst, const cv::Mat &src, int near = -1, int far = -1);
 	static cv::Mat filterDepth2(const cv::Mat &src, int near = -1, int far = -1);
+	static int findMin(const cv::Mat &depth);
+private:
+
+
 	static void processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi, int near = -1);
 
 	void processColorSegmentation(const cv::Mat &bgr, const cv::Mat &depth);
@@ -46,30 +48,23 @@ private:
 			const cv::Mat &depth);
 	std::vector<int> categorizeFingers(const std::vector<cv::Point>& contour ,const std::vector<int> &candidates);
 
-	static void distanceTransform(const cv::Mat &binaryHand, cv::Mat &binaryHandFiltered, cv::Mat &handDT);
-	static void findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint);
-	static float findHandCenterRadius(const cv::Mat &binaryHandFiltered, const cv::Point &maxDTPoint);
-	static int findMin(const cv::Mat &depth);
-
 public slots:
 	void process();
 private:
 	QThread m_thread;
 
-
-
-
-
 	struct Data {
 		cv::Point center;
 	} data;
 	std::list<ImageStatistics> m_statsList;
-//	CHandTracker m_handTracker;
+	HandTracker m_handTracker;
 	ImageSourceBase *m_imageSource;
 
 	bool m_calculateHandTracker;
 	ColorSegmentation *m_segmentation;
 	Fps m_fps;
+
+
 private slots:
 	void keyPressEvent(QKeyEvent *keyEvent);
 	void closeEvent();
