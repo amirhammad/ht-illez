@@ -49,7 +49,7 @@ cv::Mat ImageStatistics::getProbabilityMap(const cv::Mat &bgr) const
 	map.create(bgr.rows, bgr.cols, CV_32F);
 	for (int i = 0; i < bgr.rows; i++) {
 		for (int j = 0; j < bgr.cols; j++) {
-			const cv::Point3_<uint8_t> &point = yuv.at<cv::Point3_<uint8_t>>(i,j);
+			const cv::Point3_<uint8_t> &point = yuv.at<cv::Point3_<uint8_t> >(i,j);
 			map.at<float>(i,j) = getProbability(point.y, point.z);
 		}
 	}

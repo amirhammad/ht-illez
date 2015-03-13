@@ -24,6 +24,9 @@ public:
 	static void filterDepth(cv::Mat &dst, const cv::Mat &src, int near = -1, int far = -1);
 	static cv::Mat filterDepth2(const cv::Mat &src, int near = -1, int far = -1);
 	static int findMin(const cv::Mat &depth);
+	static int findMin2(const cv::Mat &depth, cv::Point &point);
+	static cv::Point calculateMean(const std::vector<cv::Point>&);
+
 private:
 
 
@@ -33,7 +36,7 @@ private:
 
 	void processContourTracing(const cv::Mat &bgr, const cv::Mat &depth, const cv::Mat &bgrDepthFiltered);
 	static cv::Point calculateWeightedMean(const std::vector<cv::Point>&);
-	static cv::Point calculateMean(const std::vector<cv::Point>&);
+
 	static cv::Point calculateMeanIndices(const cv::Mat&);
 
 

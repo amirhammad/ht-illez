@@ -55,7 +55,7 @@ void Processing::process()
 	bgr.copyTo(bgrDepthFiltered);
 	filterDepth(bgrDepthFiltered, depth);
 
-	m_handTracker.process(bgr, depth);
+	m_handTracker.process(bgr, depth, m_imageSource->getSequence());
 
 
 	// calculate stats every 5. image
@@ -73,7 +73,7 @@ void Processing::process()
 //	}
 	m_fps.tick();
 //	processContourTracing(bgr, depth, bgrDepthFiltered);
-	qDebug("fps: %2.1f", m_fps.fps());
+//	qDebug("fps: %2.1f", m_fps.fps());
 //	return;
 //	const cv::Mat &bgrSaturated = processSaturate(bgr, 50);
 //	WindowManager::getInstance().imShow("Saturated BGR",bgrSaturated);
@@ -319,19 +319,29 @@ void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth,
 
 int Processing::findMin(const cv::Mat& depth)
 {
+	cv::Point dummy;
+	return findMin2(depth, dummy);
+}
+
+int Processing::findMin2(const cv::Mat& depth, cv::Point &point)
+{
 	int minDepth = 10000;
 
 	for (int i = 0; i < depth.rows; i++) {
 		for (int j = 0; j < depth.cols; j++) {
 			const int d = depth.at<uint16_t>(i, j);
-			if (d) {
-				minDepth = qMin<int>(minDepth, d);
+			if (d > 0) {
+				if (minDepth > d) {
+					minDepth = d;
+					point = cv::Point(j, i);
+				}
 			}
 		}
 	}
 
 	return minDepth;
 }
+
 
 void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int far)
 {
@@ -375,6 +385,7 @@ cv::Mat Processing::filterDepth2(const cv::Mat &depth, int near, int far)
 
 	return outputMask;
 }
+
 
 static int params[20]={11, 139, 0, 255, 95, 169, 174, 118};
 void Processing::processHSVFilter(const cv::Mat &orig)
@@ -524,7 +535,7 @@ cv::Point Processing::calculateMean(const std::vector<cv::Point> &pointVector)
 	}
 
 	cv::Point mean(0,0);
-	float wsum = 0;
+
 	for (int i = 0; i < pointVector.size(); i++) {
 		mean = mean + pointVector[i];
 	}
