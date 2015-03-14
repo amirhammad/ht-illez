@@ -25,7 +25,7 @@
 #include "Processing.h"
 #include "WindowManager.h"
 #include "main.h"
-
+#include "GeneralizedHough.h"
 #include "unistd.h"
 #include "getopt.h"
 using namespace cv;
@@ -100,6 +100,10 @@ int main(int argc, char *argv[])
 	using namespace iez;
 	using namespace std;
 	QApplication app(argc, argv);
+
+	iez::GeneralizedHough hough;
+	hough.process();
+	return 0;
 
 	getOptions(argc, argv);
 	// Camera init
