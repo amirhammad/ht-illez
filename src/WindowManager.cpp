@@ -11,10 +11,9 @@ void WindowManager::imShow(const QString name, const cv::Mat& image)
 
 void WindowManager::imShow(const QString name, const QImage& image)
 {
-	m_mutex.lock();
+	QMutexLocker l(&m_mutex);
 	struct imShowMapData * data = &m_imShowMap[name];//.image = image;
 	data->image = image;
-	m_mutex.unlock();
 	QMetaObject::invokeMethod(this, "on_imShow", Qt::AutoConnection, QGenericArgument("const QString", &name));
 }
 
@@ -24,10 +23,9 @@ void WindowManager::plot(const QString name,
 {
 //	QMainWindow *w = new QMainWindow();
 //	w->setFixedSize(QSize(640, 480));
-	m_mutex.lock();
+	QMutexLocker l(&m_mutex);
 	m_plotMap[name].x = QVector<double>(x);
 	m_plotMap[name].y = QVector<double>(y);
-	m_mutex.unlock();
 	QMetaObject::invokeMethod(this, "on_plot", Qt::AutoConnection, QGenericArgument("const QString", &name));
 }
 
@@ -41,7 +39,7 @@ void WindowManager::plot(const QString name,
 
 void WindowManager::on_plot(const QString name)
 {
-	m_mutex.lock();
+	QMutexLocker l(&m_mutex);
 	struct plotMapData *data= &m_plotMap[name];
 
 	if (!data->widget) {
@@ -90,7 +88,6 @@ void WindowManager::on_plot(const QString name)
 	customPlot->yAxis->setRange(-5, 5);
 	customPlot->replot();
 	data->widget->show();
-	m_mutex.unlock();
 }
 QImage WindowManager::Mat2QImage(const cv::Mat& src)
 {
@@ -124,10 +121,9 @@ WindowManager::WindowManager()
 
 void WindowManager::on_imShow(const QString str)
 {
-	m_mutex.lock();
+	QMutexLocker l(&m_mutex);
 	if (!m_imShowMap[str].widget) {
 		Window *mapLabel = new Window();
-//		mapLabel->moveToThread(QCoreApplication::instance()->thread());
 		m_imShowMap[str].widget = mapLabel;
 	}
 
@@ -136,8 +132,8 @@ void WindowManager::on_imShow(const QString str)
 	mapLabel->setWindowTitle(str);
 	mapLabel->show();
 
+
 	mapLabel->setPixmap(QPixmap::fromImage(m_imShowMap[str].image));
-	m_mutex.unlock();
 }
 
 }

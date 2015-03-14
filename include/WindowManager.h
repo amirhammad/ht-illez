@@ -61,7 +61,7 @@ private:
 		Window *widget;
 		QImage image;
 	};
-	std::map<const QString, struct imShowMapData > m_imShowMap;
+	QHash<const QString, struct imShowMapData > m_imShowMap;
 
 	struct plotMapData {
 		Window *widget;
@@ -69,7 +69,7 @@ private:
 		QVector<double> y;
 		QCustomPlot *customPlot;
 	};
-	std::map<const QString, struct plotMapData> m_plotMap;
+	QHash<const QString, struct plotMapData> m_plotMap;
 
 	QMutex m_mutex;
 
