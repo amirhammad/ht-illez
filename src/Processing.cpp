@@ -34,54 +34,19 @@ Processing::~Processing(void)
 
 void Processing::process()
 {
-	uint32_t t1 = clock();
 	const cv::Mat &depth = m_imageSource->getDepthMat();
 	const cv::Mat &rgb = m_imageSource->getColorMat();
 	cv::Mat bgr;
 	cv::cvtColor(rgb, bgr,cv::COLOR_RGB2BGR);
 
-//	qDebug("%d %d %d %d ", bgr.rows, depth.rows, bgr.cols, depth.cols);
 	assert(bgr.rows == depth.rows);
 	assert(bgr.cols == depth.cols);
 
 	WindowManager::getInstance().imShow("Original", bgr);
-	cv::Mat bgrRoi;
-	cv::Mat bgrDepthFiltered;
-	cv::Mat o,mask;
 
 	m_handTracker.invokeProcess(bgr, depth, m_imageSource->getSequence());
 
-
-	processDepthFiltering(bgr, depth, o, bgrRoi);
-	bgr.copyTo(bgrDepthFiltered);
-	filterDepth(bgrDepthFiltered, depth);
-
-
-
-	// calculate stats every 5. image
-	if (m_imageSource->getSequence()%5 == 0) {
-		if (m_statsList.size() == 30) {
-			m_statsList.pop_front();
-		}
-
-		m_statsList.push_back(ImageStatistics(bgrDepthFiltered, true));
-	}
-
-//	const cv::Mat &megafilter = ColorSegmentation::m_statsFile.getProbabilityMapComplementary(bgrDepthFiltered, m_statsList, 0.00001);
-//	if (ColorSegmentation::m_statsFile.getSampleCount()) {
-//		WindowManager::getInstance().imShow("MEGAFILTER", megafilter);
-//	}
-	m_fps.tick();
-//	processContourTracing(bgr, depth, bgrDepthFiltered);
-//	qDebug("fps: %2.1f", m_fps.fps());
-//	return;
-//	const cv::Mat &bgrSaturated = processSaturate(bgr, 50);
-//	WindowManager::getInstance().imShow("Saturated BGR",bgrSaturated);
-
-
-	imageSourceArtificial->setColorMat(bgrRoi);
-
-//	processColorSegmentation(bgr, depth);
+	imageSourceArtificial->setColorMat(bgr);
 }
 
 void Processing::processContourTracing(const cv::Mat &bgr, const cv::Mat &depth, const cv::Mat &bgrDepthFiltered)
