@@ -34,6 +34,7 @@ private:
 							const std::vector<cv::Point> &palmContour,
 							const cv::Mat &binaryHand,
 							const cv::Mat &palmMask,
+							const cv::Point &handCenter,
 							Data &data);
 
 private:

@@ -11,6 +11,7 @@ namespace iez {
 #define NEXT_HAND_TOLERANCE (5)
 #define HAND_MAX_PHYSICAL_DEPTH	(200)
 #define C3	(90)
+#define PALM_RADIUS_RATIO (1.2f)
 
 int HandTracker::Worker::m_runningThreads = 0;
 
@@ -49,7 +50,7 @@ float HandTracker::findHandCenterRadius(const cv::Mat& binaryHandFiltered,
 }
 
 
-#define PALM_RADIUS_RATIO (1.2f)
+
 void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 						   std::vector<cv::Point> &palmContour,
 						   const cv::Mat &binaryHand,
@@ -110,6 +111,7 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 							  const std::vector<cv::Point> &palmContour,
 							  const cv::Mat &binaryHand,
 							  const cv::Mat &palmMask,
+							  const cv::Point &handCenter,
 							  Data &data)
 {
 	std::pair<cv::Point, cv::Point> wristPointPair;
@@ -120,6 +122,9 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 	}
 	/// find wristPointPair
 	{
+
+		/// Find max distance between 2 successive points, add them to linked list of size at most 3
+
 		float maxDist = std::numeric_limits<float>::min();
 
 		QLinkedList<wristpair> wpp3;
@@ -146,6 +151,9 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 				}
 			}
 		}
+
+		/// Find wrist(out of 3 got in previous algorithm step) nearest to previously saved wrist
+
 		wristpair wppData = data.wrist();
 		cv::Point wppMeanData = Processing::pointMean(wppData.first, wppData.second);
 
@@ -164,81 +172,62 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 			wpp3.removeLast();
 		}
 
-		// lowpassing
 
-		if (Processing::pointDistance(wppData.first, wppFinal.first) > Processing::pointDistance(wppData.first, wppFinal.second)) {
+		/// order by right-hand rule
+
+		const cv::Point &pt1 = wppFinal.first;
+		const cv::Point &pt2 = handCenter;
+		const cv::Point &pt3 = wppFinal.second;
+		const cv::Point normal(pt2.y - pt1.y, pt1.x - pt2.x); // (from pt1 to pt2) -> normal -90*
+		if ((pt3 - pt1).dot(normal) < 0) {
 			// swap
 			wppFinal = wristpair(wppFinal.second, wppFinal.first);
 		}
+
+		/// lowpassing
 		const float ratio = 0.8f;
 		wristPointPair = wristpair(Processing::pointMean(wppFinal.first, wppData.first, ratio),
 								   Processing::pointMean(wppFinal.second, wppData.second, ratio));
-		// ~lowpassing
 
-//		wristPointPair = wppFinal;
-
+		/// save wristpair
 		data.setWrist(wristPointPair);
 	}
 
 	{
-
-
-
-
 		cv::Mat tmp;
 		cv::dilate(palmMask, tmp, cv::Mat(), cv::Point(-1,-1), 2);// dilate main
 		cv::Mat binaryFingersDiff = binaryHand - tmp;
 		std::vector<std::vector<cv::Point> > contours;
 		cv::findContours(binaryFingersDiff, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-//		cv::Mat contoursAndWristMat = cv::Mat::zeros(binaryHand.rows, binaryHand.cols, CV_8UC1);
+		/// use dot product with normal to remove contures under wrist line (half-plane filter out)
 
-//		for (int i = 0; i < contours.size(); i++) {
-//			cv::drawContours(contoursAndWristMat, contours, i, cv::Scalar(100), 2);
-//		}
-//		wristpair wrist = data.wrist();
-//		cv::line(contoursAndWristMat, wrist.first, wrist.second, cv::Scalar(200), 5);
-
-		/// Find contour, that is closest to wrist and remove it
-
-		cv::Point wristPointPairMean = Processing::pointMean(wristPointPair.first, wristPointPair.second);
-		float minDist = std::numeric_limits<float>::max();
-		int minIndex = -1;
+		wristpair wrist = data.wrist();
+		QList<std::vector<cv::Point> > l;
 		for (int i = 0; i < contours.size(); i++) {
-//			cv::contourArea(contours[i]);
 			cv::Point center = Processing::calculateMean(contours[i]);
-			float d = Processing::pointDistance(center, wristPointPairMean);
-			if (minDist > d) {
-				minDist = d;
-				minIndex = i;
+			const cv::Point &pt1 = wrist.first;
+			const cv::Point &pt2 = wrist.second;
+			const cv::Point &pt3 = center;
+			const cv::Point normal(pt2.y - pt1.y, pt1.x - pt2.x); // (from pt1 to pt2) -> normal -90*
+			if ((pt3 - pt1).dot(normal) < 0) {
+				l.append(contours[i]);
 			}
 		}
-
-		if (minIndex == -1 || contours.size() == 1) {
-			qDebug("minindex = -1");
-			return;
+		std::vector<std::vector<cv::Point> > contoursNoWrist(l.size());
+		QListIterator<std::vector<cv::Point> > it = l;
+		int index = 0;
+		while (it.hasNext()) {
+			const std::vector<cv::Point> &contour = it.next();
+			contoursNoWrist[index++] = contour;
 		}
 
-		std::vector<std::vector<cv::Point> > contoursNoWrist(contours.size() - 1);
-		for (int i = 0; i < minIndex; i++) {
-			contoursNoWrist[i] = contours[i];
-		}
-		for (int i = minIndex + 1; i < contours.size(); i++) {
-			contoursNoWrist[i - 1] = contours[i];
-		}
 
 		/// draw fingers from contours
 
 		binaryFingersMask = cv::Mat::zeros(binaryHand.rows, binaryHand.cols, CV_8UC1);
 		cv::fillPoly(binaryFingersMask, contoursNoWrist, cv::Scalar_<uint8_t>(255));
-
-
-//		binaryFingersDiff;
-
-//		binaryFingersMask = binaryFingersDiff;
 	}
-
-//	binaryFingersMask = binaryHand - tmp;
 }
 
 HandTracker::HandTracker()
@@ -401,9 +390,12 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	/// find wrist ... TODO
 	cv::Mat fingersMask;
-	findFingers(fingersMask, palmContour, binaryHand, palmMask, data);
-
-
+	findFingers(fingersMask, palmContour, binaryHand, palmMask, palmCenter, data);
+	cv::Mat fingerMaskOutput;
+	fingersMask.copyTo(fingerMaskOutput);
+	cv::ellipse(fingerMaskOutput, palmCenter, cv::Size(palmRadius, palmRadius), 0, 0, 360, cv::Scalar(100), 1);
+	cv::ellipse(fingerMaskOutput, palmCenter, cv::Size(palmRadius*PALM_RADIUS_RATIO, palmRadius*PALM_RADIUS_RATIO), 0, 0, 360, cv::Scalar(180), 1);
+	cv::putText(fingerMaskOutput, QString::number(handContour.size()).toStdString(), cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
 	/// Draw
 
 	cv::Mat centerHighlited = bgr.clone();
@@ -416,15 +408,15 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	WindowManager::getInstance().imShow("handCenter", centerHighlited);
 
 	// draw only if valid, else results in flickering...
-	if (fingersMask.rows == binaryHand.rows) {
-		WindowManager::getInstance().imShow("fingers", fingersMask);
+	if (fingerMaskOutput.rows == binaryHand.rows) {
+		WindowManager::getInstance().imShow("fingers", fingerMaskOutput);
 	}
 //	WindowManager::getInstance().imShow("PALM", palmMask);
 
 //	cv::Mat gray;
 //	handDT.convertTo(gray, CV_8UC1, 10.0f);
 //	WindowManager::getInstance().imShow("distanceTransform", handDT);
-	qDebug("fps: %f", (1000/30.f)/t.elapsed()*30);
+	qDebug("ID=%5d fps: %4.1f ... %3dms", imageId, (1000/30.f)/t.elapsed()*30, t.elapsed());
 }
 
 HandTracker::Worker::Worker(const cv::Mat bgr, const cv::Mat depth, const int imageId, Data &data)
