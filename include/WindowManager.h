@@ -6,10 +6,10 @@
 
 namespace iez {
 
-class CWindow : public QLabel {
+class Window : public QLabel {
 	Q_OBJECT
 public:
-	CWindow(){};
+	Window(){};
 
 private:
 	void keyPressEvent(QKeyEvent *keyEvent) {
@@ -55,13 +55,13 @@ public:
 private:
 
 	struct imShowMapData {
-		CWindow *widget;
+		Window *widget;
 		QImage image;
 	};
 	std::map<const QString, struct imShowMapData > m_imShowMap;
 
 	struct plotMapData {
-		CWindow *widget;
+		Window *widget;
 		QVector<double> x;
 		QVector<double> y;
 		QCustomPlot *customPlot;

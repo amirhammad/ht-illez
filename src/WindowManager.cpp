@@ -44,7 +44,7 @@ void WindowManager::on_plot(const QString name)
 	struct plotMapData *data= &m_plotMap[name];
 
 	if (!data->widget) {
-		CWindow *widget = new CWindow();
+		Window *widget = new Window();
 		widget->setWindowTitle(name);
 		widget->setFixedSize(QSize(900, 450));
 //		connect(widget, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
@@ -125,12 +125,12 @@ void WindowManager::on_imShow(const QString str)
 {
 	m_mutex.lock();
 	if (!m_imShowMap[str].widget) {
-		CWindow *mapLabel = new CWindow();
+		Window *mapLabel = new Window();
 //		mapLabel->moveToThread(QCoreApplication::instance()->thread());
 		m_imShowMap[str].widget = mapLabel;
 	}
 
-	CWindow *mapLabel = m_imShowMap[str].widget;
+	Window *mapLabel = m_imShowMap[str].widget;
 	mapLabel->setFixedSize(m_imShowMap[str].image.width(),m_imShowMap[str].image.height());
 	mapLabel->setWindowTitle(str);
 	mapLabel->show();
