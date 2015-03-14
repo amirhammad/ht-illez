@@ -49,13 +49,13 @@ void Processing::process()
 	cv::Mat bgrDepthFiltered;
 	cv::Mat o,mask;
 
+	m_handTracker.invokeProcess(bgr, depth, m_imageSource->getSequence());
 
 
 	processDepthFiltering(bgr, depth, o, bgrRoi);
 	bgr.copyTo(bgrDepthFiltered);
 	filterDepth(bgrDepthFiltered, depth);
 
-	m_handTracker.process(bgr, depth, m_imageSource->getSequence());
 
 
 	// calculate stats every 5. image
@@ -543,6 +543,23 @@ cv::Point Processing::calculateMean(const std::vector<cv::Point> &pointVector)
 	return cv::Point(mean.x/size, mean.y/size);
 }
 
+cv::Point Processing::findNearestPoint(const std::vector<cv::Point> &pointVector, const cv::Point refPoint)
+{
+	float minDistance = std::numeric_limits<float>::max();
+	if (pointVector.size() == 0) {
+		return cv::Point();
+	}
+	cv::Point nearestPoint = pointVector[0];
+	for (int i = 1; i < pointVector.size(); i++) {
+		float d = pointDistance(refPoint, pointVector[i]);
+		if (minDistance > d) {
+			minDistance = d;
+			nearestPoint = pointVector[i];
+		}
+	}
+	return nearestPoint;
+}
+
 cv::Point Processing::calculateWeightedMean(const std::vector<cv::Point> &pointVector)
 {
 	if (pointVector.size() == 0) {
@@ -616,6 +633,11 @@ float Processing::pointDistance(const cv::Point& pt1, const cv::Point& pt2)
 {
 	const cv::Point diff = pt1-pt2;
 	return sqrtf(diff.dot(diff));
+}
+
+cv::Point Processing::pointMean(const cv::Point &pt1, const cv::Point &pt2, const float ratio12)
+{
+	return cv::Point((pt1.x*ratio12 + pt2.x*(1 - ratio12)), (pt1.y*ratio12 + pt2.y*(1 - ratio12)));
 }
 
 std::vector<cv::Point> Processing::smoothPoints(const std::vector<cv::Point>& vec, const int range)

@@ -20,12 +20,14 @@ public:
 	static cv::Mat processSaturate(const cv::Mat &bgr, const int satIncrease);
 	static std::vector<cv::Point> smoothPoints(const std::vector<cv::Point> &vec, const int range);
 	static float pointDistance(const cv::Point &pt1, const cv::Point &pt2);
+	static cv::Point pointMean(const cv::Point &pt1, const cv::Point &pt2, const float ratio12 = 0.5f);
 	static void processHSVFilter(const cv::Mat &orig);
 	static void filterDepth(cv::Mat &dst, const cv::Mat &src, int near = -1, int far = -1);
 	static cv::Mat filterDepth2(const cv::Mat &src, int near = -1, int far = -1);
 	static int findMin(const cv::Mat &depth);
 	static int findMin2(const cv::Mat &depth, cv::Point &point);
 	static cv::Point calculateMean(const std::vector<cv::Point>&);
+	static cv::Point findNearestPoint(const std::vector<cv::Point> &pointVector, const cv::Point refPoint);
 
 private:
 
