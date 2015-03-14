@@ -1,5 +1,6 @@
-#include "WindowManager.h"
 #include "qcustomplot.h"
+#include "WindowManager.h"
+
 #include <QCoreApplication>
 
 namespace iez {

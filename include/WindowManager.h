@@ -1,8 +1,11 @@
 #pragma once
 #include <opencv2/opencv.hpp>
-#include <QtGui/qlabel.h>
+#include <QtCore/QObject>
+#include <QtGui/QLabel>
+#include <QtGui/qevent.h>
 #include <QtCore/qmutex.h>
-#include "qcustomplot.h"
+
+class QCustomPlot;
 
 namespace iez {
 
