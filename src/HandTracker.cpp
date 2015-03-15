@@ -91,6 +91,28 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 		randomAngleDeg += ((static_cast<unsigned int>(qrand())%(360*1000))/1000.f)/maxValues;
 	}
 //	qDebug() << "---->---->" << k.size() << boundaryPointList.size();// << k;
+	/// SORT by angle
+
+	struct compare {
+		compare(cv::Point palmCenter)
+		:	m_palmCenter(palmCenter){
+
+		}
+
+		float getAngle(cv::Point point) {
+			const float dy = point.y - m_palmCenter.y;
+			const float dx = point.x - m_palmCenter.x;
+			const float angle = atan2(dy, dx);
+			return angle;
+		}
+
+		bool operator() (cv::Point a, cv::Point b) {
+			return getAngle(a) < getAngle(b);
+		}
+
+		cv::Point m_palmCenter;
+	};
+	std::sort(boundaryPointList.begin(), boundaryPointList.end(), compare(palmCenter));
 
 
 	/// produce output
