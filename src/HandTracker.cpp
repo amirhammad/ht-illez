@@ -179,7 +179,7 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 		wristpair wppData = data.wrist();
 		cv::Point wppMeanData = Processing::pointMean(wppData.first, wppData.second);
 
-		wristpair wppFinal;
+		wristpair wppFinal = wppData;
 		float minDist = std::numeric_limits<float>::max();
 		while (wpp3.size()) {
 			wristpair wpp = wpp3.last();
