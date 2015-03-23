@@ -7,6 +7,7 @@
 #include <QtCore/qthread.h>
 #include <QtCore/qtimer.h>
 #include <qreadwritelock.h>
+#include <QKeyEvent>
 
 namespace iez {
 class ImageSourceOpenNI : public ImageSourceBase
@@ -51,6 +52,8 @@ private:
 	bool m_initialized;
 	QThread m_thread;
 	int m_failCount;
+public slots:
+	void keyEvent(QKeyEvent *event);
 private slots:
 	void update();
 };

@@ -135,6 +135,16 @@ int ImageSourceOpenNI::streamInit()
 	return 0;
 }
 
+void ImageSourceOpenNI::keyEvent(QKeyEvent *event)
+{
+	if (event->key() == ' ') {
+		if (m_timer.isActive()) {
+			m_timer.stop();
+		} else {
+			m_timer.start();
+		}
+	}
+}
 void ImageSourceOpenNI::readDepth()
 {
 	QWriteLocker l(&depth_rwlock);

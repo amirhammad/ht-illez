@@ -124,6 +124,7 @@ void WindowManager::on_imShow(const QString str)
 	QMutexLocker l(&m_mutex);
 	if (!m_imShowMap[str].widget) {
 		Window *mapLabel = new Window();
+		connect(mapLabel, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
 		m_imShowMap[str].widget = mapLabel;
 	}
 

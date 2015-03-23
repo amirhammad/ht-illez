@@ -12,6 +12,7 @@
 // Qt
 //#include <QThread>
 #include <QApplication>
+#include <QKeyEvent>
 // Custom
 #include "ImageSource.h"
 #include "ImageSourceFreenect.h"
@@ -122,6 +123,7 @@ int main(int argc, char *argv[])
 
 
 	// TODO: can edit files
+	QObject::connect(&WindowManager::getInstance(), SIGNAL(keyPressed(QKeyEvent*)), kinect, SLOT(keyEvent(QKeyEvent*)));
 
 	iez::ImageRecorder *recorder;
 	if (options.recording) {
