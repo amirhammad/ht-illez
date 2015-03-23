@@ -1,15 +1,18 @@
 #include "ImageSourceOpenNI.h"
+#include <QApplication>
 
 using namespace iez;
 using namespace cv;
 
 #define SAMPLE_XML_PATH "SamplesConfig.xml"
 #define FILE_PLAY_SPEED (30)
+#define MAX_FAIL_COUNT (20)
 ImageSourceOpenNI::ImageSourceOpenNI(int fps)
 :	m_width(640)
 ,	m_height(480)
 ,	m_fps(fps)
 ,	m_initialized(false)
+,	m_failCount(0)
 {
 	moveToThread(&m_thread);
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -32,7 +35,8 @@ int ImageSourceOpenNI::deviceInit(const char* deviceURI)
 
 	rc = device.open(deviceURI);
 	if (device.isFile()) {
-		device.getPlaybackControl()->setSpeed(FILE_PLAY_SPEED);
+		m_fps = FILE_PLAY_SPEED;
+		device.getPlaybackControl()->setSpeed(m_fps);
 		device.getPlaybackControl()->setRepeatEnabled(true);
 	}
 
@@ -139,8 +143,14 @@ void ImageSourceOpenNI::update()
 	for (int i = 0; i < 2; i++) {
 		openni::Status rc = openni::OpenNI::waitForAnyStream(m_streams, 2, &changedIndex, 0);
 		if (rc != openni::STATUS_OK) {
+			m_failCount++;
+			if (m_failCount > MAX_FAIL_COUNT) {
+				QApplication::exit();
+			}
 			printf("Wait failed\n");
 			return;
+		} else {
+			m_failCount = 0;
 		}
 
 		switch (changedIndex) {

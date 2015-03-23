@@ -45,9 +45,10 @@ private:
 	mutable QReadWriteLock depth_rwlock;
 	mutable QReadWriteLock color_rwlock;
 
-	const int m_fps;
+	int m_fps;
 	bool m_initialized;
 	QThread m_thread;
+	int m_failCount;
 private slots:
 	void update();
 };
