@@ -317,7 +317,7 @@ void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int f
 		near = findMin(depth);
 		far = near + 170;
 	}
-	const cv::Mat &mask = filterDepth2(depth, near, far);
+	const cv::Mat &mask = filterDepthMask(depth, near, far);
 	WindowManager::getInstance().imShow("x", mask);
 	cv::Mat dst2;
 
@@ -326,7 +326,7 @@ void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int f
 	dst2.copyTo(dst);
 }
 
-cv::Mat Processing::filterDepth2(const cv::Mat &depth, int near, int far)
+cv::Mat Processing::filterDepthMask(const cv::Mat &depth, int near, int far)
 {
 	cv::Mat outputMask;
 	outputMask.create(depth.rows, depth.cols, CV_8UC1);

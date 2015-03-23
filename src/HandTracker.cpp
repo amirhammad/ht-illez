@@ -296,7 +296,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 //		far = near + HAND_MAX_PHYSICAL_DEPTH + NEXT_HAND_TOLERANCE;
 	}
 
-	candidates = Processing::filterDepth2(depth, near, far);
+	candidates = Processing::filterDepthMask(depth, near, far);
 
 	// mask with rectangle
 //	cv::Mat mask = cv::Mat::zeros(depth.rows, depth.cols, CV_8UC1);
