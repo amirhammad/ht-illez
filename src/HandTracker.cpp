@@ -10,6 +10,7 @@ namespace iez {
 
 #define HAND_MAX_PHYSICAL_DEPTH	(200)
 #define PALM_RADIUS_RATIO (1.2f)
+#define MAX_THREADS (1)
 
 QVector<float> * HandTracker::C1::m_vector = 0;
 
@@ -256,7 +257,7 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 
 HandTracker::HandTracker()
 {
-	m_maxThreads = 3;
+	m_maxThreads = MAX_THREADS;
 }
 
 void HandTracker::invokeProcess(const cv::Mat &bgr, const cv::Mat &depth, const int imageId)
