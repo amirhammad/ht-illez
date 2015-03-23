@@ -32,6 +32,14 @@ link_directories(${OPENNI_DIR}/Redist)
 include_directories(include)
 SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -gdwarf-3")
 SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-std=c++11 -gdwarf-3")
+
+include(./scripts/Findlog4cplus.cmake)
+if (NOT LOG4CPLUS_FOUND)
+    message( FATAL_ERROR "log4cplus not found")
+endif()
+
+INCLUDE_DIRECTORIES(${LOG4CPLUS_INCLUDE_DIR})
+
 # Open CV
 find_package(OpenCV REQUIRED)
 
@@ -68,7 +76,7 @@ ADD_DEFINITIONS(${QT_DEFINITIONS})
 
 add_executable(${outputname} ${QCustomPlot_SOURCES} ${out_SOURCES} ${out_HEADERS_MOC} ${out_HEADERS})
 target_link_libraries(${outputname} ${OpenCV_LIBS})
-target_link_libraries(${outputname} ${QT_LIBRARIES} OpenNI2 pthread opennn ${FREENECT_LIBRARIES})
+target_link_libraries(${outputname} ${QT_LIBRARIES} ${LOG4CPLUS_LIBRARIES} OpenNI2 pthread opennn ${FREENECT_LIBRARIES})
 
 #target_link_libraries(${outputname} ${FREENECT_LIBRARIES})
 

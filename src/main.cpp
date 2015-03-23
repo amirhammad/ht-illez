@@ -24,10 +24,12 @@
 #include "WindowManager.h"
 #include "MainWindow.h"
 #include "main.h"
+#include "Logger.h"
 
-#include "unistd.h"
-#include "getopt.h"
+#include <unistd.h>
+#include <getopt.h>
 
+DBG_MODULE_INIT("MAIN");
 
 
 iez::ImageSourceArtificial *iez::imageSourceArtificial;
@@ -102,6 +104,7 @@ int main(int argc, char *argv[])
 //	new MainWindow();
 //	QApplication::exec();
 //	return 0;
+	iez::Logger::init();
 	getOptions(argc, argv);
 
 
