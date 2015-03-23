@@ -32,6 +32,8 @@ private:
 	int deviceInit(const char* deviceURI);
 	int streamInit(void);
 
+	void readDepth();
+	void readColor();
 	int m_width, m_height;
 
 	cv::Mat m_depthMat;

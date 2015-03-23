@@ -136,6 +136,26 @@ int ImageSourceOpenNI::streamInit()
 	return 0;
 }
 
+void ImageSourceOpenNI::readDepth()
+{
+	QWriteLocker l(&depth_rwlock);
+	m_depthStream.readFrame(&m_depthFrame);
+	m_sequence = max<int>(m_sequence, m_depthFrame.getFrameIndex());//bug(overflow in ~700 days)
+	if (m_depthFrame.isValid()) {
+		memcpy(m_depthMat.data, m_depthFrame.getData(), m_depthFrame.getDataSize());
+	}
+}
+
+void ImageSourceOpenNI::readColor()
+{
+	QWriteLocker l(&color_rwlock);
+	m_colorStream.readFrame(&m_colorFrame);
+	m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug(overflow in ~700 days)
+	if (m_colorFrame.isValid()) {
+		memcpy(m_colorMat.data, m_colorFrame.getData(), m_colorFrame.getDataSize());
+	}
+}
+
 void ImageSourceOpenNI::update() 
 {
 	int changedIndex;
@@ -156,22 +176,12 @@ void ImageSourceOpenNI::update()
 		switch (changedIndex) {
 		case 0:
 		{
-			QWriteLocker l(&depth_rwlock);
-			m_depthStream.readFrame(&m_depthFrame);
-			m_sequence = max<int>(m_sequence, m_depthFrame.getFrameIndex());//bug(overflow in ~700 days)
-			if (m_depthFrame.isValid()) {
-				memcpy(m_depthMat.data, m_depthFrame.getData(), m_depthFrame.getDataSize());
-			}
+			readDepth();
 		}
 			break;
 		case 1:
 		{
-			QWriteLocker l(&color_rwlock);
-			m_colorStream.readFrame(&m_colorFrame);
-			m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug(overflow in ~700 days)
-			if (m_colorFrame.isValid()) {
-				memcpy(m_colorMat.data, m_colorFrame.getData(), m_colorFrame.getDataSize());
-			}
+			readColor();
 		}
 			break;
 		default:
@@ -217,8 +227,6 @@ cv::Mat ImageSourceOpenNI::getDepthMat() const
 	QReadLocker l(&depth_rwlock);
 	return m_depthMat;
 }
-
-
 
 cv::Mat ImageSourceOpenNI::getColorMat() const
 {
