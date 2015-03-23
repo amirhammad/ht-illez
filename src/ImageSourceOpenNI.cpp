@@ -4,7 +4,6 @@
 using namespace iez;
 using namespace cv;
 
-#define SAMPLE_XML_PATH "SamplesConfig.xml"
 #define FILE_PLAY_SPEED (30)
 #define MAX_FAIL_COUNT (20)
 ImageSourceOpenNI::ImageSourceOpenNI(int fps)

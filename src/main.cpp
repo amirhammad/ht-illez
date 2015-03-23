@@ -6,9 +6,6 @@
 #include <iostream>
 #include <string>
 
-// armadillo
-//#include <armadillo>
-
 // libfreenect
 #include <libfreenect/libfreenect.hpp>
 

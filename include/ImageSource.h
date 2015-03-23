@@ -13,7 +13,8 @@ public:
 	virtual cv::Mat getColorMat() const = 0;
 	virtual cv::Mat getDepthMat() const = 0;
 
-	virtual ~ImageSourceBase(){};
+	virtual ~ImageSourceBase(){}
+
 	int getSequence() const {
 		return m_sequence;
 	}

@@ -8,9 +8,7 @@
 
 namespace iez {
 
-#define NEXT_HAND_TOLERANCE (5)
 #define HAND_MAX_PHYSICAL_DEPTH	(200)
-#define C3	(90)
 #define PALM_RADIUS_RATIO (1.2f)
 
 QVector<float> * HandTracker::C1::m_vector = 0;
