@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <vector>
 #include <limits>
-
+#include <queue>
 
 namespace iez {
 
@@ -12,6 +12,8 @@ namespace iez {
 #define HAND_MAX_PHYSICAL_DEPTH	(200)
 #define C3	(90)
 #define PALM_RADIUS_RATIO (1.2f)
+
+QVector<float> * HandTracker::C1::m_vector = 0;
 
 int HandTracker::Worker::m_runningThreads = 0;
 
@@ -141,45 +143,45 @@ void HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 		return;
 	}
 
+	/**
+	 * construct the Priority queue and take out first 5 for consideration.
+	 * Then choose closest one to previous data.wrist (if valid).
+	 */
 
-	/// Find max distance between 2 successive points, add them to linked list of size at most 3
-
-	float maxDist = std::numeric_limits<float>::min();
-
-	QLinkedList<wristpair> wpp3;
-
-	const float dextra = Processing::pointDistance(palmContour[0], palmContour[palmContour.size() - 1]);
-	if (maxDist < dextra) {
-		maxDist = dextra;
-		wristpair wpp;
-		wpp.first = palmContour[0];
-		wpp.second = palmContour[palmContour.size() - 1];
-		wpp3.append(wpp);
-	}
-
+	/// calculate distances between neighbors
+	QVector<float> distanceToNeighbor(palmContour.size());
+	distanceToNeighbor[distanceToNeighbor.size() - 1] =
+			Processing::pointDistance(palmContour[0], palmContour[palmContour.size() - 1]);
 	for (int i = 0; i < palmContour.size() - 1; i++) {
-		const float d = Processing::pointDistance(palmContour[i], palmContour[i + 1]);
-		if (maxDist < d) {
-			maxDist = d;
-			wristpair wpp;
-			wpp.first = palmContour[i];
-			wpp.second = palmContour[i + 1];
-			wpp3.append(wpp);
-			if (wpp3.size() > 3) {
-				wpp3.removeFirst();
-			}
-		}
+		distanceToNeighbor[i] =
+				Processing::pointDistance(palmContour[i], palmContour[i + 1]);
 	}
 
-	/// Find wrist(out of 3 got in previous algorithm step) nearest to previously saved wrist
+
+	/// comparator for PQ
+
+
+	C1::setVector(&distanceToNeighbor);
+
+	/// construct the PQ
+	std::priority_queue<int, std::vector<int>, C1> wpPq;
+	for (int i = 0; i < distanceToNeighbor.size(); i++) {
+		wpPq.push(i);
+	}
+
+
+	/// Find wrist(out of 5 got in previous algorithm step) nearest to previously saved wrist
 
 	wristpair wppData = data.wrist();
 	cv::Point wppMeanData = Processing::pointMean(wppData.first, wppData.second);
 
 	wristpair wppFinal = wppData;
 	float minDist = std::numeric_limits<float>::max();
-	while (wpp3.size()) {
-		wristpair wpp = wpp3.last();
+	wppFinal = wristpair(palmContour[wpPq.top()], palmContour[(wpPq.top() + 1)%palmContour.size()]);
+
+	int cnt = 0;
+	while (wpPq.size() > 0 && cnt++ < 5) {
+		wristpair wpp(palmContour[wpPq.top()], palmContour[(wpPq.top() + 1)%palmContour.size()]);
 		cv::Point wppMean = Processing::pointMean(wpp.first, wpp.second);
 		float d = Processing::pointDistance(wppMean, wppMeanData);
 
@@ -188,11 +190,12 @@ void HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 			minDist = d;
 			wppFinal = wpp;
 		}
-		wpp3.removeLast();
+		wpPq.pop();
 	}
 
 
-	/// order by right-hand rule
+
+	/// order pair by right-hand rule
 
 	const cv::Point &pt1 = wppFinal.first;
 	const cv::Point &pt2 = handCenter;
@@ -480,5 +483,11 @@ std::pair<cv::Point, cv::Point> HandTracker::Data::wrist() const
 	QMutexLocker l(&m_mutex);
 	return m_wrist;
 }
+
+void HandTracker::C1::setVector(QVector<float> *vector)
+{
+	m_vector = vector;
+}
+
 
 } // Namespace iez

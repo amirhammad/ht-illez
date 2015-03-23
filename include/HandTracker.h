@@ -43,6 +43,16 @@ private:
 
 private:
 
+	// Comparator for findWrist
+	struct C1 {
+	private:
+		static QVector<float> *m_vector;
+	public:
+		/// less
+		bool operator()(int a, int b) const { return (*m_vector)[a] < (*m_vector)[b]; }
+		static void setVector(QVector<float> *vector);
+	};
+
 	class Data {
 	public:
 		void setWrist(wristpair wrist);
