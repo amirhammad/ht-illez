@@ -88,7 +88,8 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 			boundaryPointList.append(nearestPoint);
 		}
 
-		randomAngleDeg += ((static_cast<unsigned int>(qrand())%(360*1000))/1000.f)/maxValues;
+//		randomAngleDeg += ((static_cast<unsigned int>(qrand())%(360*1000))/1000.f)/maxValues;
+		randomAngleDeg += 360.0f/maxValues;
 	}
 //	qDebug() << "---->---->" << k.size() << boundaryPointList.size();// << k;
 	/// SORT by angle
