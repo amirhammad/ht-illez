@@ -24,17 +24,21 @@ private:
 									  const cv::Point &maxDTPoint,
 									  const std::vector<cv::Point> contour);
 
+
 	static void findPalm(cv::Mat &binaryPalmMask,
 						 std::vector<cv::Point> &palmContour,
 						 const cv::Mat &binaryHand,
 						 const std::vector<cv::Point> &contour,
 						 const cv::Point &palmCenter,
 						 const float palmRadius);
+
+	static void findWrist(const std::vector<cv::Point> &palmContour,
+						  const cv::Point &handCenter,
+						  Data &data);
+
 	static void findFingers(cv::Mat &binaryFingersMask,
-							const std::vector<cv::Point> &palmContour,
 							const cv::Mat &binaryHand,
 							const cv::Mat &palmMask,
-							const cv::Point &handCenter,
 							Data &data);
 
 private:
