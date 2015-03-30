@@ -2,8 +2,13 @@
 #include <opencv2/opencv.hpp>
 #include "WindowManager.h"
 #include "ColorSegmentation.h"
+#include "Types.h"
+#include "PoseRecognition.h"
+
 namespace iez {
+
 class HandTracker;
+class PoseRecognition;
 
 class HandTracker {
 
@@ -13,7 +18,6 @@ public:
 
 private:
 	class Data;
-	typedef std::pair<cv::Point, cv::Point> wristpair;
 
 	static void process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId, Data &data);
 
@@ -37,9 +41,13 @@ private:
 						  Data &data);
 
 	static void findFingers(cv::Mat &binaryFingersMask,
+							std::vector<std::vector<cv::Point> > &fingersContours,
 							const cv::Mat &binaryHand,
 							const cv::Mat &palmMask,
 							Data &data);
+	static QList<cv::Point> findFingertip(const cv::RotatedRect &rotRect,
+										  const float palmRadius,
+										  const cv::Point &palmCenter);
 
 private:
 
@@ -55,12 +63,17 @@ private:
 
 	class Data {
 	public:
-		void setWrist(wristpair wrist);
-		wristpair wrist() const;
+		void setWrist(wristpair_t wrist);
+		wristpair_t wrist() const;
+		void setFingertips(QList<cv::Point> fingertips);
+		QList<cv::Point> fingertips() const;
 
+		PoseRecognition *pose();
 	private:
-		wristpair m_wrist;
+		wristpair_t m_wrist;
+		QList<cv::Point> m_fingertips;
 
+		PoseRecognition m_pose;
 		mutable QMutex m_mutex;
 	};
 

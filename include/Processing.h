@@ -28,6 +28,7 @@ public:
 	static int findMin2(const cv::Mat &depth, cv::Point &point);
 	static cv::Point calculateMean(const std::vector<cv::Point>&);
 	static cv::Point findNearestPoint(const std::vector<cv::Point> &pointVector, const cv::Point refPoint);
+	static void rotate(cv::Mat& src, double angle, cv::Mat& dst);
 
 private:
 

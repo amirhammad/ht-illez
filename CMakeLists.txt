@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 2.4)
-SET(CMAKE_CXX_COMPILER g++-4.8)
-SET(CMAKE_C_COMPILER gcc-4.8)
+#SET(CMAKE_CXX_COMPILER g++-4.8)
+#SET(CMAKE_C_COMPILER gcc-4.8)
+
+execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
+                OUTPUT_VARIABLE GCC_VERSION)
+if (GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
+        message(STATUS "Version >= 4.8")
+else()
+#        message(FATAL_ERROR "OLD GCC, must be >= 4.8, is " + ${GCC_VERSION})
+endif()
 SET(outputname out.elf)
 project(${outputname})
 SET(CMAKE_BUILD_TYPE Debug)
@@ -40,7 +48,8 @@ QT4_WRAP_CPP(out_HEADERS_MOC ${out_HEADERS} ${QCustomPlot_HEADERS})
 ADD_DEFINITIONS(${QT_DEFINITIONS})
 
 add_executable(${outputname} ${QCustomPlot_SOURCES} ${out_SOURCES} ${out_HEADERS_MOC} ${out_HEADERS})
-target_link_libraries(${outputname} ${QT_LIBRARIES} glut GLU armadillo  OpenNI2 -pthread)
-target_link_libraries(${outputname} ${OpenCV_LIBRARIES})
-target_link_libraries(${outputname} ${FREENECT_LIBRARIES})
+target_link_libraries(${outputname} ${OpenCV_LIBS})
+target_link_libraries(${outputname} ${QT_LIBRARIES} OpenNI2 pthread ${FREENECT_LIBRARIES})
+
+#target_link_libraries(${outputname} ${FREENECT_LIBRARIES})
 

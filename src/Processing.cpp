@@ -333,7 +333,7 @@ cv::Mat Processing::filterDepthMask(const cv::Mat &depth, int near, int far)
 
 	if (near == -1) {
 		near = findMin(depth);
-		far = near + 170;
+		far = near + 150;
 	}
 
 	for (int y = 0; y < depth.rows; ++y) {
@@ -525,6 +525,18 @@ cv::Point Processing::findNearestPoint(const std::vector<cv::Point> &pointVector
 	return nearestPoint;
 }
 
+/**
+ * Rotate an image
+ */
+void Processing::rotate(cv::Mat& src, double angle, cv::Mat& dst)
+{
+	int len = std::max(src.cols, src.rows);
+	cv::Point2f pt(len/2., len/2.);
+	cv::Mat r = cv::getRotationMatrix2D(pt, angle, 1.0);
+
+	cv::warpAffine(src, dst, r, cv::Size(len, len), cv::INTER_NEAREST);
+}
+
 cv::Point Processing::calculateWeightedMean(const std::vector<cv::Point> &pointVector)
 {
 	if (pointVector.size() == 0) {
@@ -555,7 +567,7 @@ void Processing::processContourPoints(const cv::Mat &bgr, const cv::Mat &depth, 
 	const std::vector<cv::Point> &contourSmoothed = smoothPoints(contour, 10);
 	std::vector<int> hullSmoothedIndices;
 	cv::convexHull(contourSmoothed, hullSmoothedIndices, false, false);
-	qDebug("hull: %d", hullSmoothedIndices.size());
+//	qDebug("hull: %d", hullSmoothedIndices.size());
 //	const std::vector<int> &fingersAll = fingerCandidates(contourSmoothed, hullSmoothedIndices);
 	const std::vector<cv::Point> &fingersAll2 = fingerCandidates2(contourSmoothed, hullSmoothedIndices, depth);
 //	const std::vector<int> &fingersSorted = categorizeFingers(contourSmoothed, fingersAll);
@@ -596,7 +608,7 @@ void Processing::processContourPoints(const cv::Mat &bgr, const cv::Mat &depth, 
 
 float Processing::pointDistance(const cv::Point& pt1, const cv::Point& pt2)
 {
-	const cv::Point diff = pt1-pt2;
+	const cv::Point diff = pt1 - pt2;
 	return sqrtf(diff.dot(diff));
 }
 
