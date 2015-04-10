@@ -74,7 +74,7 @@ private:
 		QList<cv::Point> m_fingertips;
 
 		PoseRecognition m_pose;
-		mutable QMutex m_mutex;
+//		mutable QMutex m_mutex;
 	};
 
 	class Worker : public QRunnable {

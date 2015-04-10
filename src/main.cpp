@@ -22,6 +22,7 @@
 #include "ImageDescriptor.h"
 #include "Processing.h"
 #include "WindowManager.h"
+#include "MainWindow.h"
 #include "main.h"
 
 #include "unistd.h"
@@ -98,7 +99,9 @@ int main(int argc, char *argv[])
 	using namespace iez;
 	using namespace std;
 	QApplication app(argc, argv);
-
+//	new MainWindow();
+//	QApplication::exec();
+//	return 0;
 	getOptions(argc, argv);
 	// Camera init
 //	iez::ImageSourceFreenect *kinectFreenect = new iez::ImageSourceFreenect(0);

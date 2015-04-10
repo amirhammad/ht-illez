@@ -237,8 +237,11 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 	if (fingerCount == 0) {
 		return QList<cv::Point>();
 	} else if (fingerCount > 1) {
-		// add factor 0.9, because when fingers are close to each other, they appear thinner
-		fingerCount = rectWidth/(palmRadius*FINGER_MAXWIDTH_FACTOR*0.9f) + 1;
+
+		// add factor, because when fingers are close to each other, they appear thinner
+		const float factor = 0.95f;
+		fingerCount = rectWidth/(palmRadius*FINGER_MAXWIDTH_FACTOR*factor) + 1;
+
 	}
 
 	// find fingertips
@@ -274,6 +277,13 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 			l.append(fingertip);
 		}
 	}
+
+///// We now have list of fingertips, now assign each one of them to finger id
+///// 0-thumb, 1-pointer, 2 middle,...
+//	QVector<cv::Point> fingertipsFinal(5);
+//	foreach (cv::Point p, l) {
+
+//	}
 
 	return l;
 
@@ -538,14 +548,16 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 			QList<cv::Point> rectFingertips = findFingertip(rotRect, palmRadius, palmCenter);
 			foreach (cv::Point fingertip, rectFingertips) {
 				fingertips.append(fingertip);
-//					cv::ellipse(fingerMaskOutput, fingertip, cv::Size(2, 2), 0, 0, 360, cv::Scalar(100), 5);
+				cv::ellipse(fingerMaskOutput, fingertip, cv::Size(2, 2), 0, 0, 360, cv::Scalar(100), 5);
 			}
 		}
 		data.setFingertips(fingertips);
 	}
 
 	{
-
+		if (data.fingertips().size() == 5) {
+			data.pose()->learnNew(PoseRecognition::POSE_5, palmCenter, palmRadius, data.wrist(), data.fingertips());
+		}
 		/// recognizer
 		data.pose()->categorize(data.wrist(), data.fingertips());
 	}
@@ -615,7 +627,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	cv::ellipse(fingerMaskOutput, palmCenter, cv::Size(palmRadius, palmRadius), 0, 0, 360, cv::Scalar(100), 1);
 	cv::ellipse(fingerMaskOutput, palmCenter, cv::Size(palmRadius*PALM_RADIUS_RATIO, palmRadius*PALM_RADIUS_RATIO), 0, 0, 360, cv::Scalar(180), 1);
 	cv::putText(fingerMaskOutput, QString::number(handContour.size()).toStdString(), cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
-        cv::putText(fingerMaskOutput, QString::number(fingersContours.size()).toStdString(), cv::Point(10, 22), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+	cv::putText(fingerMaskOutput, QString::number(fingersContours.size()).toStdString(), cv::Point(10, 22), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
 //        cv::putText(fingerMaskOutput, QString::number(kkk).toStdString(), cv::Point(10, 35), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
 
 	/// Draw
@@ -664,13 +676,11 @@ int HandTracker::Worker::runningThreads()
 
 void HandTracker::Data::setWrist(std::pair<cv::Point, cv::Point> wrist)
 {
-	QMutexLocker l(&m_mutex);
 	m_wrist = wrist;
 }
 
 std::pair<cv::Point, cv::Point> HandTracker::Data::wrist() const
 {
-	QMutexLocker l(&m_mutex);
 	return m_wrist;
 }
 
@@ -681,13 +691,11 @@ void HandTracker::C1::setVector(QVector<float> *vector)
 
 void HandTracker::Data::setFingertips(QList<cv::Point> fingertips)
 {
-	QMutexLocker l(&m_mutex);
 	m_fingertips = fingertips;
 }
 
 QList<cv::Point> HandTracker::Data::fingertips() const
 {
-	QMutexLocker l(&m_mutex);
 	return m_fingertips;
 }
 

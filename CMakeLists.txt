@@ -28,6 +28,11 @@ SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-std=c++11 -gdwarf-3")
 # Open CV
 find_package(OpenCV REQUIRED)
 
+# opennn
+set(OPENNN_DIR /home/amir/Downloads/opennn_2.0/opennn2.0/opennn)
+INCLUDE_DIRECTORIES(${OPENNN_DIR})
+LINK_DIRECTORIES(${OPENNN_DIR})
+
 # libfreenect
 find_package(libfreenect REQUIRED)
 message("HELLO: " ${QCustomPlot_SOURCES} ${FREENECT_INCLUDE_DIRS})
@@ -49,7 +54,7 @@ ADD_DEFINITIONS(${QT_DEFINITIONS})
 
 add_executable(${outputname} ${QCustomPlot_SOURCES} ${out_SOURCES} ${out_HEADERS_MOC} ${out_HEADERS})
 target_link_libraries(${outputname} ${OpenCV_LIBS})
-target_link_libraries(${outputname} ${QT_LIBRARIES} OpenNI2 pthread ${FREENECT_LIBRARIES})
+target_link_libraries(${outputname} ${QT_LIBRARIES} OpenNI2 pthread opennn ${FREENECT_LIBRARIES})
 
 #target_link_libraries(${outputname} ${FREENECT_LIBRARIES})
 
