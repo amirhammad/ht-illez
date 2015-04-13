@@ -106,43 +106,42 @@ int main(int argc, char *argv[])
 	// Camera init
 //	iez::ImageSourceFreenect *kinectFreenect = new iez::ImageSourceFreenect(0);
 
-	iez::ImageSourceOpenNI *kinect = new iez::ImageSourceOpenNI();
+//	iez::ImageSourceOpenNI *kinect = new iez::ImageSourceOpenNI();
 
-	if (options.playingRecord) {
-		kinect->init(options.recordName);
-		if (!kinect->isInitialized()) {
-			cerr << "cannot open file" << options.recordName << endl;
-			return -1;
-		}
-	} else {
-		kinect->init();
-		if (!kinect->isInitialized()) {
-			cerr << "cannot open kinect" << endl;
-			return -1;
-		}
-	}
+//	if (options.playingRecord) {
+//		kinect->init(options.recordName);
+//		if (!kinect->isInitialized()) {
+//			cerr << "cannot open file" << options.recordName << endl;
+//			return -1;
+//		}
+//	} else {
+//		kinect->init();
+//		if (!kinect->isInitialized()) {
+//			cerr << "cannot open kinect" << endl;
+//			return -1;
+//		}
+//	}
 
 	iez::imageSourceArtificial = new iez::ImageSourceArtificial();
-
+	new MainWindow();
 
 	// TODO: can edit files
-	QObject::connect(&WindowManager::getInstance(), SIGNAL(keyPressed(QKeyEvent*)), kinect, SLOT(keyEvent(QKeyEvent*)));
-
-	iez::ImageRecorder *recorder;
-	if (options.recording) {
-		iez::ImageDescriptor *imageDescriptor = new iez::ImageDescriptor(kinect);
-		recorder = new iez::ImageRecorder();
-		recorder->init(kinect, options.recordName);
-	} else {
-		/**
-		 * Processing
-		 */
-		iez::Processing *processing = new iez::Processing(kinect);
-	}
+//	iez::ImageRecorder *recorder;
+//	if (options.recording) {
+//		iez::ImageDescriptor *imageDescriptor = new iez::ImageDescriptor(kinect);
+//		recorder = new iez::ImageRecorder();
+//		recorder->init(kinect, options.recordName);
+//	} else {
+//		/**
+//		 * Processing
+//		 */
+//		iez::Processing *processing = new iez::Processing(kinect);
+//	}
 
 //	iez::ColorSegmentation::buildDatabaseFromFiles("../database/colorDB_files.txt");
 
-	return QApplication::exec();
+	QApplication::exec();
+	return 0;
 }
 
 cv::Mat iez::ImageSourceArtificial::getColorMat() const
@@ -164,6 +163,11 @@ void iez::ImageSourceArtificial::setColorMat(const cv::Mat& src)
 	QMutexLocker locker(&m_mutex);
 	cvtColor(src, m_color, cv::COLOR_RGB2BGR);
 	m_sequence++;
+}
+
+void iez::ImageSourceArtificial::pause(bool p)
+{
+	Q_UNUSED(p);
 }
 
 

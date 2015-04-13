@@ -10,25 +10,28 @@
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.h>
 #include "main.h"
-
+#include <QApplication>
 //using namespace cv;
 namespace iez {
 
-Processing::Processing(ImageSourceBase *imgsrc)
-:	m_imageSource(imgsrc)
+Processing::Processing(ImageSourceBase *imgsrc, QObject *parent)
+:	QObject(parent)
+,	m_imageSource(imgsrc)
 ,	m_calculateHandTracker(false)
 ,	m_statsList(0)
 {
-	moveToThread(&m_thread);
-	m_segmentation = new ColorSegmentation();
+	m_thread = new QThread(QCoreApplication::instance()->thread());
+	moveToThread(m_thread);
 	connect(imgsrc, SIGNAL(frameReceived()), this, SLOT(process()));
-	m_thread.start();
+	m_thread->start();
 }
 
 
 Processing::~Processing(void)
 {
-	delete m_segmentation;
+	qDebug("X1");
+	m_thread->quit();
+	qDebug("X1 finished");
 }
 
 
@@ -45,8 +48,56 @@ void Processing::process()
 	WindowManager::getInstance().imShow("Original", bgr);
 
 	m_handTracker.invokeProcess(bgr, depth, m_imageSource->getSequence());
+	const HandTracker::Data *handTrackerData = m_handTracker.data();
 
+	QString poseString = m_pose.categorize(handTrackerData->palmCenter(),
+					  handTrackerData->palmRadius(),
+					  handTrackerData->wrist(),
+					  handTrackerData->fingertips());
+	emit got_poseUpdated(poseString);
 	imageSourceArtificial->setColorMat(bgr);
+}
+
+void Processing::learnNew(enum PoseRecognition::POSE poseId)
+{
+	const HandTracker::Data *data = m_handTracker.data();
+	qDebug("LEARNING");
+	qDebug("%d", poseId);
+	qDebug("(%d, %d) R=%f", data->palmCenter().x, data->palmCenter().y, data->palmRadius());
+	qDebug("(%d, %d) (%d, %d)", data->wrist().first.x,
+								data->wrist().first.y,
+								data->wrist().second.x,
+								data->wrist().second.y);
+	qDebug("fingertips:");
+	foreach (cv::Point p, data->fingertips()) {
+		qDebug("\t(%d, %d)", p.x, p.y);
+	}
+
+	m_pose.learnNew(poseId,
+				  data->palmCenter(),
+				  data->palmRadius(),
+				  data->wrist(),
+					data->fingertips());
+}
+
+void Processing::train()
+{
+	try {
+		m_pose.train();
+	} catch (std::logic_error e) {
+		qDebug("%s", e.what());
+		QApplication::quit();
+	}
+}
+
+void Processing::savePoseDatabase()
+{
+	m_pose.savePoseDatabase();
+}
+
+QString Processing::poseDatabaseToString() const
+{
+	return m_pose.databaseToString();
 }
 
 void Processing::processContourTracing(const cv::Mat &bgr, const cv::Mat &depth, const cv::Mat &bgrDepthFiltered)
@@ -460,18 +511,6 @@ void Processing::processHSVFilter(const cv::Mat &orig)
 	Canny(mask,canny,params[6],params[7]);
 //		imshow("black",color);
 //	imshow("CANNY", canny);
-}
-
-void Processing::keyPressEvent(QKeyEvent* keyEvent)
-{
-	switch (keyEvent->key()) {
-	case Qt::Key_Escape:
-		::exit(0);
-		break;
-	case Qt::Key_F:
-		m_calculateHandTracker = true;
-		break;
-	}
 }
 
 cv::Point Processing::calculateMeanIndices(const cv::Mat &mat)
@@ -890,11 +929,6 @@ std::vector<int> Processing::categorizeFingers(const std::vector<cv::Point>& con
 //	categorized[0];
 //	msleep(2000);
 	return categorized;
-}
-
-void Processing::closeEvent()
-{
-	::exit(0);
 }
 
 cv::Mat Processing::processSaturate(const cv::Mat& bgr, const int satIncrease)

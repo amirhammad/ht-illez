@@ -31,9 +31,15 @@ class WindowManager: public QObject {
 public:
 	static WindowManager& getInstance()
 	{
-		static WindowManager instance; // Guaranteed to be destroyed.
+		static WindowManager *instance = new WindowManager(); // Guaranteed to be destroyed.
 							  // Instantiated on first use.
-		return instance;
+		return *instance;
+	}
+	static void destroy()
+	{
+		if (&getInstance() != 0) {
+			getInstance().deleteLater();
+		}
 	}
 
 private:
@@ -44,6 +50,7 @@ private:
 	void operator=(WindowManager const&); // Don't implement
 
 	WindowManager();
+	~WindowManager();
 
 
 public:
@@ -61,7 +68,7 @@ private:
 		Window *widget;
 		QImage image;
 	};
-	QHash<const QString, struct imShowMapData > m_imShowMap;
+	QHash<QString, struct imShowMapData > m_imShowMap;
 
 	struct plotMapData {
 		Window *widget;
@@ -69,7 +76,7 @@ private:
 		QVector<double> y;
 		QCustomPlot *customPlot;
 	};
-	QHash<const QString, struct plotMapData> m_plotMap;
+	QHash<QString, struct plotMapData> m_plotMap;
 
 	QMutex m_mutex;
 

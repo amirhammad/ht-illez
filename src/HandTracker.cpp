@@ -11,16 +11,12 @@ namespace iez {
 
 #define HAND_MAX_PHYSICAL_DEPTH	(200)
 #define PALM_RADIUS_RATIO (1.7f)
-#define MAX_THREADS (1)
 
 // FINGER_FACTOR*PALM_RADIUS => minimal length of finger -- set to half the size of finger
-#define FINGER_LENGTH_FACTOR (0.7f)
-
-#define FINGER_MAXWIDTH_FACTOR (FINGER_LENGTH_FACTOR*0.9f)
+#define FINGER_LENGTH_FACTOR (0.5f)
+#define FINGER_MAXWIDTH_FACTOR (0.57f)
 
 QVector<float> * HandTracker::C1::m_vector = 0;
-
-int HandTracker::Worker::m_runningThreads = 0;
 
 void HandTracker::distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT)
 {
@@ -137,15 +133,16 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 	cv::fillPoly(binaryPalmMask, hc, cv::Scalar_<uint8_t>(255));
 }
 
-void HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
+bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 							const cv::Point &handCenter,
-							Data &data)
+							const Data &data,
+							wristpair_t& outputWrist)
 {
-	std::pair<cv::Point, cv::Point> wristPointPair;
+	wristpair_t wristPointPair;
 
 	if (palmContour.size() <= 2) {
 		qDebug("Error: palmContour.size() <= 2");
-		return;
+		return false;
 	}
 
 	/**
@@ -216,8 +213,10 @@ void HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 	wristPointPair = wristpair_t(Processing::pointMean(wppFinal.first, wppData.first, ratio),
 							   Processing::pointMean(wppFinal.second, wppData.second, ratio));
 
-	/// save wristpair
-	data.setWrist(wristPointPair);
+	/// return wristpair
+
+	outputWrist = wristPointPair;
+	return true;
 }
 
 
@@ -233,17 +232,6 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 	rotRect.points(rectPoints);
 
 	const float rectWidth = std::min(rotRect.size.width, rotRect.size.height);
-	int fingerCount = rectWidth/(palmRadius*FINGER_MAXWIDTH_FACTOR) + 1;
-	if (fingerCount == 0) {
-		return QList<cv::Point>();
-	} else if (fingerCount > 1) {
-
-		// add factor, because when fingers are close to each other, they appear thinner
-		const float factor = 0.95f;
-		fingerCount = rectWidth/(palmRadius*FINGER_MAXWIDTH_FACTOR*factor) + 1;
-
-	}
-
 	// find fingertips
 	struct compare1 {
 		compare1(cv::Point palmCenter)
@@ -264,6 +252,18 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 		rectPointsVector[i] = rectPoints[i];
 	}
 	std::sort(rectPointsVector.begin(), rectPointsVector.end(), compare1(palmCenter));
+
+
+	int fingerCount = rectWidth/(palmRadius*FINGER_MAXWIDTH_FACTOR) + 1;
+	if (fingerCount == 0) {
+		return QList<cv::Point>();
+	} else if (fingerCount > 1) {
+
+		// add factor, because when fingers are close to each other, they appear thinner
+		const float factor = 0.75f;
+		fingerCount = rectWidth/(palmRadius*FINGER_MAXWIDTH_FACTOR*factor);
+
+	}
 	QList<cv::Point> l;
 	if (fingerCount == 1) {
 		cv::Point fingertip = Processing::pointMean(rectPointsVector[2], rectPointsVector[3]);
@@ -289,11 +289,16 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 
 
 }
+
+const HandTracker::Data *HandTracker::data() const
+{
+	return &m_data;
+}
 void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 							  std::vector<std::vector<cv::Point> > &fingersContours,
 							  const cv::Mat &binaryHand,
 							  const cv::Mat &palmMask,
-							  Data &data)
+							  const Data &data)
 {
 	cv::Mat tmp;
 	cv::dilate(palmMask, tmp, cv::Mat(), cv::Point(-1,-1), 2);// dilate main
@@ -335,17 +340,15 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 
 HandTracker::HandTracker()
 {
-	m_maxThreads = MAX_THREADS;
 }
 
 void HandTracker::invokeProcess(const cv::Mat &bgr, const cv::Mat &depth, const int imageId)
 {
-	if (Worker::runningThreads() < m_maxThreads) {
-		Worker *w = new Worker(bgr, depth, imageId, m_data);
-		QThreadPool::globalInstance()->start(w);
-	} else {
-		qDebug() << "cannot start thread";
-	}
+	process(bgr, depth, imageId, m_data);
+}
+
+HandTracker::~HandTracker()
+{
 }
 
 void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId, Data &data)
@@ -407,10 +410,6 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	if (contours.size() == 0) {
 		qDebug("%d Zero objects", imageId);
-
-		if (!isReferenceImage) {
-			process(bgr, depth, imageId, data);
-		}
 		return;
 	} else if (contours.size() == 1) {
 		handContour = contours[0];
@@ -444,23 +443,6 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	hc[0] = handContour;
 	cv::fillPoly(out, hc, cv::Scalar_<uint8_t>(255));
 
-	if (isReferenceImage) {
-
-	} else {
-//		int minDepth = std::numeric_limits<int>::max();
-//		for (int i = 0; i < out.rows; i++) {
-//			for (int j = 0; j < out.cols; j++) {
-//				if (out.at<uint8_t>(i, j)) {
-//					int d = depth.at<uint16_t>(i, j);
-//					if (d > near && minDepth > d) {
-//						minDepth = d;
-//					}
-//				}
-//			}
-//		}
-//		m_prevHandDepth = minDepth;
-
-	}
 	/// save binary hand
 	out.copyTo(binaryHand);
 
@@ -506,9 +488,11 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	/// isolate fingers, ready: +palmMask
 
 	/// find wrist
-
-	findWrist(palmContour, palmCenter, data);
-
+	wristpair_t wrist;
+	if (findWrist(palmContour, palmCenter, data, wrist) == false) {
+		qDebug("ERROR %s %d", __FILE__, __LINE__);
+		return;
+	}
 
 	/// find fingers
 
@@ -540,26 +524,26 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 		{
 			// unmerge merged fingertips
-
-//				QList<cv::Point2f> unmergedFingertips;
-//				for (int i = 0; i < 4; i++) {
-//					unmergedFingertips.append(rect_points[i]);
-//				}
 			QList<cv::Point> rectFingertips = findFingertip(rotRect, palmRadius, palmCenter);
 			foreach (cv::Point fingertip, rectFingertips) {
 				fingertips.append(fingertip);
 				cv::ellipse(fingerMaskOutput, fingertip, cv::Size(2, 2), 0, 0, 360, cv::Scalar(100), 5);
 			}
 		}
-		data.setFingertips(fingertips);
+
 	}
 
-	{
-		if (data.fingertips().size() == 5) {
-			data.pose()->learnNew(PoseRecognition::POSE_5, palmCenter, palmRadius, data.wrist(), data.fingertips());
-		}
+	{	// FINALIZE
+		data.setFingertips(fingertips);
+		data.setPalmCenter(palmCenter);
+		data.setPalmRadius(palmRadius);
+		data.setWrist(wrist);
+
+//		if (data.fingertips().size() == 5) {
+//			pose.learnNew(PoseRecognition::POSE_5, palmCenter, palmRadius, data.wrist(), data.fingertips());
+//		}
 		/// recognizer
-		data.pose()->categorize(data.wrist(), data.fingertips());
+//		posecategorize(data.wrist(), data.fingertips());
 	}
 	///
 
@@ -634,7 +618,6 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	cv::Mat centerHighlited = bgr.clone();
 
-	wristpair_t wrist = data.wrist();
 	cv::line(centerHighlited, wrist.first, wrist.second, cv::Scalar(100), 5);
 	cv::ellipse(centerHighlited, palmCenter, cv::Size(palmRadius, palmRadius), 0, 0, 360, cv::Scalar(100, 0, 255), 10);
 
@@ -651,27 +634,6 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 //	handDT.convertTo(gray, CV_8UC1, 10.0f);
 //	WindowManager::getInstance().imShow("distanceTransform", handDT);
 	qDebug("ID=%5d fps: %4.1f ... %3dms", imageId, (1000/30.f)/t.elapsed()*30, t.elapsed());
-}
-
-HandTracker::Worker::Worker(const cv::Mat bgr, const cv::Mat depth, const int imageId, Data &data)
-:	m_bgr(bgr)
-,	m_depth(depth)
-,	m_imageId(imageId)
-,	m_data(data)
-{
-
-}
-
-void HandTracker::Worker::run()
-{
-	m_runningThreads++;
-	process(m_bgr, m_depth, m_imageId, m_data);
-	m_runningThreads--;
-}
-
-int HandTracker::Worker::runningThreads()
-{
-	return m_runningThreads;
 }
 
 void HandTracker::Data::setWrist(std::pair<cv::Point, cv::Point> wrist)
@@ -698,10 +660,25 @@ QList<cv::Point> HandTracker::Data::fingertips() const
 {
 	return m_fingertips;
 }
-
-PoseRecognition *HandTracker::Data::pose()
+float HandTracker::Data::palmRadius() const
 {
-	return &m_pose;
+	return m_palmRadius;
 }
+
+void HandTracker::Data::setPalmRadius(float palmRadius)
+{
+	m_palmRadius = palmRadius;
+}
+
+cv::Point HandTracker::Data::palmCenter() const
+{
+	return m_palmCenter;
+}
+
+void HandTracker::Data::setPalmCenter(const cv::Point &palmCenter)
+{
+	m_palmCenter = palmCenter;
+}
+
 
 } // Namespace iez

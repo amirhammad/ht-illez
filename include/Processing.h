@@ -12,11 +12,17 @@
 namespace iez {
 
 
-class Processing : QObject {
+class Processing : public QObject {
 	Q_OBJECT
 public:
-	explicit Processing(ImageSourceBase *imgsrc);
+	explicit Processing(ImageSourceBase *imgsrc, QObject *parent = 0);
 	~Processing(void);
+
+	void learnNew(enum PoseRecognition::POSE);
+	void train();
+	void savePoseDatabase();
+	QString poseDatabaseToString() const;
+
 	static cv::Mat processSaturate(const cv::Mat &bgr, const int satIncrease);
 	static std::vector<cv::Point> smoothPoints(const std::vector<cv::Point> &vec, const int range);
 	static float pointDistance(const cv::Point &pt1, const cv::Point &pt2);
@@ -56,8 +62,9 @@ private:
 
 public slots:
 	void process();
+
 private:
-	QThread m_thread;
+	QThread *m_thread;
 
 	struct Data {
 		cv::Point center;
@@ -70,11 +77,10 @@ private:
 	ColorSegmentation *m_segmentation;
 	Fps m_fps;
 
+	PoseRecognition m_pose;
 
-private slots:
-	void keyPressEvent(QKeyEvent *keyEvent);
-	void closeEvent();
-
+signals:
+	void got_poseUpdated(QString);
 };
 
 }

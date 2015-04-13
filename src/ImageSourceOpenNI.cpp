@@ -6,24 +6,29 @@ using namespace cv;
 
 #define FILE_PLAY_SPEED (30)
 #define MAX_FAIL_COUNT (20)
-ImageSourceOpenNI::ImageSourceOpenNI(int fps)
+ImageSourceOpenNI::ImageSourceOpenNI(QObject *parent, int fps)
 :	m_width(640)
 ,	m_height(480)
 ,	m_fps(fps)
 ,	m_initialized(false)
 ,	m_failCount(0)
 {
-	moveToThread(&m_thread);
+	m_thread = new QThread(QApplication::instance()->thread());
+	moveToThread(m_thread);
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(update()));
-	m_thread.start();
+	m_thread->start();
 }
 
 
 ImageSourceOpenNI::~ImageSourceOpenNI(void)
 {
+	qDebug("X2");
+//	moveToThread(QApplication::instance()->thread());
+//	m_thread->quit();
 	m_depthStream.stop();
 	m_colorStream.stop();
 	openni::OpenNI::shutdown();
+	qDebug("X2 end");
 }
 
 int ImageSourceOpenNI::deviceInit(const char* deviceURI)
@@ -135,16 +140,6 @@ int ImageSourceOpenNI::streamInit()
 	return 0;
 }
 
-void ImageSourceOpenNI::keyEvent(QKeyEvent *event)
-{
-	if (event->key() == ' ') {
-		if (m_timer.isActive()) {
-			m_timer.stop();
-		} else {
-			m_timer.start();
-		}
-	}
-}
 void ImageSourceOpenNI::readDepth()
 {
 	QWriteLocker l(&depth_rwlock);
@@ -162,6 +157,18 @@ void ImageSourceOpenNI::readColor()
 	m_sequence = max<int>(m_sequence, m_colorFrame.getFrameIndex());//bug(overflow in ~700 days)
 	if (m_colorFrame.isValid()) {
 		memcpy(m_colorMat.data, m_colorFrame.getData(), m_colorFrame.getDataSize());
+	}
+}
+
+void ImageSourceOpenNI::pause(bool p)
+{
+	qDebug("pause received");
+	if (p) {
+		if (m_timer.isActive()) {
+			m_timer.stop();
+		}
+	} else {
+		m_timer.start();
 	}
 }
 

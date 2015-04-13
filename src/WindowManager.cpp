@@ -119,6 +119,14 @@ WindowManager::WindowManager()
 	moveToThread(QCoreApplication::instance()->thread());
 }
 
+WindowManager::~WindowManager()
+{
+	qDebug("WM desctruction");
+	foreach (const QString k, m_imShowMap.keys()) {
+		m_imShowMap.value(k).widget->deleteLater();
+	}
+}
+
 void WindowManager::on_imShow(const QString str)
 {
 	QMutexLocker l(&m_mutex);

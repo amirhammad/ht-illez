@@ -15,10 +15,10 @@ class HandTracker {
 public:
 	HandTracker();
 	void invokeProcess(const cv::Mat &bgr, const cv::Mat &depth, const int imageId = 0);
+	class Data;
+	~HandTracker();
 
 private:
-	class Data;
-
 	static void process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId, Data &data);
 
 	static void distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT);
@@ -36,15 +36,16 @@ private:
 						 const cv::Point &palmCenter,
 						 const float palmRadius);
 
-	static void findWrist(const std::vector<cv::Point> &palmContour,
+	static bool findWrist(const std::vector<cv::Point> &palmContour,
 						  const cv::Point &handCenter,
-						  Data &data);
+						  const Data &data,
+						  wristpair_t& outputWrist);
 
 	static void findFingers(cv::Mat &binaryFingersMask,
 							std::vector<std::vector<cv::Point> > &fingersContours,
 							const cv::Mat &binaryHand,
 							const cv::Mat &palmMask,
-							Data &data);
+							const Data &data);
 	static QList<cv::Point> findFingertip(const cv::RotatedRect &rotRect,
 										  const float palmRadius,
 										  const cv::Point &palmCenter);
@@ -61,38 +62,28 @@ private:
 		static void setVector(QVector<float> *vector);
 	};
 
+public:
 	class Data {
 	public:
 		void setWrist(wristpair_t wrist);
 		wristpair_t wrist() const;
+
 		void setFingertips(QList<cv::Point> fingertips);
 		QList<cv::Point> fingertips() const;
 
-		PoseRecognition *pose();
+		cv::Point palmCenter() const;
+		void setPalmCenter(const cv::Point &palmCenter);
+
+		float palmRadius() const;
+		void setPalmRadius(float palmRadius);
+
 	private:
+		cv::Point m_palmCenter;
+		float m_palmRadius;
 		wristpair_t m_wrist;
 		QList<cv::Point> m_fingertips;
-
-		PoseRecognition m_pose;
-//		mutable QMutex m_mutex;
 	};
-
-	class Worker : public QRunnable {
-	public:
-		Worker(const cv::Mat bgr,
-			   const cv::Mat depth,
-			   const int imageId,
-			   Data &data);
-		void run();
-		static int runningThreads();
-	private:
-		const cv::Mat m_bgr;
-		const cv::Mat m_depth;
-		const int m_imageId;
-		Data &m_data;
-
-		static int m_runningThreads;
-	};
+	const Data *data() const;
 
 private:
 	Data m_data;

@@ -430,7 +430,8 @@ void ColorSegmentation::on_TMaxChanged(int value)
 
 ColorSegmentation::~ColorSegmentation()
 {
-	delete m_master;
+//	delete m_master;
+	m_master->deleteLater();
 }
 
 void ColorSegmentation::on_TMinChanged(int value)

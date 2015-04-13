@@ -6,7 +6,7 @@ namespace iez {
 class ImageSourceBase : public QObject {
 	Q_OBJECT
 public:
-	ImageSourceBase()
+	ImageSourceBase(QObject *parent = 0)
 	:	m_sequence(-1) {
 
 	}
@@ -21,6 +21,12 @@ public:
 
 protected:
 	int m_sequence;
+
+public slots:
+	/**
+	 *
+	 */
+	virtual void pause(bool p = true) = 0;
 signals:
 	void frameReceived();
 };

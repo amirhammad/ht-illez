@@ -14,7 +14,7 @@ class ImageSourceOpenNI : public ImageSourceBase
 {
 	Q_OBJECT
 public:
-	ImageSourceOpenNI(int fps = 30);
+	ImageSourceOpenNI(QObject *parent = 0, int fps = 30);
 	~ImageSourceOpenNI(void);
 
 	int init(const char* deviceURI = openni::ANY_DEVICE);
@@ -50,10 +50,10 @@ private:
 
 	int m_fps;
 	bool m_initialized;
-	QThread m_thread;
+	QThread *m_thread;
 	int m_failCount;
 public slots:
-	void keyEvent(QKeyEvent *event);
+	void pause(bool p = true);
 private slots:
 	void update();
 };
