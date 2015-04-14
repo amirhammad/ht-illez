@@ -42,6 +42,8 @@ public slots:
 
 	void on_addButtonClicked();
 	void on_cancelButtonClicked();
+	void on_neuralNetworkSave();
+	void on_neuralNetworkLoad();
 };
 
 }

@@ -8,6 +8,7 @@
 
 #define INPUT_VECTOR_SIZE 11
 #define NNDATA_FILENAME "NNData.txt"
+
 // define stream operators
 
 QDataStream& operator<<(QDataStream& stream, const OpenNN::Perceptron& foo)
@@ -244,6 +245,22 @@ void PoseRecognition::savePoseDatabase()
 	m_settings->setValue("NNDATA", output);
 }
 
+void PoseRecognition::neuralNetworkSave(std::string path)
+{
+	if (!m_neuralNetwork) {
+		return;
+	}
+	m_neuralNetwork->save(path);
+}
+
+void PoseRecognition::neuralNetworkLoad(std::string path)
+{
+	if (!m_neuralNetwork) {
+		m_neuralNetwork = new OpenNN::NeuralNetwork();
+	}
+	m_neuralNetwork->load(path);
+}
+
 void PoseRecognition::train()
 {
 	using namespace OpenNN;
@@ -278,73 +295,72 @@ void PoseRecognition::train()
 		variablesPointer->set_use(INPUT_VECTOR_SIZE + i, Variables::Target);
 	}
 
-	// Instances
+	do {
+		// Instances
 
-	Instances* instancesPointer = dataSet.get_instances_pointer();
+		Instances* instancesPointer = dataSet.get_instances_pointer();
 
-	instancesPointer->split_random_indices(0.75, 0.2, 0.25);
+		instancesPointer->split_random_indices(0.5, 0.25, 0.25);
 
-
-	const Matrix<std::string> inputs_information = variablesPointer->arrange_inputs_information();
-	const Matrix<std::string> targets_information = variablesPointer->arrange_targets_information();
-
-
-	const Vector< Statistics<double> > inputs_statistics = dataSet.scale_inputs_minimum_maximum();
+		const Matrix<std::string> inputs_information = variablesPointer->arrange_inputs_information();
+		const Matrix<std::string> targets_information = variablesPointer->arrange_targets_information();
 
 
-	// Neural network
-	Vector<size_t> nnSizes(4);
-	nnSizes[0] = INPUT_VECTOR_SIZE;
-	nnSizes[1] = 40;
-	nnSizes[2] = 50;
-	nnSizes[3] = POSE_END;
-	m_neuralNetwork = new NeuralNetwork(nnSizes);
-
-	qDebug("NN: %d", m_neuralNetwork->get_multilayer_perceptron_pointer()->get_inputs_number());
-	qDebug("d: %d", inputs_statistics.size());
-	Inputs* inputs_pointer = m_neuralNetwork->get_inputs_pointer();
-
-	inputs_pointer->set_information(inputs_information);
-
-	m_neuralNetwork->construct_scaling_layer();
-
-	ScalingLayer* scaling_layer_pointer = m_neuralNetwork->get_scaling_layer_pointer();
-	qDebug("%d", inputs_statistics.size());
-	foreach (double d, dataSet.calculate_training_target_data_mean()) {
-		qDebug("->%f", d);
-	}
+		const Vector< Statistics<double> > inputs_statistics = dataSet.scale_inputs_minimum_maximum();
 
 
-	scaling_layer_pointer->set_statistics(inputs_statistics);
+		// Neural network
+		Vector<size_t> nnSizes(4);
+		nnSizes[0] = INPUT_VECTOR_SIZE;
+		nnSizes[1] = 35;
+		nnSizes[2] = 25;
+		nnSizes[3] = POSE_END;
+		if (m_neuralNetwork) {
+			delete m_neuralNetwork;
+		}
+		m_neuralNetwork = new NeuralNetwork(nnSizes);
 
-	scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
+		Inputs* inputs_pointer = m_neuralNetwork->get_inputs_pointer();
 
-	MultilayerPerceptron* multilayer_perceptron_pointer = m_neuralNetwork->get_multilayer_perceptron_pointer();
+		inputs_pointer->set_information(inputs_information);
 
-	multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::Logistic);
-	multilayer_perceptron_pointer->set_layer_activation_function(2, Perceptron::HyperbolicTangent);
+		m_neuralNetwork->construct_scaling_layer();
 
-	Outputs* outputs_pointer = m_neuralNetwork->get_outputs_pointer();
+		ScalingLayer* scaling_layer_pointer = m_neuralNetwork->get_scaling_layer_pointer();
 
-	outputs_pointer->set_information(targets_information);
+		scaling_layer_pointer->set_statistics(inputs_statistics);
 
-	// Performance functional
+		scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
 
-	PerformanceFunctional performance_functional(m_neuralNetwork, &dataSet);
+		MultilayerPerceptron* multilayer_perceptron_pointer = m_neuralNetwork->get_multilayer_perceptron_pointer();
 
-	// Training strategy
+		multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::HyperbolicTangent);
+		multilayer_perceptron_pointer->set_layer_activation_function(2, Perceptron::Logistic);
 
-	TrainingStrategy training_strategy(&performance_functional);
+		Outputs* outputs_pointer = m_neuralNetwork->get_outputs_pointer();
 
-	QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+		outputs_pointer->set_information(targets_information);
 
-	quasi_Newton_method_pointer->set_minimum_performance_increase(1.0e-6);
+		// Performance functional
 
-	TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+		PerformanceFunctional performance_functional(m_neuralNetwork, &dataSet);
 
-	std::string resultString;
-	training_strategy_results.save(resultString);
-	qDebug("%s", resultString.c_str());
+		// Training strategy
+
+		TrainingStrategy training_strategy(&performance_functional);
+
+		QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+
+		quasi_Newton_method_pointer->set_minimum_performance_increase(1.0e-6);
+
+		TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+
+		qDebug("Generalization: %f", training_strategy_results.quasi_Newton_method_results_pointer->final_generalization_performance);
+		std::string resultString;
+		training_strategy_results.save(resultString);
+		qDebug("%s", resultString.c_str());
+
+	} while (!testNeuralNetwork());
 }
 
 QString PoseRecognition::databaseToString() const
@@ -355,7 +371,7 @@ QString PoseRecognition::databaseToString() const
 		foreach (float f, d.input) {
 			tmp.append(QString("%1 ").arg(f));
 		}
-		tmp.append(QString(" || %1\n").arg(d.output));
+		tmp.append(QString(" || %1\r\n").arg(d.output));
 		output.append(tmp);
 	}
 	return output;
@@ -388,6 +404,9 @@ QString PoseRecognition::categorize(const cv::Point palmCenter,
 	}
 	QString outputString;
 	outputString += poseToString(minIndex);
+	if (minValue > 0.5f) {
+		outputString += QString("   Not Found");
+	}
 	outputString += "\n\n##########\n";
 	foreach (double val, outputQVector) {
 		outputString += QString("%1\n").arg(val);
@@ -397,6 +416,45 @@ QString PoseRecognition::categorize(const cv::Point palmCenter,
 //	emit foundPose(outputString);
 //	qDebug("%s", outputString.toStdString().c_str());
 	return outputString;
+}
+
+int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const
+{
+	const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(featureVector);
+
+	int minIndex = 0;
+	double minValue = std::numeric_limits<double>::max();
+
+	for (int i = 0; i < outputs.size(); i++) {
+		double val = outputs[i];
+		double err = fabs(1 - val);
+		if (minValue > err) {
+			minValue = err;
+			minIndex = i;
+		}
+	}
+
+	return minIndex;
+}
+
+bool PoseRecognition::testNeuralNetwork() const
+{
+	int errors = 0;
+	OpenNN::Vector<size_t> selectedColumns(INPUT_VECTOR_SIZE);
+	for (int i = 0; i < selectedColumns.size(); i++) {
+		selectedColumns[i] = i;
+	}
+
+	for (int i = 0; i < m_matrix.get_rows_number(); i++) {
+		OpenNN::Vector<double> row = m_matrix.arrange_row(i, selectedColumns);
+		int output = calculateOutput(row);
+		if (output != m_database.at(i).output) {
+			errors++;
+		}
+	}
+	float ratio = static_cast<float>(errors)/m_matrix.get_rows_number();
+	qWarning("RATIO: %f", ratio);
+	return ratio < 0.4f;
 }
 
 QString PoseRecognition::poseToString(enum POSE pose)
@@ -437,68 +495,38 @@ OpenNN::Matrix<double> PoseRecognition::convertToMatrix(const QList<PoseRecognit
 	return mat;
 }
 
+
+/*
+ *  assume, fingertips are ordered
+ */
 OpenNN::Vector<double> PoseRecognition::constructFeatureVector( const cv::Point palmCenter,
 																const float palmRadius,
 																const wristpair_t &wrist,
 																const QList<cv::Point> &fingertips)
 {
-
 	const float norm = palmRadius;
-	const cv::Point b1 = wrist.second - wrist.first;
-	const cv::Point b2 = cv::Point(b1.y, -b1.x);
+	// normalize
+	cv::Point2f b1_tmp = (wrist.second - wrist.first);
+	b1_tmp.x /= norm;
+	b1_tmp.y /= norm;
+	const cv::Point2f b1 = b1_tmp;
+	const cv::Point2f b2 = cv::Point2f(b1.y, -b1.x);
 	const cv::Point2f wristMiddlePoint = Processing::pointMean(wrist.first, wrist.second);
-
+//	qDebug("###(%f %f)", b2.x, b2.y);
 	OpenNN::Vector<double> featureVector(INPUT_VECTOR_SIZE, 0);
 	if (fingertips.size() > 5) {
 		return featureVector;
 	}
 	featureVector[10] = fingertips.size();
 
-	QList<cv::Point> fingertipsOrdered = QList<cv::Point>(fingertips);
-	// sort by angle
-	struct compare {
-		compare(cv::Point palmCenter, float offs)
-		:	m_palmCenter(palmCenter)
-		,	m_offs(offs) {
-
-		}
-
-		float getAngle(cv::Point point) {
-			const float dy = point.y - m_palmCenter.y;
-			const float dx = point.x - m_palmCenter.x;
-			const float angle = atan2f(dy, dx) - (m_offs);
-			if (angle < -M_PI) {
-				return angle + 2*M_PI;
-			} else {
-				return angle;
-			}
-		}
-
-		bool operator() (cv::Point a, cv::Point b) {
-			return getAngle(a) < getAngle(b);
-		}
-
-		const cv::Point m_palmCenter;
-		const float m_offs;
-	};
-//TODO: order not working properly? test more
-	// ordering
-	const float offs = atan2f(wrist.second.y - wrist.first.y,
-						wrist.second.x - wrist.first.x);
-
-	std::sort(fingertipsOrdered.begin(), fingertipsOrdered.end(), compare(cv::Point(wristMiddlePoint.x, wristMiddlePoint.y), offs));
-
-
-
-
 	// [0] must be the first finger in direction of thumb->pointer
 	int i = 0;
-	foreach (const cv::Point2f p, fingertipsOrdered) {
+	foreach (const cv::Point2f p, fingertips) {
 		const cv::Point2f v = p - wristMiddlePoint;
 		const cv::Point2f vNorm = cv::Point2f(v.x/norm, v.y/norm);
 		const cv::Point2f vNormRot = cv::Point2f(b1.dot(vNorm), b2.dot(vNorm));
 		featureVector.at(i++) = vNormRot.x;
-		featureVector.at(i++)= vNormRot.y;
+		featureVector.at(i++) = vNormRot.y;
 	}
 
 	return featureVector;

@@ -11,6 +11,7 @@
 #include <opencv/cv.h>
 #include "main.h"
 #include <QApplication>
+
 //using namespace cv;
 namespace iez {
 
@@ -22,7 +23,10 @@ Processing::Processing(ImageSourceBase *imgsrc, QObject *parent)
 {
 	m_thread = new QThread(QCoreApplication::instance()->thread());
 	moveToThread(m_thread);
+
 	connect(imgsrc, SIGNAL(frameReceived()), this, SLOT(process()));
+	connect(this, SIGNAL(got_learnNew(int)), this, SLOT(on_learnNew(int)));
+	connect(this, SIGNAL(got_train()), this, SLOT(on_train()));
 	m_thread->start();
 }
 
@@ -45,42 +49,52 @@ void Processing::process()
 	assert(bgr.rows == depth.rows);
 	assert(bgr.cols == depth.cols);
 
-	WindowManager::getInstance().imShow("Original", bgr);
+//	WindowManager::getInstance().imShow("Original", bgr);
 
 	m_handTracker.invokeProcess(bgr, depth, m_imageSource->getSequence());
-	const HandTracker::Data *handTrackerData = m_handTracker.data();
+	const HandTracker::Data handTrackerData = m_handTracker.data();
 
-	QString poseString = m_pose.categorize(handTrackerData->palmCenter(),
-					  handTrackerData->palmRadius(),
-					  handTrackerData->wrist(),
-					  handTrackerData->fingertips());
+	QString poseString = m_pose.categorize(handTrackerData.palmCenter(),
+					  handTrackerData.palmRadius(),
+					  handTrackerData.wrist(),
+					  handTrackerData.fingertips());
 	emit got_poseUpdated(poseString);
 	imageSourceArtificial->setColorMat(bgr);
 }
 
 void Processing::learnNew(enum PoseRecognition::POSE poseId)
 {
-	const HandTracker::Data *data = m_handTracker.data();
+	emit got_learnNew(poseId);
+}
+
+void Processing::on_learnNew(int poseId)
+{
+	const HandTracker::Data data = m_handTracker.data();
 	qDebug("LEARNING");
 	qDebug("%d", poseId);
-	qDebug("(%d, %d) R=%f", data->palmCenter().x, data->palmCenter().y, data->palmRadius());
-	qDebug("(%d, %d) (%d, %d)", data->wrist().first.x,
-								data->wrist().first.y,
-								data->wrist().second.x,
-								data->wrist().second.y);
+	qDebug("(%d, %d) R=%f", data.palmCenter().x, data.palmCenter().y, data.palmRadius());
+	qDebug("(%d, %d) (%d, %d)", data.wrist().first.x,
+								data.wrist().first.y,
+								data.wrist().second.x,
+								data.wrist().second.y);
 	qDebug("fingertips:");
-	foreach (cv::Point p, data->fingertips()) {
+	foreach (cv::Point p, data.fingertips()) {
 		qDebug("\t(%d, %d)", p.x, p.y);
 	}
 
-	m_pose.learnNew(poseId,
-				  data->palmCenter(),
-				  data->palmRadius(),
-				  data->wrist(),
-					data->fingertips());
+	m_pose.learnNew(static_cast<enum PoseRecognition::POSE>(poseId),
+				  data.palmCenter(),
+				  data.palmRadius(),
+				  data.wrist(),
+					data.fingertips());
 }
 
 void Processing::train()
+{
+	emit got_train();
+}
+
+void Processing::on_train()
 {
 	try {
 		m_pose.train();
@@ -93,6 +107,16 @@ void Processing::train()
 void Processing::savePoseDatabase()
 {
 	m_pose.savePoseDatabase();
+}
+
+void Processing::neuralNetworkSave(std::string path)
+{
+	m_pose.neuralNetworkSave(path);
+}
+
+void Processing::neuralNetworkLoad(std::string path)
+{
+	m_pose.neuralNetworkLoad(path);
 }
 
 QString Processing::poseDatabaseToString() const

@@ -9,7 +9,7 @@
 
 namespace iez {
 
-#define HAND_MAX_PHYSICAL_DEPTH	(200)
+#define HAND_MAX_PHYSICAL_DEPTH	(150)
 #define PALM_RADIUS_RATIO (1.7f)
 
 // FINGER_FACTOR*PALM_RADIUS => minimal length of finger -- set to half the size of finger
@@ -134,7 +134,8 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 }
 
 bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
-							const cv::Point &handCenter,
+							const cv::Point &palmCenter,
+							const float palmRadius,
 							const Data &data,
 							wristpair_t& outputWrist)
 {
@@ -200,7 +201,7 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 	/// order pair by right-hand rule
 
 	const cv::Point &pt1 = wppFinal.first;
-	const cv::Point &pt2 = handCenter;
+	const cv::Point &pt2 = palmCenter;
 	const cv::Point &pt3 = wppFinal.second;
 	const cv::Point normal(pt2.y - pt1.y, pt1.x - pt2.x); // (from pt1 to pt2) -> normal -90*
 	if ((pt3 - pt1).dot(normal) < 0) {
@@ -214,8 +215,11 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 							   Processing::pointMean(wppFinal.second, wppData.second, ratio));
 
 	/// return wristpair
-
-	outputWrist = wristPointPair;
+	if (0) {
+		outputWrist = wristPointPair;
+	} else {
+		outputWrist = wristPairFix(palmCenter, palmRadius, Processing::pointMean(wristPointPair.first, wristPointPair.second));
+	}
 	return true;
 }
 
@@ -265,18 +269,22 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 
 	}
 	QList<cv::Point> l;
+	Q_ASSERT(fingerCount > 0);
+
 	if (fingerCount == 1) {
 		cv::Point fingertip = Processing::pointMean(rectPointsVector[2], rectPointsVector[3]);
 
 		l.append(fingertip);
-	} else {
+	} else if (fingerCount < 5) {
 		for (int i = 0; i < fingerCount; i++) {
-			const float n1 = rectWidth/fingerCount;
-			const float ratio = (i*(n1) + 0.5f*n1)/rectWidth;
+			const float ratio = (i + 0.5f)/fingerCount;
 			cv::Point fingertip = Processing::pointMean(rectPointsVector[2], rectPointsVector[3], ratio);
 			l.append(fingertip);
 		}
+	} else {
+		return QList<cv::Point>();
 	}
+
 
 ///// We now have list of fingertips, now assign each one of them to finger id
 ///// 0-thumb, 1-pointer, 2 middle,...
@@ -290,9 +298,28 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 
 }
 
-const HandTracker::Data *HandTracker::data() const
+wristpair_t HandTracker::wristPairFix(cv::Point palmCenter, float palmRadius, cv::Point wristMiddle)
 {
-	return &m_data;
+	const float distToCenter = Processing::pointDistance(palmCenter, wristMiddle);
+	cv::Point2f vecToCenter = (palmCenter - wristMiddle);
+	// normalize
+	vecToCenter.x /= distToCenter;
+	vecToCenter.y /= distToCenter;
+
+	// create normal vector
+	cv::Point2f normalVector = cv::Point2f(vecToCenter.y, -vecToCenter.x);
+
+
+	// ASSUMPTION: wrist width is equal to palmRadius
+	wristpair_t wrist;
+	wrist.first = cv::Point2f(wristMiddle.x, wristMiddle.y) - 0.5f*palmRadius*normalVector;
+	wrist.second = cv::Point2f(wristMiddle.x, wristMiddle.y) + 0.5f*palmRadius*normalVector;
+	return wrist;
+}
+
+HandTracker::Data HandTracker::data() const
+{
+	return m_data;
 }
 void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 							  std::vector<std::vector<cv::Point> > &fingersContours,
@@ -429,6 +456,11 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 				mid = tmpmid;
 			}
 		}
+		// not found valid contour
+		if (minIndex == std::numeric_limits<int>::max()) {
+			qDebug("%d Zero objects", imageId);
+			return;
+		}
 		handContour = contours[minIndex];
 	}
 	if (handContour.size() == 0) {
@@ -447,7 +479,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	out.copyTo(binaryHand);
 
 	cv::ellipse(out, referencePoint, cv::Size(5, 5), 0, 0, 360, cv::Scalar_<uint8_t>(200), 2);
-	WindowManager::getInstance().imShow("binaryHand", binaryHand);
+//	WindowManager::getInstance().imShow("binaryHand", binaryHand);
 
 
 
@@ -489,7 +521,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	/// find wrist
 	wristpair_t wrist;
-	if (findWrist(palmContour, palmCenter, data, wrist) == false) {
+	if (findWrist(palmContour, palmCenter, palmRadius, data, wrist) == false) {
 		qDebug("ERROR %s %d", __FILE__, __LINE__);
 		return;
 	}
@@ -518,7 +550,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 		}
 		cv::Point2f rect_points[4];
 		rotRect.points(rect_points);
-		for( int j = 0; j < 4; j++ ) {
+		for (int j = 0; j < 4; j++) {
 			cv::line(fingerMaskOutput, rect_points[j], rect_points[(j+1)%4], cv::Scalar(100), 2, 8 );
 		}
 
@@ -527,10 +559,20 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 			QList<cv::Point> rectFingertips = findFingertip(rotRect, palmRadius, palmCenter);
 			foreach (cv::Point fingertip, rectFingertips) {
 				fingertips.append(fingertip);
-				cv::ellipse(fingerMaskOutput, fingertip, cv::Size(2, 2), 0, 0, 360, cv::Scalar(100), 5);
+//				cv::ellipse(fingerMaskOutput, fingertip, cv::Size(2, 2), 0, 0, 360, cv::Scalar(100), 5);
 			}
 		}
+	}
 
+	orderFingertipsByAngle(wrist, fingertips);
+
+	// draw fingertips
+	{
+		int i = 0;
+		foreach (cv::Point fingertip, fingertips) {
+			cv::ellipse(fingerMaskOutput, fingertip, cv::Size(2, 2), 0, 0, 360, cv::Scalar(100), 5);
+			cv::putText(fingerMaskOutput, QString::number(i++).toStdString(), fingertip, cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+		}
 	}
 
 	{	// FINALIZE
@@ -538,12 +580,6 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 		data.setPalmCenter(palmCenter);
 		data.setPalmRadius(palmRadius);
 		data.setWrist(wrist);
-
-//		if (data.fingertips().size() == 5) {
-//			pose.learnNew(PoseRecognition::POSE_5, palmCenter, palmRadius, data.wrist(), data.fingertips());
-//		}
-		/// recognizer
-//		posecategorize(data.wrist(), data.fingertips());
 	}
 	///
 
@@ -635,6 +671,44 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 //	WindowManager::getInstance().imShow("distanceTransform", handDT);
 	qDebug("ID=%5d fps: %4.1f ... %3dms", imageId, (1000/30.f)/t.elapsed()*30, t.elapsed());
 }
+
+void HandTracker::orderFingertipsByAngle(wristpair_t wrist, QList<cv::Point> &fingertips)
+{
+	const cv::Point2f wristMiddlePoint = Processing::pointMean(wrist.first, wrist.second);
+	// sort by angle
+	struct compare {
+		compare(cv::Point palmCenter, float offs)
+		:	m_palmCenter(palmCenter)
+		,	m_offs(offs) {
+
+		}
+
+		float getAngle(cv::Point point) {
+			const float dy = point.y - m_palmCenter.y;
+			const float dx = point.x - m_palmCenter.x;
+			const float angle = atan2f(dy, dx) - (m_offs);
+			if (angle < -M_PI) {
+				return angle + 2*M_PI;
+			} else {
+				return angle;
+			}
+		}
+
+		bool operator() (cv::Point a, cv::Point b) {
+			return getAngle(a) < getAngle(b);
+		}
+
+		const cv::Point m_palmCenter;
+		const float m_offs;
+	};
+	//TODO: order not working properly? test more
+	// ordering
+	const float offs = atan2f(wrist.second.y - wrist.first.y,
+						wrist.second.x - wrist.first.x);
+
+	qSort(fingertips.begin(), fingertips.end(), compare(cv::Point(wristMiddlePoint.x, wristMiddlePoint.y), offs));
+}
+
 
 void HandTracker::Data::setWrist(std::pair<cv::Point, cv::Point> wrist)
 {

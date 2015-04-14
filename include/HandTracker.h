@@ -37,7 +37,8 @@ private:
 						 const float palmRadius);
 
 	static bool findWrist(const std::vector<cv::Point> &palmContour,
-						  const cv::Point &handCenter,
+						  const cv::Point &palmCenter,
+						  const float palmRadius,
 						  const Data &data,
 						  wristpair_t& outputWrist);
 
@@ -46,9 +47,12 @@ private:
 							const cv::Mat &binaryHand,
 							const cv::Mat &palmMask,
 							const Data &data);
+
 	static QList<cv::Point> findFingertip(const cv::RotatedRect &rotRect,
 										  const float palmRadius,
 										  const cv::Point &palmCenter);
+
+	static wristpair_t wristPairFix(cv::Point palmCenter, float palmRadius, cv::Point wristMiddle);
 
 private:
 
@@ -62,6 +66,7 @@ private:
 		static void setVector(QVector<float> *vector);
 	};
 
+	static void orderFingertipsByAngle(wristpair_t wrist, QList<cv::Point> &fingertips);
 public:
 	class Data {
 	public:
@@ -83,7 +88,7 @@ public:
 		wristpair_t m_wrist;
 		QList<cv::Point> m_fingertips;
 	};
-	const Data *data() const;
+	Data data() const;
 
 private:
 	Data m_data;

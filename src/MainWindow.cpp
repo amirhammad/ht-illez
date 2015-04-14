@@ -21,24 +21,34 @@
 
 namespace iez {
 
+#define NEURAL_NETWORK_FILENAME "NeuralNet.dat"
+
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
 	setWindowTitle("HT-illez: Main Window");
 
 	QDockWidget *databaseWidget = new QDockWidget("database", this);
-	addDockWidget(Qt::LeftDockWidgetArea, databaseWidget);
+	addDockWidget(Qt::TopDockWidgetArea, databaseWidget);
 	m_databaseTextEdit = new QTextEdit(this);
 	databaseWidget->setWidget(m_databaseTextEdit);
 
 	QDockWidget *nnResultWidget = new QDockWidget("results", this);
-	addDockWidget(Qt::BottomDockWidgetArea, nnResultWidget);
+	addDockWidget(Qt::TopDockWidgetArea, nnResultWidget);
 	m_nnResultTextEdit = new QTextEdit(this);
 	nnResultWidget->setWidget(m_nnResultTextEdit);
 
 	QMenuBar *menuBar = new QMenuBar(this);
-	QMenu *fileMenu = new QMenu("&File",this);
-	fileMenu->addAction(QIcon(), "quit", this, SLOT(deleteLater()));
+
+	QMenu *fileMenu = new QMenu("&File", this);
+	fileMenu->addAction(QIcon(), "&Quit", this, SLOT(deleteLater()));
 	menuBar->addMenu(fileMenu);
+
+	QMenu *neuralNetworkMenu = new QMenu("NeuralNet", this);
+	neuralNetworkMenu->addAction(QIcon(), "load", this, SLOT(on_neuralNetworkLoad()));
+	neuralNetworkMenu->addAction(QIcon(), "save", this, SLOT(on_neuralNetworkSave()));
+	menuBar->addMenu(neuralNetworkMenu);
+
 	setMenuBar(menuBar);
 
 //	addDockWidget(Qt::RightDockWidgetArea, new QDockWidget("X", this));
@@ -112,6 +122,7 @@ void MainWindow::buildNNTeachDialog()
 	layout->addLayout(layoutButtons);
 
 	dialog->setLayout(layout);
+	dialog->setWindowTitle("Gesture trainer");
 
 	connect(cancelButton, SIGNAL(clicked()), this, SLOT(on_cancelButtonClicked()));
 	connect(addButton, SIGNAL(clicked()), this, SLOT(on_addButtonClicked()));
@@ -136,7 +147,6 @@ void MainWindow::on_addButtonClicked()
 
 	m_processing->learnNew(static_cast<enum PoseRecognition::POSE>(m_teachDialogProperties.classComboBox->currentIndex()));
 
-	m_databaseTextEdit->setText(m_processing->poseDatabaseToString());
 	emit got_pause(false);
 }
 
@@ -144,6 +154,16 @@ void MainWindow::on_cancelButtonClicked()
 {
 	m_teachDialog->hide();
 	emit got_pause(false);
+}
+
+void MainWindow::on_neuralNetworkSave()
+{
+	m_processing->neuralNetworkSave(NEURAL_NETWORK_FILENAME);
+}
+
+void MainWindow::on_neuralNetworkLoad()
+{
+	m_processing->neuralNetworkLoad(NEURAL_NETWORK_FILENAME);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -174,6 +194,10 @@ void MainWindow::keyEvent(QKeyEvent *event)
 
 	case Qt::Key_Q:
 		deleteLater();
+		break;
+
+	case Qt::Key_F5:
+		m_databaseTextEdit->setText(m_processing->poseDatabaseToString());
 		break;
 
 	case Qt::Key_S:

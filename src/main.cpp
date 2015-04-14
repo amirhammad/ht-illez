@@ -27,7 +27,7 @@
 
 #include "unistd.h"
 #include "getopt.h"
-using namespace cv;
+
 
 
 iez::ImageSourceArtificial *iez::imageSourceArtificial;
@@ -93,11 +93,11 @@ static void getOptions(int argc, char *argv[])
 	}
 }
 
-
 int main(int argc, char *argv[])
 {
-	using namespace iez;
-	using namespace std;
+//	using namespace iez;
+//	using namespace std;
+//	using namespace cv;
 	QApplication app(argc, argv);
 //	new MainWindow();
 //	QApplication::exec();
@@ -122,8 +122,20 @@ int main(int argc, char *argv[])
 //		}
 //	}
 
+	//TEST
+//	for (int i = 20; i < 100; i += 5) {
+//		qWarning("\n#####");
+//		QList<cv::Point> points = iez::HandTracker::findFingertip(
+//					cv::RotatedRect(cv::Point2f(400, 400), cv::Size2f(i, 500), 0),
+//					30,
+//					cv::Point(300, 300));
+//		foreach (cv::Point pt, points) {
+//			qWarning("(%d %d) ", pt.x, pt.y);
+//		}
+//	}
+//	return 0;
 	iez::imageSourceArtificial = new iez::ImageSourceArtificial();
-	new MainWindow();
+	new iez::MainWindow();
 
 	// TODO: can edit files
 //	iez::ImageRecorder *recorder;

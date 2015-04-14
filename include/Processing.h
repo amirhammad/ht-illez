@@ -9,6 +9,8 @@
 #include "WindowManager.h"
 #include "HandTracker.h"
 
+class QSound;
+
 namespace iez {
 
 
@@ -21,6 +23,8 @@ public:
 	void learnNew(enum PoseRecognition::POSE);
 	void train();
 	void savePoseDatabase();
+	void neuralNetworkSave(std::string path);
+	void neuralNetworkLoad(std::string path);
 	QString poseDatabaseToString() const;
 
 	static cv::Mat processSaturate(const cv::Mat &bgr, const int satIncrease);
@@ -62,7 +66,9 @@ private:
 
 public slots:
 	void process();
-
+private slots:
+	void on_learnNew(int poseId);
+	void on_train();
 private:
 	QThread *m_thread;
 
@@ -81,6 +87,8 @@ private:
 
 signals:
 	void got_poseUpdated(QString);
+	void got_learnNew(int);
+	void got_train();
 };
 
 }
