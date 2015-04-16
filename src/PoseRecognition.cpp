@@ -10,42 +10,47 @@
 #define NNDATA_FILENAME "NNData.csv"
 
 // Serialization operations
-QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &data)
+
+QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 {
-	iez::PoseRecognition::Data d(INPUT_VECTOR_SIZE);
 	QString str;
 	str.reserve(16);
 	qint8 c;
+	int index = 0;
 	do {
-		int index = 0;
-		do {
-			if (stream.atEnd() && index == 0) {
-//				qDebug("ERROR");
+		if (stream.atEnd() && index == 0) {
+			stream.setStatus(QDataStream::ReadCorruptData);
+			return stream;
+		}
+		stream >> c;
+		if (c == ',') {
+			if (str.isEmpty()) {
 				stream.setStatus(QDataStream::ReadCorruptData);
 				return stream;
 			}
-			stream >> c;
-//			qDebug() <<" READ "<< c;
-			if (c == ',') {
-				if (str.isEmpty()) {
-					stream.setStatus(QDataStream::ReadCorruptData);
-					return stream;
-				}
-				d.input[index++] = str.toFloat();
-				str.clear();
-			} else if (c != '\n' && c != '\r' && c != 0) {
-				str += c;
-			} else {
-				if (str.isEmpty()) {
-					stream.setStatus(QDataStream::ReadCorruptData);
-					return stream;
-				}
-				d.output = str.toInt();
-				str.clear();
-				break;
+			data.input[index++] = str.toFloat();
+			str.clear();
+		} else if (c != '\n' && c != '\r' && c != 0) {
+			str += c;
+		} else {
+			if (str.isEmpty()) {
+				stream.setStatus(QDataStream::ReadCorruptData);
+				return stream;
 			}
+			data.output = str.toInt();
+			str.clear();
+			break;
+		}
 
-		} while (true);
+	} while (true);
+}
+
+QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &data)
+{
+	iez::PoseRecognition::Data d(INPUT_VECTOR_SIZE);
+
+	do {
+		stream >> d;
 		data.append(d);
 	} while (!stream.atEnd());
 
@@ -53,22 +58,29 @@ QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &
 	return stream;
 }
 
-QDataStream& operator<<(QDataStream& stream, const QList<iez::PoseRecognition::Data> &data)
-{
-	foreach (iez::PoseRecognition::Data d, data) {
-		for (int input = 0; input < INPUT_VECTOR_SIZE; input++) {
-			QByteArray str = QString::number(d.input[input], 'g', 10).toAscii();
-			for (int i = 0; i < str.size(); i++) {
-				stream << static_cast<qint8>(str[i]);
-			}
 
-			stream << static_cast<qint8>(',');
-		}
-		QByteArray str = QString::number(d.output, 'g', 10).toAscii();
+QDataStream& operator<<(QDataStream& stream, const iez::PoseRecognition::Data &data)
+{
+	for (int input = 0; input < INPUT_VECTOR_SIZE; input++) {
+		QByteArray str = QString::number(data.input[input], 'g', 10).toAscii();
 		for (int i = 0; i < str.size(); i++) {
 			stream << static_cast<qint8>(str[i]);
 		}
-		stream << static_cast<qint8>('\n');
+
+		stream << static_cast<qint8>(',');
+	}
+	QByteArray str = QString::number(data.output, 'g', 10).toAscii();
+	for (int i = 0; i < str.size(); i++) {
+		stream << static_cast<qint8>(str[i]);
+	}
+	stream << static_cast<qint8>('\n');
+	return stream;
+}
+
+QDataStream& operator<<(QDataStream& stream, const QList<iez::PoseRecognition::Data> &data)
+{
+	foreach (iez::PoseRecognition::Data d, data) {
+		stream << d;
 	}
 
 	return stream;
