@@ -51,11 +51,19 @@ public:
 	static QString poseToString(enum POSE pose);
 	static QString poseToString(int pose);
 
-private:
 	struct Data {
+		Data(int size)
+		: input(size) {
+
+		}
+
 		QVector<float> input;
 		int output;
 	};
+	static QList<Data> loadDatabaseFromFile(QString path);
+	static void saveDatabaseToFile(QString path, QList<Data> database);
+private:
+
 	QList<Data> m_database;
 
 	void teachNN();

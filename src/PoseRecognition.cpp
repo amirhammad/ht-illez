@@ -7,72 +7,83 @@
 #include <QVariantList>
 
 #define INPUT_VECTOR_SIZE 11
-#define NNDATA_FILENAME "NNData.txt"
+#define NNDATA_FILENAME "NNData.csv"
+
+// Serialization operations
+QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &data)
+{
+	iez::PoseRecognition::Data d(INPUT_VECTOR_SIZE);
+	QString str;
+	str.reserve(16);
+	qint8 c;
+	do {
+		int index = 0;
+		do {
+			if (stream.atEnd() && index == 0) {
+//				qDebug("ERROR");
+				stream.setStatus(QDataStream::ReadCorruptData);
+				return stream;
+			}
+			stream >> c;
+//			qDebug() <<" READ "<< c;
+			if (c == ',') {
+				if (str.isEmpty()) {
+					stream.setStatus(QDataStream::ReadCorruptData);
+					return stream;
+				}
+				d.input[index++] = str.toFloat();
+				str.clear();
+			} else if (c != '\n' && c != '\r' && c != 0) {
+				str += c;
+			} else {
+				if (str.isEmpty()) {
+					stream.setStatus(QDataStream::ReadCorruptData);
+					return stream;
+				}
+				d.output = str.toInt();
+				str.clear();
+				break;
+			}
+
+		} while (true);
+		data.append(d);
+	} while (!stream.atEnd());
+
+	stream.setStatus(QDataStream::Ok);
+	return stream;
+}
+
+QDataStream& operator<<(QDataStream& stream, const QList<iez::PoseRecognition::Data> &data)
+{
+	foreach (iez::PoseRecognition::Data d, data) {
+		for (int input = 0; input < INPUT_VECTOR_SIZE; input++) {
+			QByteArray str = QString::number(d.input[input], 'g', 10).toAscii();
+			for (int i = 0; i < str.size(); i++) {
+				stream << static_cast<qint8>(str[i]);
+			}
+
+			stream << static_cast<qint8>(',');
+		}
+		QByteArray str = QString::number(d.output, 'g', 10).toAscii();
+		for (int i = 0; i < str.size(); i++) {
+			stream << static_cast<qint8>(str[i]);
+		}
+		stream << static_cast<qint8>('\n');
+	}
+
+	return stream;
+}
+
 namespace iez {
 
 
 PoseRecognition::PoseRecognition()
 {
 	m_neuralNetwork = 0;
-//	qRegisterMetaTypeStreamOperators<OpenNN::Perceptron>("OpenNN::Perceptron");
-//	qRegisterMetaTypeStreamOperators<OpenNN::PerceptronLayer>("OpenNN::PerceptronLayer");
-//	qRegisterMetaType<OpenNN::Perceptron>();
-//	qRegisterMetaType<OpenNN::PerceptronLayer>();
-
-	m_settings = new QSettings("pose_recognition.ini", QSettings::IniFormat);
-
-
-	QVariant settingsVariant = m_settings->value("NNDATA");
-	if (settingsVariant.isNull()) {
-		qDebug("Error loading settings");
-		return;
+	m_database = loadDatabaseFromFile(NNDATA_FILENAME);
+	if (m_database.size() > 0) {
+		m_matrix = convertToMatrix(m_database);
 	}
-
-	Q_ASSERT(settingsVariant.canConvert<QVariantList>());
-	QVariantList list = settingsVariant.value<QVariantList>();
-
-	foreach (QVariant v, list) {
-		Q_ASSERT(v.canConvert<QVariantList>());
-		QVariantList unitVariant = v.value<QVariantList>();
-
-		Data d;
-		d.input = QVector<float>(INPUT_VECTOR_SIZE);
-
-		// save input
-		for (int i = 0; i < INPUT_VECTOR_SIZE; i++) {
-			Q_ASSERT(unitVariant.at(i).canConvert<float>());
-			d.input[i] = unitVariant.at(i).toFloat();
-		}
-		// save output
-		Q_ASSERT(unitVariant.at(INPUT_VECTOR_SIZE).canConvert<int>());
-		d.output = unitVariant.at(INPUT_VECTOR_SIZE).toInt();
-
-		m_database.append(d);
-	}
-	m_matrix = convertToMatrix(m_database);
-
-	return;
-
-//	OpenNN::Perceptron perceptron(5);
-//	perceptron.set_activation_function("Linear");
-//	perceptron.set_synaptic_weight(0, 1);
-//	perceptron.set_synaptic_weight(1, 0);
-//	perceptron.set_synaptic_weight(2, 0);
-//	perceptron.set_synaptic_weight(3, 0);
-//	perceptron.set_synaptic_weight(4, 0);
-//	perceptron.set_bias(5);
-//	OpenNN::Vector<double> vec(5);
-//	vec[0] = 2;
-//	vec[1] = 3;
-//	vec[2] = 4;
-//	vec[3] = 5;
-//	vec[4] = 6;
-//	printf("VALUE: %f\n", perceptron.calculate_output(vec));
-//	m_settings->setValue("NN", qVariantFromValue(perceptron));
-
-
-//	fflush(stdout);
-//	exit(0);
 }
 
 void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
@@ -88,8 +99,8 @@ void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
 
 	OpenNN::Vector<double> featureVector = constructFeatureVector(palmCenter, palmRadius, wrist, fingertips);
 
-	Data d;
-	d.input = QVector<float>(featureVector.size(), 0);
+	Q_ASSERT(featureVector.size() == INPUT_VECTOR_SIZE);
+	Data d(INPUT_VECTOR_SIZE);
 	int index = 0;
 	foreach (double val, featureVector) {
 		d.input[index++] = val;
@@ -101,16 +112,7 @@ void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
 
 void PoseRecognition::savePoseDatabase()
 {
-	QVariantList output;
-	foreach (Data d, m_database) {
-		QVariantList v;
-		foreach (float x, d.input) {
-			v.append(x);
-		}
-		v.append(d.output);
-		output.append(QVariant(v));
-	}
-	m_settings->setValue("NNDATA", output);
+	saveDatabaseToFile(NNDATA_FILENAME, m_database);
 }
 
 void PoseRecognition::neuralNetworkSave(std::string path)
@@ -343,6 +345,29 @@ QString PoseRecognition::poseToString(int pose)
 	}
 }
 
+QList<PoseRecognition::Data> PoseRecognition::loadDatabaseFromFile(QString path)
+{
+	QList<PoseRecognition::Data> data;
+	QFile f(path);
+	if (!f.open(QIODevice::ReadOnly)) {
+		return data;
+	}
+	QDataStream s(&f);
+	s >> data;
+
+	return data;
+}
+
+void PoseRecognition::saveDatabaseToFile(QString path, QList<PoseRecognition::Data> database)
+{
+	QFile f(path);
+	if (!f.open(QIODevice::WriteOnly)) {
+		return;
+	}
+	QDataStream s(&f);
+	s << database;
+}
+
 OpenNN::Matrix<double> PoseRecognition::convertToMatrix(const QList<PoseRecognition::Data>& db)
 {
 
@@ -412,8 +437,3 @@ void PoseRecognition::appendToMatrix(OpenNN::Vector<double> vec)
 }
 
 }
-Q_DECLARE_METATYPE(OpenNN::Perceptron)
-Q_DECLARE_METATYPE(OpenNN::PerceptronLayer)
-
-
-

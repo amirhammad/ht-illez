@@ -58,3 +58,15 @@ target_link_libraries(${outputname} ${QT_LIBRARIES} OpenNI2 pthread opennn ${FRE
 
 #target_link_libraries(${outputname} ${FREENECT_LIBRARIES})
 
+
+
+#tests
+find_library(gtest REQUIRED)
+set(PROJECT_TEST_NAME test)
+set(TEST_SRC_FILES src/test/PoseRecognitionTest.cpp)
+
+add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
+add_dependencies(${PROJECT_TEST_NAME} googletest)
+target_link_libraries(${PROJECT_TEST_NAME} ${OpenCV_LIBS} ${QT_LIBRARIES} OpenNI2 opennn)
+target_link_libraries(${PROJECT_TEST_NAME} gtest gtest_main pthread)
+#add_test(test1 ${PROJECT_TEST_NAME})
