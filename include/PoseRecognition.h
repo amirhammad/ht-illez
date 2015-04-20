@@ -16,10 +16,10 @@ public:
 		POSE_2 = 2,//middle and pointing finger
 		POSE_3 = 3,//POSE_2 + T
 		POSE_4 = 4,// POSE_3 + ring
-//		POSE_5 = 5,// 5 fingers
-//		POSE_6 = 6,// 2_2_T
-//		POSE_7 = 7,//1_2_1_T
-//		POSE_8 = 8,// POSE_6 - T
+		POSE_5 = 5,// 5 fingers
+		POSE_6 = 6,// 2_2_T
+		POSE_7 = 7,//1_2_1_T
+		POSE_8 = 8,// POSE_6 - T
 //		POSE_9 = 9,// POSE_7 - T
 //		POSE_10 = 10,// pinky_(ring,middle,point)
 //		POSE_11 = 11,// POSE_10 + T
@@ -62,6 +62,7 @@ public:
 	};
 	static QList<Data> loadDatabaseFromFile(QString path);
 	static void saveDatabaseToFile(QString path, QList<Data> database);
+	static int inputVectorSize();
 private:
 
 	QList<Data> m_database;

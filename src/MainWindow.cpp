@@ -18,6 +18,7 @@
 #include <QComboBox>
 #include <QTextEdit>
 #include <QMenuBar>
+#include <QTableWidget>
 
 namespace iez {
 
@@ -30,8 +31,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	QDockWidget *databaseWidget = new QDockWidget("database", this);
 	addDockWidget(Qt::TopDockWidgetArea, databaseWidget);
-	m_databaseTextEdit = new QTextEdit(this);
-	databaseWidget->setWidget(m_databaseTextEdit);
+	m_databaseTable = new QTableWidget(this);
+	databaseWidget->setWidget(m_databaseTable);
 
 	QDockWidget *nnResultWidget = new QDockWidget("results", this);
 	addDockWidget(Qt::TopDockWidgetArea, nnResultWidget);
@@ -82,8 +83,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	m_paused = false;
 
-
-	m_databaseTextEdit->setText(m_processing->poseDatabaseToString());
+	loadPoseDatabaseToTable();
 
 	buildNNTeachDialog();
 
@@ -139,6 +139,32 @@ void MainWindow::train()
 	emit got_pause(true);
 	m_processing->train();
 	emit got_pause(false);
+}
+
+void MainWindow::loadPoseDatabaseToTable()
+{
+	QString poseDB = m_processing->poseDatabaseToString();
+	QStringList poseDBLineList = poseDB.split('\n', QString::SkipEmptyParts);
+	m_databaseTable->setRowCount(poseDBLineList.count());
+	m_databaseTable->setColumnCount(PoseRecognition::inputVectorSize() + 1);
+	int indexLine = 0;
+	foreach (QString line, poseDBLineList) {
+		QStringList inputOutputStringList = line.split("||", QString::SkipEmptyParts);
+		QStringList inputStringList = inputOutputStringList[0].split(' ', QString::SkipEmptyParts);
+		int indexColumn = 0;
+		Q_ASSERT(inputStringList.size() == PoseRecognition::inputVectorSize());
+		foreach (QString inputItem, inputStringList) {
+			QTableWidgetItem *tableWidgetItem = new QTableWidgetItem(inputItem);
+			m_databaseTable->setItem(indexLine, indexColumn++, tableWidgetItem);
+		}
+
+		QString outputItem = inputOutputStringList[1];
+		QTableWidgetItem *tableWidgetItem = new QTableWidgetItem(outputItem);
+		m_databaseTable->setItem(indexLine, PoseRecognition::inputVectorSize(), tableWidgetItem);
+		indexLine++;
+	}
+
+
 }
 
 void MainWindow::on_addButtonClicked()
@@ -197,7 +223,7 @@ void MainWindow::keyEvent(QKeyEvent *event)
 		break;
 
 	case Qt::Key_F5:
-		m_databaseTextEdit->setText(m_processing->poseDatabaseToString());
+		loadPoseDatabaseToTable();
 		break;
 
 	case Qt::Key_S:

@@ -1,8 +1,11 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QComboBox>
+
+class QComboBox;
 class QTextEdit;
+class QTableWidget;
+
 namespace iez {
 class ImageSourceOpenNI;
 class Processing;
@@ -21,6 +24,7 @@ private:
 	void buildNNTeachDialog();
 	void teachDialogShow();
 	void train();
+	void loadPoseDatabaseToTable();
 
 	bool m_paused;
 
@@ -29,7 +33,7 @@ private:
 	} m_teachDialogProperties;
 	QWidget *m_teachDialog;
 
-	QTextEdit *m_databaseTextEdit;
+	QTableWidget *m_databaseTable;
 	QTextEdit *m_nnResultTextEdit;
 
 signals:

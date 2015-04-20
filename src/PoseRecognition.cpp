@@ -253,7 +253,7 @@ QString PoseRecognition::databaseToString() const
 		foreach (float f, d.input) {
 			tmp.append(QString("%1 ").arg(f));
 		}
-		tmp.append(QString(" || %1\r\n").arg(d.output));
+		tmp.append(QString("||%1\n").arg(d.output));
 		output.append(tmp);
 	}
 	return output;
@@ -378,6 +378,11 @@ void PoseRecognition::saveDatabaseToFile(QString path, QList<PoseRecognition::Da
 	}
 	QDataStream s(&f);
 	s << database;
+}
+
+int PoseRecognition::inputVectorSize()
+{
+	return INPUT_VECTOR_SIZE;
 }
 
 OpenNN::Matrix<double> PoseRecognition::convertToMatrix(const QList<PoseRecognition::Data>& db)
