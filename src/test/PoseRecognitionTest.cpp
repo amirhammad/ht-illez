@@ -40,8 +40,8 @@ TEST_F(PoseRecognitionTest, integrityTest)
 	QList<PoseRecognition::Data> db;
 
 	for (int m = 0; m < j; m++) {
-		PoseRecognition::Data dataSource(INPUT_VECTOR_SIZE);
-		for (int i = 0; i < INPUT_VECTOR_SIZE; i++) {
+		PoseRecognition::Data dataSource(NN_INPUT_VECTOR_SIZE);
+		for (int i = 0; i < NN_INPUT_VECTOR_SIZE; i++) {
 			dataSource.input[i] = 100000.0f/rand()*((rand()%2) ? -1 : 1);
 		}
 		dataSource.output = rand()%100;
@@ -54,7 +54,7 @@ TEST_F(PoseRecognitionTest, integrityTest)
 
 	EXPECT_EQ(dbResult.size(), db.size());
 	for (int m = 0; m < j; m++) {
-		for (int i = 0; i < INPUT_VECTOR_SIZE; i++) {
+		for (int i = 0; i < NN_INPUT_VECTOR_SIZE; i++) {
 			EXPECT_FLOAT_EQ(QString::number(db[m].input[i]).toFloat(), QString::number(dbResult[m].input[i]).toFloat());
 		}
 		EXPECT_EQ(db[m].output, dbResult[m].output);

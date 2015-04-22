@@ -7,7 +7,7 @@
 #include <QFile>
 #include <QVariantList>
 
-#define INPUT_VECTOR_SIZE 11
+#define NN_INPUT_VECTOR_SIZE 10
 #define NNDATA_FILENAME "NNData.csv"
 
 // Serialization operations
@@ -52,7 +52,7 @@ QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 
 QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &data)
 {
-	iez::PoseRecognition::Data d(INPUT_VECTOR_SIZE);
+	iez::PoseRecognition::Data d(NN_INPUT_VECTOR_SIZE);
 
 	do {
 		stream >> d;
@@ -66,7 +66,7 @@ QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &
 
 QDataStream& operator<<(QDataStream& stream, const iez::PoseRecognition::Data &data)
 {
-	for (int input = 0; input < INPUT_VECTOR_SIZE; input++) {
+	for (int input = 0; input < NN_INPUT_VECTOR_SIZE; input++) {
 		QByteArray str = QString::number(data.input[input], 'g', 10).toAscii();
 		for (int i = 0; i < str.size(); i++) {
 			stream << static_cast<qint8>(str[i]);
@@ -116,8 +116,8 @@ void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
 
 	OpenNN::Vector<double> featureVector = constructFeatureVector(palmCenter, palmRadius, wrist, fingertips);
 
-	Q_ASSERT(featureVector.size() == INPUT_VECTOR_SIZE);
-	Data d(INPUT_VECTOR_SIZE);
+	Q_ASSERT(featureVector.size() == NN_INPUT_VECTOR_SIZE);
+	Data d(NN_INPUT_VECTOR_SIZE);
 	int index = 0;
 	foreach (double val, featureVector) {
 		d.input[index++] = val;
@@ -173,12 +173,12 @@ void PoseRecognition::train()
 	variablesPointer->set_name(8, "f5x");
 	variablesPointer->set_name(9, "f5y");
 
-	for (int i = 0; i < INPUT_VECTOR_SIZE; i++) {
+	for (int i = 0; i < NN_INPUT_VECTOR_SIZE; i++) {
 		variablesPointer->set_use(i, Variables::Input);
 	}
 	for (int i = 0; i < POSE_END; i++) {
-		variablesPointer->set_name(INPUT_VECTOR_SIZE + i, QString("output_").append(QString::number(i)).toStdString());
-		variablesPointer->set_use(INPUT_VECTOR_SIZE + i, Variables::Target);
+		variablesPointer->set_name(NN_INPUT_VECTOR_SIZE + i, QString("output_").append(QString::number(i)).toStdString());
+		variablesPointer->set_use(NN_INPUT_VECTOR_SIZE + i, Variables::Target);
 	}
 
 	do {
@@ -197,7 +197,7 @@ void PoseRecognition::train()
 
 		// Neural network
 		Vector<size_t> nnSizes(4);
-		nnSizes[0] = INPUT_VECTOR_SIZE;
+		nnSizes[0] = NN_INPUT_VECTOR_SIZE;
 		nnSizes[1] = 35;
 		nnSizes[2] = 25;
 		nnSizes[3] = POSE_END;
@@ -324,7 +324,7 @@ int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const
 bool PoseRecognition::testNeuralNetwork() const
 {
 	int errors = 0;
-	OpenNN::Vector<size_t> selectedColumns(INPUT_VECTOR_SIZE);
+	OpenNN::Vector<size_t> selectedColumns(NN_INPUT_VECTOR_SIZE);
 	for (int i = 0; i < selectedColumns.size(); i++) {
 		selectedColumns[i] = i;
 	}
@@ -384,7 +384,7 @@ void PoseRecognition::saveDatabaseToFile(QString path, QList<PoseRecognition::Da
 
 int PoseRecognition::inputVectorSize()
 {
-	return INPUT_VECTOR_SIZE;
+	return NN_INPUT_VECTOR_SIZE;
 }
 
 double PoseRecognition::normalizeInto(double value, double low, double high)
@@ -494,13 +494,13 @@ OpenNN::Matrix<double> PoseRecognition::convertToNormalizedMatrix(const QList<Da
 	// convert To Matrix
 	int index = 0;
 	foreach (Data data, db) {
-		OpenNN::Vector<double> k(INPUT_VECTOR_SIZE + POSE_END, 0);
-		Q_ASSERT(data.input.size() == INPUT_VECTOR_SIZE);
+		OpenNN::Vector<double> k(NN_INPUT_VECTOR_SIZE + POSE_END, 0);
+		Q_ASSERT(data.input.size() == NN_INPUT_VECTOR_SIZE);
 		qCopy(data.input.begin(), data.input.end(), k.begin());
 		normalizeVector(k);
 
 		Q_ASSERT(data.output >= 0 && data.output < POSE_END);
-		k[INPUT_VECTOR_SIZE + data.output] = 1;
+		k[NN_INPUT_VECTOR_SIZE + data.output] = 1;
 
 //		QStringList rowString;
 //		foreach (double d, k) rowString.append(QString::number(d));
@@ -529,7 +529,8 @@ OpenNN::Vector<double> PoseRecognition::constructFeatureVector( const cv::Point 
 	const cv::Point2f b2 = cv::Point2f(b1.y, -b1.x);
 	const cv::Point2f wristMiddlePoint = Processing::pointMean(wrist.first, wrist.second);
 //	qDebug("###(%f %f)", b2.x, b2.y);
-	OpenNN::Vector<double> featureVector(INPUT_VECTOR_SIZE, 0);
+
+	OpenNN::Vector<double> featureVector(NN_INPUT_VECTOR_SIZE, 0);
 	if (fingertips.size() > 5) {
 		return featureVector;
 	}
@@ -551,7 +552,7 @@ void PoseRecognition::appendToMatrix(OpenNN::Vector<double> vec)
 {
 	printf("%lu %lu\n", m_matrix.get_columns_number(), vec.size());
 	if (m_matrix.empty()) {
-		m_matrix.set(1, INPUT_VECTOR_SIZE + PoseRecognition::POSE_END);
+		m_matrix.set(1, NN_INPUT_VECTOR_SIZE + PoseRecognition::POSE_END);
 		m_matrix.set_row(1, vec);
 	}
 	m_matrix.append_row(vec);
