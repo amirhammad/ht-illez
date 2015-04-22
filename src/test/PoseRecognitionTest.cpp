@@ -22,6 +22,18 @@ protected:
 	PoseRecognition *pose;
 };
 
+TEST_F(PoseRecognitionTest, normalizeInto)
+{
+	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(2, 0, 2), 1.0);
+	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(1, 0, 2), 0.5);
+	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(0, 0, 2), 0);
+	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(1.5, 1, 2), 0.5);
+	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(3, 0, 9), 1.0/3.0);
+	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(0, -3, 6), 1.0/3.0);
+	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(7, -3, 6), 1.0);
+	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(-7, -3, 6), 0.0);
+}
+
 TEST_F(PoseRecognitionTest, integrityTest)
 {
 	int j = 100;
