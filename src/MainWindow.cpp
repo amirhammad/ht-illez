@@ -71,9 +71,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 //	action->setMenu(menu);
 //	QObject::connect(action, SIGNAL(triggered()), this, SLOT(oh()));
 
-	m_video = new iez::ImageSourceOpenNI(0);
-	m_video->init();
-	m_processing = new iez::Processing(m_video, 0);
+	QMetaObject::invokeMethod(this, "on_init");
 
 	// Handle window manager key events
 	QObject::connect(&WindowManager::getInstance(), SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(keyEvent(QKeyEvent*)));
@@ -83,7 +81,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	m_paused = false;
 
-	loadPoseDatabaseToTable();
+
 
 	buildNNTeachDialog();
 
@@ -190,6 +188,14 @@ void MainWindow::on_neuralNetworkSave()
 void MainWindow::on_neuralNetworkLoad()
 {
 	m_processing->neuralNetworkLoad(NEURAL_NETWORK_FILENAME);
+}
+
+void MainWindow::on_init()
+{
+	m_video = new iez::ImageSourceOpenNI(0);
+	m_video->init();
+	m_processing = new iez::Processing(m_video, 0);
+	loadPoseDatabaseToTable();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
