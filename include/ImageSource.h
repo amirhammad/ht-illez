@@ -1,6 +1,7 @@
 #pragma once
 #include <opencv2/opencv.hpp>
 #include <qobject.h>
+
 namespace iez {
 
 class ImageSourceBase : public QObject {
@@ -10,6 +11,7 @@ public:
 	:	m_sequence(-1) {
 
 	}
+
 	virtual cv::Mat getColorMat() const = 0;
 	virtual cv::Mat getDepthMat() const = 0;
 

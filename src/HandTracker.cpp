@@ -418,7 +418,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 //	cv::Mat f;
 //	candidates.copyTo(f, mask);
 //	f.copyTo(candidates);
-//	WindowManager::getInstance().imShow("xxxx", candidates);
+//	WindowManager::getInstance()->imShow("xxxx", candidates);
 
 
 	/// Filter
@@ -479,7 +479,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	out.copyTo(binaryHand);
 
 	cv::ellipse(out, referencePoint, cv::Size(5, 5), 0, 0, 360, cv::Scalar_<uint8_t>(200), 2);
-//	WindowManager::getInstance().imShow("binaryHand", binaryHand);
+//	WindowManager::getInstance()->imShow("binaryHand", binaryHand);
 
 
 
@@ -639,7 +639,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 //				}
 //			}
-//			WindowManager::getInstance().imShow("rotated", binaryHandRotated);
+//			WindowManager::getInstance()->imShow("rotated", binaryHandRotated);
 
 //		}
 */
@@ -658,17 +658,17 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	cv::ellipse(centerHighlited, palmCenter, cv::Size(palmRadius, palmRadius), 0, 0, 360, cv::Scalar(100, 0, 255), 10);
 
 
-	WindowManager::getInstance().imShow("handCenter", centerHighlited);
+	WindowManager::getInstance()->imShow("handCenter", centerHighlited);
 
 	// draw only if valid, else results in flickering...
 	if (fingerMaskOutput.rows == binaryHand.rows) {
-		WindowManager::getInstance().imShow("fingers", fingerMaskOutput);
+		WindowManager::getInstance()->imShow("fingers", fingerMaskOutput);
 	}
-//	WindowManager::getInstance().imShow("PALM", palmMask);
+//	WindowManager::getInstance()->imShow("PALM", palmMask);
 
 //	cv::Mat gray;
 //	handDT.convertTo(gray, CV_8UC1, 10.0f);
-//	WindowManager::getInstance().imShow("distanceTransform", handDT);
+//	WindowManager::getInstance()->imShow("distanceTransform", handDT);
 	qDebug("ID=%5d fps: %4.1f ... %3dms", imageId, (1000/30.f)/t.elapsed()*30, t.elapsed());
 }
 

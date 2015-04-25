@@ -34,7 +34,15 @@ Processing::Processing(ImageSourceBase *imgsrc, QObject *parent)
 Processing::~Processing(void)
 {
 	qDebug("X1");
-	m_thread->quit();
+
+	m_thread->exit();
+	// If thread does not terminate within 10s, terminate it
+	if (!m_thread->wait(10000)) {
+		m_thread->terminate();
+		m_thread->wait();
+	}
+	m_thread->deleteLater();
+
 	qDebug("X1 finished");
 }
 
@@ -49,7 +57,7 @@ void Processing::process()
 	assert(bgr.rows == depth.rows);
 	assert(bgr.cols == depth.cols);
 
-//	WindowManager::getInstance().imShow("Original", bgr);
+//	WindowManager::getInstance()->imShow("Original", bgr);
 
 	m_handTracker.invokeProcess(bgr, depth, m_imageSource->getSequence());
 	const HandTracker::Data handTrackerData = m_handTracker.data();
@@ -255,8 +263,8 @@ void Processing::processContourTracing(const cv::Mat &bgr, const cv::Mat &depth,
 	}
 
 
-	WindowManager::getInstance().imShow("contours", contourOutput);
-//	WindowManager::getInstance().imShow("contoursx", x);
+	WindowManager::getInstance()->imShow("contours", contourOutput);
+//	WindowManager::getInstance()->imShow("contoursx", x);
 
 
 }
@@ -270,7 +278,7 @@ void Processing::processColorSegmentation(const cv::Mat &bgr, const cv::Mat &dep
 	const cv::Mat &probabilitiesOriginal = ColorSegmentation::m_statsFile.getProbabilityMap(bgrAveraged);
 	cv::Mat probabilitiesDisplayable;
 	probabilitiesOriginal.convertTo(probabilitiesDisplayable,CV_8UC3, 255, 1);
-	WindowManager::getInstance().imShow("probabilities...", probabilitiesDisplayable);
+	WindowManager::getInstance()->imShow("probabilities...", probabilitiesDisplayable);
 
 	cv::Mat probabilities;
 	cv::blur(probabilitiesOriginal, probabilities, cv::Size(5,5));
@@ -309,7 +317,7 @@ void Processing::processColorSegmentation(const cv::Mat &bgr, const cv::Mat &dep
 		}
 	}
 
-	WindowManager::getInstance().imShow("Segmented BGR (with db)", segmentedBGR);
+	WindowManager::getInstance()->imShow("Segmented BGR (with db)", segmentedBGR);
 }
 void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth, cv::Mat &bgrDepthMasked, cv::Mat &bgrRoi, int near)
 {
@@ -322,8 +330,8 @@ void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth,
 
 	cv::Mat depthShowable;
 	depth.convertTo(depthShowable, CV_8UC1, 1/18.0, 0);
-//	WindowManager::getInstance().imShow("depth BW", depthShowable);
-	WindowManager::getInstance().imShow("depth masked BGR", bgrDepthMasked);
+//	WindowManager::getInstance()->imShow("depth BW", depthShowable);
+	WindowManager::getInstance()->imShow("depth masked BGR", bgrDepthMasked);
 
 	/**
 	 * create mask consisting of points in depth choosen by near and far constants and their neighbours
@@ -331,7 +339,7 @@ void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth,
 	 */
 	cv::Mat tmp;
 	depth.convertTo(tmp, CV_8UC1, 1.0/16.0, 0);
-//	WindowManager::getInstance().imShow("tmp1", tmp);
+//	WindowManager::getInstance()->imShow("tmp1", tmp);
 	cv::Mat tmp23;
 	for (int y = 0; y < depth.rows; ++y) {
 		for (int x = 0; x < depth.cols; ++x) {
@@ -344,17 +352,17 @@ void Processing::processDepthFiltering(const cv::Mat &bgr, const cv::Mat &depth,
 
 	cv::Mat tmp2;
 	cv::threshold(tmp, tmp2, far/16, 255, cv::THRESH_BINARY_INV);
-//	WindowManager::getInstance().imShow("tmp2", tmp2);
+//	WindowManager::getInstance()->imShow("tmp2", tmp2);
 	cv::Mat tmp3, tmp4;
 	cv::dilate(tmp2, tmp3, cv::Mat(), cv::Point(-1,-1), 4);// dilate main
 	cv::dilate(tmp2, tmp4, cv::Mat(), cv::Point(-1,-1), 3);// dilate border
 
 
-//	WindowManager::getInstance().imShow("bounds", tmp3-tmp4);
-//	WindowManager::getInstance().imShow("BGR roi mask", tmp3);
+//	WindowManager::getInstance()->imShow("bounds", tmp3-tmp4);
+//	WindowManager::getInstance()->imShow("BGR roi mask", tmp3);
 	bgr.copyTo(bgrRoi,tmp3);
 
-//	WindowManager::getInstance().imShow("BGR roi finished", bgrRoi);
+//	WindowManager::getInstance()->imShow("BGR roi finished", bgrRoi);
 }
 
 int Processing::findMin(const cv::Mat& depth)
@@ -393,11 +401,11 @@ void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int f
 		far = near + 170;
 	}
 	const cv::Mat &mask = filterDepthMask(depth, near, far);
-	WindowManager::getInstance().imShow("x", mask);
+	WindowManager::getInstance()->imShow("x", mask);
 	cv::Mat dst2;
 
 	dst.copyTo(dst2, mask);
-	WindowManager::getInstance().imShow("x2", dst2);
+	WindowManager::getInstance()->imShow("x2", dst2);
 	dst2.copyTo(dst);
 }
 
@@ -665,7 +673,7 @@ void Processing::processContourPoints(const cv::Mat &bgr, const cv::Mat &depth, 
 //		cv::putText(x, std::to_string(i), cv::Point(contourSmoothed[fingersAll[fingersSorted[i]]]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(200));
 		cv::circle(x, fingersAll2[i],10, cv::Scalar(100));
 	}
-	WindowManager::getInstance().imShow("contourSmooth", x);
+	WindowManager::getInstance()->imShow("contourSmooth", x);
 //	msleep(1000);
 }
 

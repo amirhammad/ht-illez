@@ -77,10 +77,10 @@ private:
 	} data;
 	std::list<ImageStatistics> m_statsList;
 	HandTracker m_handTracker;
-	ImageSourceBase *m_imageSource;
+	const ImageSourceBase *m_imageSource;
 
 	bool m_calculateHandTracker;
-	ColorSegmentation *m_segmentation;
+	const ColorSegmentation *m_segmentation;//not used
 	Fps m_fps;
 
 	PoseRecognition m_pose;

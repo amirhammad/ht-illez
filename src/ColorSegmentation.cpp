@@ -92,7 +92,7 @@ bool ColorSegmentation::buildDatabaseFromFiles(const QString &path)
 	 } while (!in.atEnd());
 
 	 //saveStats(path);
-	 WindowManager::getInstance().imShow("FileDB statistics", m_statsFile.getProbabilityMap());
+	 WindowManager::getInstance()->imShow("FileDB statistics", m_statsFile.getProbabilityMap());
 
 	 return true;
 }
@@ -157,13 +157,13 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
 
 
 	}
-//	WindowManager::getInstance().imShow(QString("segmented: %1").arg(id++), maskedImage);
+//	WindowManager::getInstance()->imShow(QString("segmented: %1").arg(id++), maskedImage);
 
 //	cv::Mat bigger(768, 768, CV_8UC1);
 //	cv::resize(m_statsFile.getCountAllMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);
-//	WindowManager::getInstance().imShow("statsFile", bigger);
+//	WindowManager::getInstance()->imShow("statsFile", bigger);
 //	cv::resize(m_statsFile.getCountSkinMapNormalized(), bigger, bigger.size(), 0, 0, cv::INTER_NEAREST);
-//	WindowManager::getInstance().imShow("statsFileSkin", bigger);
+//	WindowManager::getInstance()->imShow("statsFileSkin", bigger);
 }
 
 

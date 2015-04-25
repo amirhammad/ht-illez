@@ -22,6 +22,15 @@ protected:
 	PoseRecognition *pose;
 };
 
+TEST_F(PoseRecognitionTest, findBestMatchIndex)
+{
+	QVector<double> v(10, 0);
+	v[5] = -100;
+	v[3] = 0.8;
+	EXPECT_EQ(PoseRecognition::findBestMatchIndex(v, -100), 5);
+
+}
+
 TEST_F(PoseRecognitionTest, normalizeInto)
 {
 	EXPECT_DOUBLE_EQ(PoseRecognition::normalizeInto(2, 0, 2), 1.0);

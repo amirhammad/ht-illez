@@ -29,16 +29,15 @@ signals:
 class WindowManager: public QObject {
 	Q_OBJECT
 public:
-	static WindowManager& getInstance()
+	static WindowManager * getInstance()
 	{
 		static WindowManager *instance = new WindowManager(); // Guaranteed to be destroyed.
-							  // Instantiated on first use.
-		return *instance;
+		return instance;
 	}
 	static void destroy()
 	{
-		if (&getInstance() != 0) {
-			getInstance().deleteLater();
+		if (getInstance() != 0) {
+			getInstance()->deleteLater();
 		}
 	}
 
