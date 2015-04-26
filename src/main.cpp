@@ -188,20 +188,3 @@ void iez::ImageSourceArtificial::pause(bool p)
 {
 	Q_UNUSED(p);
 }
-
-
-
-iez::Fps::Fps()
-{
-	m_timeLast = 0;
-}
-
-void iez::Fps::tick()
-{
-	m_timeLast = clock();
-}
-
-float iez::Fps::fps() const
-{
-	return 1000000.0f/(clock() - m_timeLast);
-}

@@ -56,7 +56,6 @@ private:
 
 	bool m_calculateHandTracker;
 	const ColorSegmentation *m_segmentation;//not used
-	Fps m_fps;
 
 	PoseRecognition m_pose;
 
