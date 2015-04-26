@@ -1,7 +1,6 @@
 #include "Processing.h"
 #include "ImageSource.h"
 #include <stdint.h>
-#include <assert.h>
 #include <string>
 #include <math.h>
 //#include <QtGui>
@@ -54,8 +53,8 @@ void Processing::process()
 	cv::Mat bgr;
 	cv::cvtColor(rgb, bgr,cv::COLOR_RGB2BGR);
 
-	assert(bgr.rows == depth.rows);
-	assert(bgr.cols == depth.cols);
+	Q_ASSERT(bgr.rows == depth.rows);
+	Q_ASSERT(bgr.cols == depth.cols);
 
 //	WindowManager::getInstance()->imShow("Original", bgr);
 
