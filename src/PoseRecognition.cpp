@@ -2,14 +2,18 @@
 #include "Processing.h"
 
 #include <opennn.h>
-
+#include <container.h>
 #include <QVector>
-#include <QVariantList>
+#include <QFile>
 
-#define INPUT_VECTOR_SIZE 11
+#define NN_INPUT_VECTOR_SIZE 10
 #define NNDATA_FILENAME "NNData.csv"
 
 // Serialization operations
+#define BOUND_X_LOW (-3.0)
+#define BOUND_X_HIGH (3.0)
+#define BOUND_Y_LOW (-6.0)
+#define BOUND_Y_HIGH (0.0)
 
 QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 {
@@ -24,7 +28,7 @@ QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 		}
 		stream >> c;
 		if (c == ',') {
-			if (str.isEmpty()) {
+			if (str.isEmpty() || (index >= data.input.size())) {
 				stream.setStatus(QDataStream::ReadCorruptData);
 				return stream;
 			}
@@ -47,7 +51,7 @@ QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 
 QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &data)
 {
-	iez::PoseRecognition::Data d(INPUT_VECTOR_SIZE);
+	iez::PoseRecognition::Data d(NN_INPUT_VECTOR_SIZE);
 
 	do {
 		stream >> d;
@@ -61,7 +65,7 @@ QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &
 
 QDataStream& operator<<(QDataStream& stream, const iez::PoseRecognition::Data &data)
 {
-	for (int input = 0; input < INPUT_VECTOR_SIZE; input++) {
+	for (int input = 0; input < NN_INPUT_VECTOR_SIZE; input++) {
 		QByteArray str = QString::number(data.input[input], 'g', 10).toAscii();
 		for (int i = 0; i < str.size(); i++) {
 			stream << static_cast<qint8>(str[i]);
@@ -94,7 +98,12 @@ PoseRecognition::PoseRecognition()
 	m_neuralNetwork = 0;
 	m_database = loadDatabaseFromFile(NNDATA_FILENAME);
 	if (m_database.size() > 0) {
-		m_matrix = convertToMatrix(m_database);
+		m_matrix = convertToNormalizedMatrix(m_database);
+	}
+	OpenNN::MultilayerPerceptron mlp;
+	if (loadMLP("/home/amir/neural_data/megadb", mlp)) {
+		m_neuralNetwork = new OpenNN::NeuralNetwork(mlp);
+		testNeuralNetwork();
 	}
 }
 
@@ -111,36 +120,46 @@ void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
 
 	OpenNN::Vector<double> featureVector = constructFeatureVector(palmCenter, palmRadius, wrist, fingertips);
 
-	Q_ASSERT(featureVector.size() == INPUT_VECTOR_SIZE);
-	Data d(INPUT_VECTOR_SIZE);
+	Q_ASSERT(featureVector.size() == NN_INPUT_VECTOR_SIZE);
+	Data d(NN_INPUT_VECTOR_SIZE);
 	int index = 0;
 	foreach (double val, featureVector) {
 		d.input[index++] = val;
 	}
 	d.output = pose;
 	m_database.append(d);
-	m_matrix = convertToMatrix(m_database);
+	m_matrix = convertToNormalizedMatrix(m_database);
 }
 
-void PoseRecognition::savePoseDatabase()
+void PoseRecognition::savePoseDatabase(QString path)
 {
-	saveDatabaseToFile(NNDATA_FILENAME, m_database);
+	saveDatabaseToFile(path, m_database);
 }
 
-void PoseRecognition::neuralNetworkSave(std::string path)
+void PoseRecognition::loadPoseDatabase(QString path)
+{
+	m_database = loadDatabaseFromFile(path);
+	if (m_database.size() != 0) {
+		m_matrix = convertToNormalizedMatrix(m_database);
+	} else {
+		qDebug("Error loading pose database");
+	}
+}
+
+void PoseRecognition::neuralNetworkSave(QString path)
 {
 	if (!m_neuralNetwork) {
 		return;
 	}
-	m_neuralNetwork->save(path);
+	m_neuralNetwork->save(path.toStdString());
 }
 
-void PoseRecognition::neuralNetworkLoad(std::string path)
+void PoseRecognition::neuralNetworkLoad(QString path)
 {
 	if (!m_neuralNetwork) {
 		m_neuralNetwork = new OpenNN::NeuralNetwork();
 	}
-	m_neuralNetwork->load(path);
+	m_neuralNetwork->load(path.toStdString());
 }
 
 void PoseRecognition::train()
@@ -151,6 +170,7 @@ void PoseRecognition::train()
 		return;
 	}
 	DataSet dataSet;
+
 	dataSet.set(m_matrix);
 
 	// Variables
@@ -167,22 +187,22 @@ void PoseRecognition::train()
 	variablesPointer->set_name(7, "f4y");
 	variablesPointer->set_name(8, "f5x");
 	variablesPointer->set_name(9, "f5y");
-	variablesPointer->set_name(10, "count");
 
-	for (int i = 0; i < INPUT_VECTOR_SIZE; i++) {
+	for (int i = 0; i < NN_INPUT_VECTOR_SIZE; i++) {
 		variablesPointer->set_use(i, Variables::Input);
 	}
 	for (int i = 0; i < POSE_END; i++) {
-		variablesPointer->set_name(INPUT_VECTOR_SIZE + i, QString("output_").append(QString::number(i)).toStdString());
-		variablesPointer->set_use(INPUT_VECTOR_SIZE + i, Variables::Target);
+		variablesPointer->set_name(NN_INPUT_VECTOR_SIZE + i, QString("output_").append(QString::number(i)).toStdString());
+		variablesPointer->set_use(NN_INPUT_VECTOR_SIZE + i, Variables::Target);
 	}
 
+	double errorRatio = NAN;
 	do {
 		// Instances
 
 		Instances* instancesPointer = dataSet.get_instances_pointer();
-
-		instancesPointer->split_random_indices(0.5, 0.25, 0.25);
+//		instancesPointer->set_training();
+		instancesPointer->split_random_indices(2.0, 0.2, 0.5);
 
 		const Matrix<std::string> inputs_information = variablesPointer->arrange_inputs_information();
 		const Matrix<std::string> targets_information = variablesPointer->arrange_targets_information();
@@ -191,16 +211,13 @@ void PoseRecognition::train()
 		const Vector< Statistics<double> > inputs_statistics = dataSet.scale_inputs_minimum_maximum();
 
 
-		// Neural network
-		Vector<size_t> nnSizes(4);
-		nnSizes[0] = INPUT_VECTOR_SIZE;
-		nnSizes[1] = 35;
-		nnSizes[2] = 25;
-		nnSizes[3] = POSE_END;
+//		// Neural network
+
 		if (m_neuralNetwork) {
 			delete m_neuralNetwork;
 		}
-		m_neuralNetwork = new NeuralNetwork(nnSizes);
+		m_neuralNetwork = new NeuralNetwork(NN_INPUT_VECTOR_SIZE, 25, POSE_END);
+		m_neuralNetwork->randomize_parameters_normal(-0.0005, 0.0005);
 
 		Inputs* inputs_pointer = m_neuralNetwork->get_inputs_pointer();
 
@@ -217,7 +234,6 @@ void PoseRecognition::train()
 		MultilayerPerceptron* multilayer_perceptron_pointer = m_neuralNetwork->get_multilayer_perceptron_pointer();
 
 		multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::HyperbolicTangent);
-		multilayer_perceptron_pointer->set_layer_activation_function(2, Perceptron::Logistic);
 
 		Outputs* outputs_pointer = m_neuralNetwork->get_outputs_pointer();
 
@@ -230,19 +246,67 @@ void PoseRecognition::train()
 		// Training strategy
 
 		TrainingStrategy training_strategy(&performance_functional);
+		int method = 1;
+		switch (method) {
+		case 0:
+			training_strategy.set_main_type(OpenNN::TrainingStrategy::CONJUGATE_GRADIENT);
+			training_strategy.get_conjugate_gradient_pointer()->set_minimum_performance_increase(1.0e-6);
+			break;
 
-		QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+		case 1:
+			training_strategy.set_main_type(OpenNN::TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+			training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_minimum_performance_increase(1.0e-6);
+			break;
 
-		quasi_Newton_method_pointer->set_minimum_performance_increase(1.0e-6);
+		default:
+			training_strategy.set_main_type(OpenNN::TrainingStrategy::QUASI_NEWTON_METHOD);
+			training_strategy.get_quasi_Newton_method_pointer()->set_minimum_performance_increase(1.0e-6);
+			break;
+		}
 
 		TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+		QStringList params;
+		foreach (double p, m_neuralNetwork->arrange_parameters()) {
+			params.append(QString::number(p));
+		}
+		qDebug() << params;
 
-		qDebug("Generalization: %f", training_strategy_results.quasi_Newton_method_results_pointer->final_generalization_performance);
-		std::string resultString;
-		training_strategy_results.save(resultString);
-		qDebug("%s", resultString.c_str());
 
-	} while (!testNeuralNetwork());
+		TestingAnalysis testing_analysis(m_neuralNetwork, &dataSet);
+		Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+		confusion.save_csv("/tmp/confusion.csv");
+//		qDebug("Generalization: %f", training_strategy_results.quasi_Newton_method_results_pointer->final_generalization_performance);
+//		std::string resultString = "/tmp/ooo.txt";
+//		training_strategy_results.save(resultString);
+//		qDebug("%s\n\n", resultString.c_str());
+		int errors = 0;
+		int total = 0;
+		for (int i = 0; i < confusion.get_rows_number(); i++) {
+			Vector<size_t> row = confusion.arrange_row(i);
+			for (int j = 0; j < row.size(); j++) {
+				total += row[j];
+				if (i != j) {
+					errors += row[j];
+					continue;
+				}
+
+			}
+		}
+		QFile f("/tmp/analysis");
+		f.open(QFile::WriteOnly);
+		QTextStream s(&f);
+		s << errors << "/" << total;
+
+		errorRatio = static_cast<double>(errors) / total;
+//		if (errorRatio < 0.07) break;
+//		if (testNeuralNetwork()) break;
+		testNeuralNetwork();
+
+		int c = 0;
+		std::cin >> c;
+		if (c) return;
+
+	} while (true);
 }
 
 QString PoseRecognition::databaseToString() const
@@ -262,33 +326,40 @@ QString PoseRecognition::databaseToString() const
 QString PoseRecognition::categorize(const cv::Point palmCenter,
 												  const float palmRadius,
 												  const wristpair_t &wrist,
-												  const QList<cv::Point> &fingertips)
+												  const QList<cv::Point> &fingertips) const
 {
 	if (!m_neuralNetwork) {
 		return QString("Nope, just chuck testa");
 	}
 
 	const OpenNN::Vector<double> &featureVector = constructFeatureVector(palmCenter, palmRadius, wrist, fingertips);
+	OpenNN::Vector<double> featureVectorNormalized(featureVector.size());
+
+	qCopy(featureVector.begin(), featureVector.end(), featureVectorNormalized.begin());
+	normalizeVector(featureVectorNormalized);
 
 	const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(featureVector);
 	QVector<double> outputQVector = QVector<double>::fromStdVector(outputs);
 
-	int minIndex = 0;
-	double minValue = std::numeric_limits<double>::max();
+	int minIndex = outputs.calculate_maximal_index();
+//	double minValue = std::numeric_limits<double>::max();
 
-	for (int i = 0; i < outputQVector.size(); i++) {
-		double val = outputQVector[i];
-		double err = fabs(1 - val);
-		if (minValue > err) {
-			minValue = err;
-			minIndex = i;
-		}
-	}
+//	for (int i = 0; i < outputQVector.size(); i++) {
+//		double val = outputQVector[i];
+//		double err = fabs(1 - val);
+//		if (minValue > err) {
+//			minValue = err;
+//			minIndex = i;
+//		}
+//	}
+
 	QString outputString;
-	outputString += poseToString(minIndex);
-	if (minValue > 0.5f) {
-		outputString += QString("   Not Found");
+	outputString += poseToString(minIndex) + "\n";
+
+	foreach (double d, featureVectorNormalized) {
+		outputString += QString::number(d, 'f', 3) + " ";
 	}
+
 	outputString += "\n\n##########\n";
 	foreach (double val, outputQVector) {
 		outputString += QString("%1\n").arg(val);
@@ -304,39 +375,40 @@ int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const
 {
 	const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(featureVector);
 
-	int minIndex = 0;
-	double minValue = std::numeric_limits<double>::max();
-
-	for (int i = 0; i < outputs.size(); i++) {
-		double val = outputs[i];
-		double err = fabs(1 - val);
-		if (minValue > err) {
-			minValue = err;
-			minIndex = i;
-		}
-	}
-
-	return minIndex;
+	return findBestMatchIndex(outputs, 1);
 }
 
 bool PoseRecognition::testNeuralNetwork() const
 {
 	int errors = 0;
-	OpenNN::Vector<size_t> selectedColumns(INPUT_VECTOR_SIZE);
+	OpenNN::Vector<size_t> selectedColumns(NN_INPUT_VECTOR_SIZE);
 	for (int i = 0; i < selectedColumns.size(); i++) {
 		selectedColumns[i] = i;
 	}
 
-	for (int i = 0; i < m_matrix.get_rows_number(); i++) {
-		OpenNN::Vector<double> row = m_matrix.arrange_row(i, selectedColumns);
-		int output = calculateOutput(row);
+	for (int i = 0; i < m_database.size(); i++) {
+		OpenNN::Vector<double> row(NN_INPUT_VECTOR_SIZE);
+
+		qCopy(m_database.at(i).input.begin(), m_database.at(i).input.end(), row.begin());
+		normalizeVector(row);
+
+		const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(row);
+
+		int output = findBestMatchIndex(outputs, 1);
+
+		QString str;
+		str = QString::number(output) + QString::number(m_database.at(i).output);
+		foreach (double d, outputs) str += " {" + QString::number(d) + "} ,";
+		qDebug() << str;
+
 		if (output != m_database.at(i).output) {
+
 			errors++;
 		}
 	}
-	float ratio = static_cast<float>(errors)/m_matrix.get_rows_number();
+	float ratio = static_cast<float>(errors)/m_database.size();
 	qWarning("RATIO: %f", ratio);
-	return ratio < 0.4f;
+	return ratio < 0.1f;
 }
 
 QString PoseRecognition::poseToString(enum POSE pose)
@@ -366,8 +438,11 @@ QList<PoseRecognition::Data> PoseRecognition::loadDatabaseFromFile(QString path)
 	}
 	QDataStream s(&f);
 	s >> data;
-
-	return data;
+	if (s.status() == QDataStream::Ok) {
+		return data;
+	} else {
+		return QList<PoseRecognition::Data>();
+	}
 }
 
 void PoseRecognition::saveDatabaseToFile(QString path, QList<PoseRecognition::Data> database)
@@ -382,29 +457,130 @@ void PoseRecognition::saveDatabaseToFile(QString path, QList<PoseRecognition::Da
 
 int PoseRecognition::inputVectorSize()
 {
-	return INPUT_VECTOR_SIZE;
+	return NN_INPUT_VECTOR_SIZE;
 }
 
-OpenNN::Matrix<double> PoseRecognition::convertToMatrix(const QList<PoseRecognition::Data>& db)
+double PoseRecognition::normalizeInto(double value, double low, double high)
 {
+	Q_ASSERT(low <= high);
+	double range = high - low;
 
-	OpenNN::Matrix<double> mat(db.size(), INPUT_VECTOR_SIZE + POSE_END);
+	if (value < low) {
+		return 0.0;
+	} else if (value > high) {
+		return 1.0;
+	} else {
+		return (value - low)/range;
+	}
+}
+
+bool PoseRecognition::loadLayer(QFile &fBias, QFile &fWeights, const int inputCount, const int neuronCount, OpenNN::PerceptronLayer &layer)
+{
+	if (!fBias.open(QFile::ReadOnly)) return false;
+	if (!fWeights.open(QFile::ReadOnly)) return false;
+	QTextStream wStream(&fWeights);
+	QTextStream bStream(&fBias);
+	int index;
+	// input weights
+	OpenNN::Matrix<double> weightsData(neuronCount, inputCount);
+	index = 0;
+	while (!wStream.atEnd()) {
+		Q_ASSERT(index < neuronCount);
+		QString line = wStream.readLine();
+		QStringList lineSplitted = line.split(",");
+		Q_ASSERT(lineSplitted.size() == inputCount);
+		OpenNN::Vector<double> row(lineSplitted.size());
+		for (int i = 0; i < row.size(); i++) {
+			bool ok = false;
+			row[i] = lineSplitted[i].toDouble(&ok);
+			Q_ASSERT(ok);
+		}
+		weightsData.set_row(index++, row);
+	}
+	Q_ASSERT(index == neuronCount);
+
+	// input biases
+	OpenNN::Vector<double> biasData(neuronCount);
+	index = 0;
+	while (!bStream.atEnd()) {
+		Q_ASSERT(index < neuronCount);
+		QString line = bStream.readLine();
+		bool ok = false;
+		biasData[index++] = line.toDouble(&ok);
+		Q_ASSERT(ok);
+	}
+	Q_ASSERT(index == neuronCount);
+
+	OpenNN::PerceptronLayer inputLayer(inputCount, neuronCount);
+	inputLayer.set_activation_function(OpenNN::Perceptron::Logistic);
+	inputLayer.set_biases(biasData);
+	inputLayer.set_synaptic_weights(weightsData);
+
+	layer = inputLayer;
+	return true;
+}
+
+bool PoseRecognition::loadMLP(QString prefix, OpenNN::MultilayerPerceptron &mlp)
+{
+	const int iwRowCount = 25;
+	const int iwColCount = 10;
+	const int ibRowCount = 25;
+	const int hwRowCount = 8;
+	const int hwColCount = 25;
+	const int hbRowCount = 8;
+
+	QFile iwFile(prefix + "/neural_data_INPUT_W.csv");
+	QFile ibFile(prefix + "/neural_data_INPUT_B.csv");
+	QFile hwFile(prefix + "/neural_data_HIDDEN_W.csv");
+	QFile hbFile(prefix + "/neural_data_HIDDEN_B.csv");
+
+	OpenNN::Vector<OpenNN::PerceptronLayer> layers(2);
+
+	if (!loadLayer(ibFile, iwFile, iwColCount, iwRowCount, layers[0])) return false;
+	if (!loadLayer(hbFile, hwFile, hwColCount, hwRowCount, layers[1])) return false;
+
+	mlp.set_layers(layers);
+	qDebug("success");
+	return true;
+}
+
+void PoseRecognition::normalizeVector(OpenNN::Vector<double> &vec)
+{
+	for (int i = 0; i < NN_INPUT_VECTOR_SIZE; i += 2) {
+		if (vec[i] == 0 && vec[i + 1] == 0) {
+			vec[i] = (qrand()%1001)/1000.0;
+			vec[i + 1] = (qrand()%1001)/1000.0;
+		} else {
+			vec[i] = normalizeInto(vec[i], BOUND_X_LOW, BOUND_X_HIGH);//x
+			vec[i + 1] = normalizeInto(vec[i + 1], BOUND_Y_LOW, BOUND_Y_HIGH);//y
+		}
+	}
+}
+
+OpenNN::Matrix<double> PoseRecognition::convertToNormalizedMatrix(const QList<Data> &db)
+{
+	// normalize X from <-3, 3> -> <0, 1>
+	OpenNN::Matrix<double> mat(db.size(), NN_INPUT_VECTOR_SIZE + POSE_END);
 	// convert To Matrix
 	int index = 0;
 	foreach (Data data, db) {
-		OpenNN::Vector<double> k(INPUT_VECTOR_SIZE + POSE_END, 0);
-		Q_ASSERT(data.input.size() == INPUT_VECTOR_SIZE);
-		for (int i = 0; i < INPUT_VECTOR_SIZE; i++) {
-			k[i] = data.input[i];
-		}
+		OpenNN::Vector<double> k(NN_INPUT_VECTOR_SIZE + POSE_END, 0);
+		Q_ASSERT(data.input.size() == NN_INPUT_VECTOR_SIZE);
+		qCopy(data.input.begin(), data.input.end(), k.begin());
+		normalizeVector(k);
+
 		Q_ASSERT(data.output >= 0 && data.output < POSE_END);
-		k[INPUT_VECTOR_SIZE + data.output] = 1;
+		k[NN_INPUT_VECTOR_SIZE + data.output] = 1;
+
+//		QStringList rowString;
+//		foreach (double d, k) rowString.append(QString::number(d));
+//		qDebug() << "____________________________"<< rowString;
 
 		mat.set_row(index++, k);
 	}
 	return mat;
-}
 
+}
 
 /*
  *  assume, fingertips are ordered
@@ -422,12 +598,11 @@ OpenNN::Vector<double> PoseRecognition::constructFeatureVector( const cv::Point 
 	const cv::Point2f b1 = b1_tmp;
 	const cv::Point2f b2 = cv::Point2f(b1.y, -b1.x);
 	const cv::Point2f wristMiddlePoint = Processing::pointMean(wrist.first, wrist.second);
-//	qDebug("###(%f %f)", b2.x, b2.y);
-	OpenNN::Vector<double> featureVector(INPUT_VECTOR_SIZE, 0);
+
+	OpenNN::Vector<double> featureVector(NN_INPUT_VECTOR_SIZE, 0);
 	if (fingertips.size() > 5) {
 		return featureVector;
 	}
-	featureVector[10] = fingertips.size();
 
 	// [0] must be the first finger in direction of thumb->pointer
 	int i = 0;
@@ -442,15 +617,5 @@ OpenNN::Vector<double> PoseRecognition::constructFeatureVector( const cv::Point 
 	return featureVector;
 }
 
-void PoseRecognition::appendToMatrix(OpenNN::Vector<double> vec)
-{
-	printf("%lu %lu\n", m_matrix.get_columns_number(), vec.size());
-	if (m_matrix.empty()) {
-		m_matrix.set(1, INPUT_VECTOR_SIZE + PoseRecognition::POSE_END);
-		m_matrix.set_row(1, vec);
-	}
-	m_matrix.append_row(vec);
-	m_matrix.save(NNDATA_FILENAME);
-}
 
 }

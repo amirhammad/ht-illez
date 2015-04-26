@@ -1,18 +1,20 @@
 #include "ImageSourceOpenNI.h"
 #include <QApplication>
+#include <QDebug>
 
 using namespace iez;
 using namespace cv;
 
 #define FILE_PLAY_SPEED (30)
 #define MAX_FAIL_COUNT (20)
-ImageSourceOpenNI::ImageSourceOpenNI(QObject *parent, int fps)
+ImageSourceOpenNI::ImageSourceOpenNI(int fps)
 :	m_width(640)
 ,	m_height(480)
 ,	m_fps(fps)
 ,	m_initialized(false)
 ,	m_failCount(0)
 {
+	openni::OpenNI::initialize();
 	m_thread = new QThread(QApplication::instance()->thread());
 	moveToThread(m_thread);
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -24,9 +26,25 @@ ImageSourceOpenNI::~ImageSourceOpenNI(void)
 {
 	qDebug("X2");
 //	moveToThread(QApplication::instance()->thread());
-//	m_thread->quit();
-	m_depthStream.stop();
-	m_colorStream.stop();
+
+	m_thread->exit();
+	// If thread does not terminate within 10s, terminate it
+	if (!m_thread->wait(10000)) {
+		m_thread->terminate();
+		m_thread->wait();
+	}
+	m_thread->deleteLater();
+
+	if (m_initialized) {
+		m_depthStream.stop();
+		m_colorStream.stop();
+		m_colorFrame.release();
+		m_depthFrame.release();
+		m_colorStream.destroy();
+		m_depthStream.destroy();
+		device.close();
+	}
+
 	openni::OpenNI::shutdown();
 	qDebug("X2 end");
 }
@@ -181,9 +199,9 @@ void ImageSourceOpenNI::update()
 		if (rc != openni::STATUS_OK) {
 			m_failCount++;
 			if (m_failCount > MAX_FAIL_COUNT) {
-				QApplication::exit();
+//				QApplication::exit();
 			}
-			printf("Wait failed\n");
+//			printf("Wait failed\n");
 			return;
 		} else {
 			m_failCount = 0;
@@ -208,29 +226,41 @@ void ImageSourceOpenNI::update()
 }
 
 
-int ImageSourceOpenNI::init(const char* deviceURI)
+bool ImageSourceOpenNI::init(QVariant args)
 {
+	const char * deviceURI;
+	if (args.toString().isEmpty()) {
+		deviceURI = openni::ANY_DEVICE;
+	} else {
+		deviceURI = args.toString().toStdString().c_str();
+	}
+
+	qDebug() << "Opening device" << deviceURI;
 	if (m_initialized) {
-		return 0;
+		return true;
+	}
+
+	try {
+		if (openni::STATUS_ERROR == deviceInit(deviceURI)) {
+			m_initialized = false;
+			return false;
+		}
+		if (openni::STATUS_ERROR == streamInit()) {
+			m_initialized = false;
+			return false;
+		}
+	} catch (...) {
+		return false;
 	}
 
 	m_depthMat.create(m_height, m_width, CV_16UC1);
 	m_colorMat.create(m_height, m_width, CV_8UC3);
-
-	if (openni::STATUS_ERROR == deviceInit(deviceURI)) {
-		m_initialized = false;
-		return -1;
-	}
-	if (openni::STATUS_ERROR == streamInit()) {
-		m_initialized = false;
-		return -1;
-	}
 	m_initialized = true;
 
 	m_timer.setSingleShot(false);
 	m_timer.start(1000/m_fps);
 
-	return 0;
+	return true;
 }
 
 bool ImageSourceOpenNI::isInitialized()

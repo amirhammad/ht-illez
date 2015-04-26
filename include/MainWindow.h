@@ -5,10 +5,33 @@
 class QComboBox;
 class QTextEdit;
 class QTableWidget;
+class QSpinBox;
+#include <QPointer>
+#include <QDialog>
 
 namespace iez {
 class ImageSourceOpenNI;
 class Processing;
+
+class PoseTrainDialog : public QDialog {
+	Q_OBJECT
+public:
+	PoseTrainDialog(QWidget *parent = 0);
+	virtual ~PoseTrainDialog();
+
+	struct Result {
+		int hiddenNeurons;
+	};
+
+signals:
+	void got_accepted(PoseTrainDialog::Result);
+
+private slots:
+	void on_accepted();
+
+private:
+	QSpinBox *m_spinBox;
+};
 
 class MainWindow : public QMainWindow
 {
@@ -18,11 +41,11 @@ public:
 	virtual ~MainWindow();
 
 private:
-	ImageSourceOpenNI *m_video;
-	Processing *m_processing;
+
+	QPointer<ImageSourceOpenNI> m_video;
+	QPointer<Processing> m_processing;
 
 	void buildNNTeachDialog();
-	void teachDialogShow();
 	void train();
 	void loadPoseDatabaseToTable();
 
@@ -35,6 +58,7 @@ private:
 
 	QTableWidget *m_databaseTable;
 	QTextEdit *m_nnResultTextEdit;
+	QStatusBar *m_statusBar;
 
 signals:
 	void got_pause(bool p);
@@ -44,11 +68,21 @@ public slots:
 	void closeEvent(QCloseEvent *event);
 	void keyEvent(QKeyEvent *event);
 
-	void on_addButtonClicked();
-	void on_cancelButtonClicked();
+private slots:
+	void on_poseTrainDialogAccepted(PoseTrainDialog::Result);
+	void on_poseDatabaseLoad();
+	void on_poseDatabaseSave();
+	void on_teachDialog();
+	void on_gestureTrainerFinished(int);
+	void on_trainingFinished();
 	void on_neuralNetworkSave();
 	void on_neuralNetworkLoad();
 	void on_init();
+	void on_buildVideo();
+	void on_buildProcessing();
 };
+
+
+
 
 }

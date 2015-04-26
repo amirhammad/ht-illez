@@ -14,10 +14,10 @@ class ImageSourceOpenNI : public ImageSourceBase
 {
 	Q_OBJECT
 public:
-	ImageSourceOpenNI(QObject *parent = 0, int fps = 30);
-	~ImageSourceOpenNI(void);
+	ImageSourceOpenNI(int fps = 30);
+	virtual ~ImageSourceOpenNI(void);
 
-	int init(const char* deviceURI = openni::ANY_DEVICE);
+	bool init(QVariant args = QVariant());
 	bool isInitialized();
 
 

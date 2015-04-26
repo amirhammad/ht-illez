@@ -7,10 +7,11 @@ namespace iez {
 class ImageSourceArtificial;
 extern ImageSourceArtificial *imageSourceArtificial;
 
-class ImageSourceArtificial:public ImageSourceBase {
+class ImageSourceArtificial : public ImageSourceBase {
 	Q_OBJECT
 public:
 	ImageSourceArtificial();
+	virtual ~ImageSourceArtificial();
 	cv::Mat getColorMat() const;
 	cv::Mat getDepthMat() const { return cv::Mat(640, 480, CV_16UC1); }
 	void setColorMat(const cv::Mat &src);
@@ -19,17 +20,6 @@ public slots:
 private:
 	cv::Mat m_color;
 	mutable QMutex m_mutex;
-};
-
-class Fps {
-public:
-	Fps();
-	void tick();
-	float fps() const;
-
-private:
-	clock_t m_timeLast;
-
 };
 
 }

@@ -103,6 +103,8 @@ int main(int argc, char *argv[])
 //	QApplication::exec();
 //	return 0;
 	getOptions(argc, argv);
+
+
 	// Camera init
 //	iez::ImageSourceFreenect *kinectFreenect = new iez::ImageSourceFreenect(0);
 
@@ -134,7 +136,8 @@ int main(int argc, char *argv[])
 //		}
 //	}
 //	return 0;
-	iez::imageSourceArtificial = new iez::ImageSourceArtificial();
+	iez::ImageSourceArtificial artif;
+	iez::imageSourceArtificial = &artif;
 	new iez::MainWindow();
 
 	// TODO: can edit files
@@ -170,6 +173,10 @@ iez::ImageSourceArtificial::ImageSourceArtificial()
 	m_color.create(480, 640, CV_8UC3);
 }
 
+iez::ImageSourceArtificial::~ImageSourceArtificial()
+{
+}
+
 void iez::ImageSourceArtificial::setColorMat(const cv::Mat& src)
 {
 	QMutexLocker locker(&m_mutex);
@@ -180,21 +187,4 @@ void iez::ImageSourceArtificial::setColorMat(const cv::Mat& src)
 void iez::ImageSourceArtificial::pause(bool p)
 {
 	Q_UNUSED(p);
-}
-
-
-
-iez::Fps::Fps()
-{
-	m_timeLast = 0;
-}
-
-void iez::Fps::tick()
-{
-	m_timeLast = clock();
-}
-
-float iez::Fps::fps() const
-{
-	return 1000000.0f/(clock() - m_timeLast);
 }
