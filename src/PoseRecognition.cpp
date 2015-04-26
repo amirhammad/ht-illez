@@ -28,7 +28,7 @@ QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 		}
 		stream >> c;
 		if (c == ',') {
-			if (str.isEmpty()) {
+			if (str.isEmpty() || (index >= data.input.size())) {
 				stream.setStatus(QDataStream::ReadCorruptData);
 				return stream;
 			}
@@ -131,25 +131,35 @@ void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
 	m_matrix = convertToNormalizedMatrix(m_database);
 }
 
-void PoseRecognition::savePoseDatabase()
+void PoseRecognition::savePoseDatabase(QString path)
 {
-	saveDatabaseToFile(NNDATA_FILENAME, m_database);
+	saveDatabaseToFile(path, m_database);
 }
 
-void PoseRecognition::neuralNetworkSave(std::string path)
+void PoseRecognition::loadPoseDatabase(QString path)
+{
+	m_database = loadDatabaseFromFile(path);
+	if (m_database.size() != 0) {
+		m_matrix = convertToNormalizedMatrix(m_database);
+	} else {
+		qDebug("Error loading pose database");
+	}
+}
+
+void PoseRecognition::neuralNetworkSave(QString path)
 {
 	if (!m_neuralNetwork) {
 		return;
 	}
-	m_neuralNetwork->save(path);
+	m_neuralNetwork->save(path.toStdString());
 }
 
-void PoseRecognition::neuralNetworkLoad(std::string path)
+void PoseRecognition::neuralNetworkLoad(QString path)
 {
 	if (!m_neuralNetwork) {
 		m_neuralNetwork = new OpenNN::NeuralNetwork();
 	}
-	m_neuralNetwork->load(path);
+	m_neuralNetwork->load(path.toStdString());
 }
 
 void PoseRecognition::train()
@@ -316,7 +326,7 @@ QString PoseRecognition::databaseToString() const
 QString PoseRecognition::categorize(const cv::Point palmCenter,
 												  const float palmRadius,
 												  const wristpair_t &wrist,
-												  const QList<cv::Point> &fingertips)
+												  const QList<cv::Point> &fingertips) const
 {
 	if (!m_neuralNetwork) {
 		return QString("Nope, just chuck testa");
@@ -428,8 +438,11 @@ QList<PoseRecognition::Data> PoseRecognition::loadDatabaseFromFile(QString path)
 	}
 	QDataStream s(&f);
 	s >> data;
-
-	return data;
+	if (s.status() == QDataStream::Ok) {
+		return data;
+	} else {
+		return QList<PoseRecognition::Data>();
+	}
 }
 
 void PoseRecognition::saveDatabaseToFile(QString path, QList<PoseRecognition::Data> database)

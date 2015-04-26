@@ -110,26 +110,8 @@ void Processing::on_train()
 		qDebug("%s", e.what());
 		QApplication::quit();
 	}
-}
 
-void Processing::savePoseDatabase()
-{
-	m_pose.savePoseDatabase();
-}
-
-void Processing::neuralNetworkSave(std::string path)
-{
-	m_pose.neuralNetworkSave(path);
-}
-
-void Processing::neuralNetworkLoad(std::string path)
-{
-	m_pose.neuralNetworkLoad(path);
-}
-
-QString Processing::poseDatabaseToString() const
-{
-	return m_pose.databaseToString();
+	emit got_trainingFinished();
 }
 
 void Processing::processContourTracing(const cv::Mat &bgr, const cv::Mat &depth, const cv::Mat &bgrDepthFiltered)
@@ -606,6 +588,11 @@ void Processing::rotate(cv::Mat& src, double angle, cv::Mat& dst)
 	cv::Mat r = cv::getRotationMatrix2D(pt, angle, 1.0);
 
 	cv::warpAffine(src, dst, r, cv::Size(len, len), cv::INTER_NEAREST);
+}
+
+PoseRecognition *Processing::pose()
+{
+	return &m_pose;
 }
 
 cv::Point Processing::calculateWeightedMean(const std::vector<cv::Point> &pointVector)

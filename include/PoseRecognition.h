@@ -33,22 +33,21 @@ public:
 			   const float palmRadius,
 			   const wristpair_t &wrist,
 			   const QList<cv::Point> &fingertips);
-	void savePoseDatabase();
-	void neuralNetworkLoad(std::string path);
-	void neuralNetworkSave(std::string path);
+	void savePoseDatabase(QString path);
+	void loadPoseDatabase(QString path);
+	void neuralNetworkLoad(QString path);
+	void neuralNetworkSave(QString path);
 	void train();
 	QString databaseToString() const;
 
 	QString categorize(const cv::Point palmCenter,
 					const float palmRadius,
 					const wristpair_t &wrist,
-					const QList<cv::Point> &fingertips);
+					const QList<cv::Point> &fingertips) const;
 
 	int calculateOutput(OpenNN::Vector<double> featureVector) const;
 
 	bool testNeuralNetwork() const;
-	static QString poseToString(enum POSE pose);
-	static QString poseToString(int pose);
 
 	struct Data {
 		Data(int size)
@@ -59,11 +58,6 @@ public:
 		QVector<float> input;
 		int output;
 	};
-	static QList<Data> loadDatabaseFromFile(QString path);
-
-	static void saveDatabaseToFile(QString path, QList<Data> database);
-	static int inputVectorSize();
-	static double normalizeInto(double value, double low = 0.0, double high = 0.0);
 
 	template <typename Container>
 	static int findBestMatchIndex(Container container, double target)
@@ -82,6 +76,15 @@ public:
 		return minIndex;
 	}
 
+	static QString poseToString(enum POSE pose);
+	static QString poseToString(int pose);
+	static int inputVectorSize();
+	static double normalizeInto(double value, double low = 0.0, double high = 0.0);
+	static QList<Data> loadDatabaseFromFile(QString path);
+	static void saveDatabaseToFile(QString path, QList<Data> database);
+private:
+
+
 	static bool loadLayer(QFile &fBias,
 						  QFile &fWeights,
 						  const int inputCount,
@@ -89,7 +92,8 @@ public:
 						  OpenNN::PerceptronLayer &layer);
 	static bool loadMLP(QString prefix, OpenNN::MultilayerPerceptron& mlp);
 
-private:
+
+
 
 	QList<Data> m_database;
 

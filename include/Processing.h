@@ -22,10 +22,6 @@ public:
 
 	void learnNew(enum PoseRecognition::POSE);
 	void train();
-	void savePoseDatabase();
-	void neuralNetworkSave(std::string path);
-	void neuralNetworkLoad(std::string path);
-	QString poseDatabaseToString() const;
 
 	static cv::Mat processSaturate(const cv::Mat &bgr, const int satIncrease);
 	static std::vector<cv::Point> smoothPoints(const std::vector<cv::Point> &vec, const int range);
@@ -39,7 +35,7 @@ public:
 	static cv::Point calculateMean(const std::vector<cv::Point>&);
 	static cv::Point findNearestPoint(const std::vector<cv::Point> &pointVector, const cv::Point refPoint);
 	static void rotate(cv::Mat& src, double angle, cv::Mat& dst);
-
+	PoseRecognition *pose();
 private:
 
 
@@ -89,6 +85,7 @@ signals:
 	void got_poseUpdated(QString);
 	void got_learnNew(int);
 	void got_train();
+	void got_trainingFinished();
 };
 
 }

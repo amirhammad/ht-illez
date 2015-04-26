@@ -46,7 +46,6 @@ private:
 	QPointer<Processing> m_processing;
 
 	void buildNNTeachDialog();
-	void teachDialogShow();
 	void train();
 	void loadPoseDatabaseToTable();
 
@@ -59,6 +58,7 @@ private:
 
 	QTableWidget *m_databaseTable;
 	QTextEdit *m_nnResultTextEdit;
+	QStatusBar *m_statusBar;
 
 signals:
 	void got_pause(bool p);
@@ -70,8 +70,11 @@ public slots:
 
 private slots:
 	void on_poseTrainDialogAccepted(PoseTrainDialog::Result);
-	void on_addButtonClicked();
-	void on_cancelButtonClicked();
+	void on_poseDatabaseLoad();
+	void on_poseDatabaseSave();
+	void on_teachDialog();
+	void on_gestureTrainerFinished(int);
+	void on_trainingFinished();
 	void on_neuralNetworkSave();
 	void on_neuralNetworkLoad();
 	void on_init();
