@@ -8,6 +8,7 @@
 
 #define NN_INPUT_VECTOR_SIZE 10
 #define NNDATA_FILENAME "NNData.csv"
+#define NN_DEFAULT_IMPORT_PATH "/home/amir/neural_data/megadb"
 
 // Serialization operations
 #define BOUND_X_LOW (-3.0)
@@ -101,14 +102,9 @@ PoseRecognition::PoseRecognition()
 	if (m_database.size() > 0) {
 		m_matrix = convertToNormalizedMatrix(m_database);
 	}
-
-	OpenNN::MultilayerPerceptron mlp;
-	if (loadMLP("/home/amir/neural_data/megadb", mlp)) {
-		m_neuralNetwork = new OpenNN::NeuralNetwork(mlp);
-		testNeuralNetwork();
-	} else {
-		qDebug("error loading neural network");
-	}
+#ifdef NN_DEFAULT_IMPORT_PATH
+	neuralNetworkImport(NN_DEFAULT_IMPORT_PATH);
+#endif
 }
 
 void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
@@ -164,6 +160,20 @@ void PoseRecognition::neuralNetworkLoad(QString path)
 		m_neuralNetwork = new OpenNN::NeuralNetwork();
 	}
 	m_neuralNetwork->load(path.toStdString());
+}
+
+void PoseRecognition::neuralNetworkImport(QString path)
+{
+	OpenNN::MultilayerPerceptron mlp;
+	if (loadMLP(path, mlp)) {
+		if (m_neuralNetwork) {
+			delete m_neuralNetwork;
+		}
+		m_neuralNetwork = new OpenNN::NeuralNetwork(mlp);
+		testNeuralNetwork();
+	} else {
+		qDebug("error loading neural network");
+	}
 }
 
 void PoseRecognition::train()

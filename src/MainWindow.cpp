@@ -65,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	QMenu *neuralNetworkMenu = new QMenu("Neural Network", this);
 	neuralNetworkMenu->addAction(QIcon(), "train", poseTrainDialog, SLOT(show()), QKeySequence(Qt::CTRL + Qt::Key_T));
 	neuralNetworkMenu->addSeparator();
+	neuralNetworkMenu->addAction(QIcon(), "import", this, SLOT(on_neuralNetworkImport()));
 	neuralNetworkMenu->addAction(QIcon(), "load", this, SLOT(on_neuralNetworkLoad()));
 	neuralNetworkMenu->addAction(QIcon(), "save", this, SLOT(on_neuralNetworkSave()));
 
@@ -241,9 +242,19 @@ void MainWindow::on_neuralNetworkLoad()
 {
 	CHECK_PROCESSING();
 
-	QString path = QFileDialog::getOpenFileName(this, QString("save neural network"), QString(), QString("*.nndb"));
+	QString path = QFileDialog::getOpenFileName(this, QString("load neural network"), QString(), QString("*.nndb"));
 	if (!path.isEmpty()) {
 		m_processing->pose()->neuralNetworkLoad(path);
+	}
+}
+
+void MainWindow::on_neuralNetworkImport()
+{
+	CHECK_PROCESSING();
+
+	QString path = QFileDialog::getExistingDirectory(this, QString("Import neural network"), QString(""));
+	if (!path.isEmpty()) {
+		m_processing->pose()->neuralNetworkImport(path);
 	}
 }
 

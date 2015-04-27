@@ -35,6 +35,7 @@ public:
 			   const QList<cv::Point> &fingertips);
 	void savePoseDatabase(QString path);
 	void loadPoseDatabase(QString path);
+	void neuralNetworkImport(QString path);
 	void neuralNetworkLoad(QString path);
 	void neuralNetworkSave(QString path);
 	void train();

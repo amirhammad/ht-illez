@@ -77,6 +77,7 @@ private slots:
 	void on_trainingFinished();
 	void on_neuralNetworkSave();
 	void on_neuralNetworkLoad();
+	void on_neuralNetworkImport();
 	void on_init();
 	void on_buildVideo();
 	void on_buildProcessing();
