@@ -127,17 +127,23 @@ void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
 		d.input[index++] = val;
 	}
 	d.output = pose;
+
+	QMutexLocker l(&m_dbMutex);
+
 	m_database.append(d);
 	m_matrix = convertToNormalizedMatrix(m_database);
 }
 
 void PoseRecognition::savePoseDatabase(QString path)
 {
+	QMutexLocker l(&m_dbMutex);
 	saveDatabaseToFile(path, m_database);
 }
 
 void PoseRecognition::loadPoseDatabase(QString path)
 {
+	QMutexLocker l(&m_dbMutex);
+
 	m_database = loadDatabaseFromFile(path);
 	if (m_database.size() != 0) {
 		m_matrix = convertToNormalizedMatrix(m_database);
@@ -186,7 +192,8 @@ void PoseRecognition::train()
 {
 	using namespace OpenNN;
 
-	QMutexLocker l(&m_nnMutex);
+	QMutexLocker lockNN(&m_nnMutex);
+	QMutexLocker lockDB(&m_dbMutex);
 
 	if (m_matrix.get_rows_number() < 1) {
 		return;
@@ -333,6 +340,8 @@ void PoseRecognition::train()
 
 QString PoseRecognition::databaseToString() const
 {
+	QMutexLocker l(&m_dbMutex);
+
 	QString output;
 	foreach (Data d, m_database) {
 		QString tmp;
@@ -400,6 +409,7 @@ int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const
 	return findBestMatchIndex(outputs, 1);
 }
 
+// Not thread safe
 bool PoseRecognition::testNeuralNetwork() const
 {
 	int errors = 0;

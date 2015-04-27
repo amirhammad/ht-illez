@@ -111,6 +111,7 @@ private:
 	OpenNN::Matrix<double> m_matrix;
 	OpenNN::NeuralNetwork *m_neuralNetwork;
 	mutable QMutex m_nnMutex;
+	mutable QMutex m_dbMutex;
 };
 
 }
