@@ -477,8 +477,14 @@ double PoseRecognition::normalizeInto(double value, double low, double high)
 
 bool PoseRecognition::loadLayer(QFile &fBias, QFile &fWeights, const int inputCount, const int neuronCount, OpenNN::PerceptronLayer &layer)
 {
-	if (!fBias.open(QFile::ReadOnly)) return false;
-	if (!fWeights.open(QFile::ReadOnly)) return false;
+	bool ret = true;
+	if (!fBias.open(QFile::ReadOnly)) {
+		ret = false;
+	}
+	if (!fWeights.open(QFile::ReadOnly)) {
+		ret = false;
+	}
+	Q_ASSERT(ret);
 	QTextStream wStream(&fWeights);
 	QTextStream bStream(&fBias);
 	int index;
