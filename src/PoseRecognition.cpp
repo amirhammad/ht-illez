@@ -101,10 +101,13 @@ PoseRecognition::PoseRecognition()
 	if (m_database.size() > 0) {
 		m_matrix = convertToNormalizedMatrix(m_database);
 	}
+
 	OpenNN::MultilayerPerceptron mlp;
 	if (loadMLP("/home/amir/neural_data/megadb", mlp)) {
 		m_neuralNetwork = new OpenNN::NeuralNetwork(mlp);
 		testNeuralNetwork();
+	} else {
+		qDebug("error loading neural network");
 	}
 }
 
@@ -529,12 +532,38 @@ bool PoseRecognition::loadLayer(QFile &fBias, QFile &fWeights, const int inputCo
 
 bool PoseRecognition::loadMLP(QString prefix, OpenNN::MultilayerPerceptron &mlp)
 {
-	const int iwRowCount = 25;
-	const int iwColCount = 10;
-	const int ibRowCount = 25;
-	const int hwRowCount = 8;
-	const int hwColCount = 25;
-	const int hbRowCount = 8;
+	QFile metaFile(prefix + "/metadata.csv");
+
+	if (!metaFile.open(QFile::ReadOnly)) {
+		qDebug("cannot open metadata");
+		return false;
+	}
+
+	QTextStream metaStream(&metaFile);
+	QString metaLine = metaStream.readLine();
+	QStringList metaLineList = metaLine.split(",");
+
+	if (metaLineList.size() != 3) {
+		qDebug("invalid number of metadata data");
+		return false;
+	}
+
+	bool ok = true;
+	const int inputCount = metaLineList[0].toInt(&ok);
+	if (inputCount != NN_INPUT_VECTOR_SIZE || !ok) {
+		qDebug("invalid size of input vector");
+		return false;
+	}
+	const int hiddenCount = metaLineList[1].toInt(&ok);
+	if (!ok) {
+		qDebug("cannot read number of hidden neurons");
+		return false;
+	}
+	const int outputCount = metaLineList[2].toInt(&ok);
+	if (!ok) {
+		qDebug("cannot read number of output neurons");
+		return false;
+	}
 
 	QFile iwFile(prefix + "/neural_data_INPUT_W.csv");
 	QFile ibFile(prefix + "/neural_data_INPUT_B.csv");
@@ -543,8 +572,8 @@ bool PoseRecognition::loadMLP(QString prefix, OpenNN::MultilayerPerceptron &mlp)
 
 	OpenNN::Vector<OpenNN::PerceptronLayer> layers(2);
 
-	if (!loadLayer(ibFile, iwFile, iwColCount, iwRowCount, layers[0])) return false;
-	if (!loadLayer(hbFile, hwFile, hwColCount, hwRowCount, layers[1])) return false;
+	if (!loadLayer(ibFile, iwFile, inputCount, hiddenCount, layers[0])) return false;
+	if (!loadLayer(hbFile, hwFile, hiddenCount, outputCount, layers[1])) return false;
 
 	mlp.set_layers(layers);
 	qDebug("success");
