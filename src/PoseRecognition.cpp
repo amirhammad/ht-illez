@@ -24,13 +24,13 @@ QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 	do {
 		if (stream.atEnd() && index == 0) {
 			stream.setStatus(QDataStream::ReadCorruptData);
-			return stream;
+			break;
 		}
 		stream >> c;
 		if (c == ',') {
 			if (str.isEmpty() || (index >= data.input.size())) {
 				stream.setStatus(QDataStream::ReadCorruptData);
-				return stream;
+				break;
 			}
 			data.input[index++] = str.toFloat();
 			str.clear();
@@ -39,7 +39,7 @@ QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 		} else {
 			if (str.isEmpty()) {
 				stream.setStatus(QDataStream::ReadCorruptData);
-				return stream;
+				break;
 			}
 			data.output = str.toInt();
 			str.clear();
@@ -47,6 +47,7 @@ QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 		}
 
 	} while (true);
+	return stream;
 }
 
 QDataStream& operator>>(QDataStream& stream, QList<iez::PoseRecognition::Data> &data)
