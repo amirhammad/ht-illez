@@ -148,6 +148,8 @@ void PoseRecognition::loadPoseDatabase(QString path)
 
 void PoseRecognition::neuralNetworkSave(QString path)
 {
+	QMutexLocker l(&m_nnMutex);
+
 	if (!m_neuralNetwork) {
 		return;
 	}
@@ -156,6 +158,8 @@ void PoseRecognition::neuralNetworkSave(QString path)
 
 void PoseRecognition::neuralNetworkLoad(QString path)
 {
+	QMutexLocker l(&m_nnMutex);
+
 	if (!m_neuralNetwork) {
 		m_neuralNetwork = new OpenNN::NeuralNetwork();
 	}
@@ -164,6 +168,8 @@ void PoseRecognition::neuralNetworkLoad(QString path)
 
 void PoseRecognition::neuralNetworkImport(QString path)
 {
+	QMutexLocker l(&m_nnMutex);
+
 	OpenNN::MultilayerPerceptron mlp;
 	if (loadMLP(path, mlp)) {
 		if (m_neuralNetwork) {
@@ -179,6 +185,8 @@ void PoseRecognition::neuralNetworkImport(QString path)
 void PoseRecognition::train()
 {
 	using namespace OpenNN;
+
+	QMutexLocker l(&m_nnMutex);
 
 	if (m_matrix.get_rows_number() < 1) {
 		return;

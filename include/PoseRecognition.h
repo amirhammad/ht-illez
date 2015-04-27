@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QVector>
 #include <opennn.h>
+#include <QMutex>
 class QFile;
 namespace iez {
 
@@ -109,6 +110,7 @@ private:
 
 	OpenNN::Matrix<double> m_matrix;
 	OpenNN::NeuralNetwork *m_neuralNetwork;
+	mutable QMutex m_nnMutex;
 };
 
 }
