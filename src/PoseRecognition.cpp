@@ -339,7 +339,7 @@ QString PoseRecognition::categorize(const cv::Point palmCenter,
 	qCopy(featureVector.begin(), featureVector.end(), featureVectorNormalized.begin());
 	normalizeVector(featureVectorNormalized);
 
-	const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(featureVector);
+	const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(featureVectorNormalized);
 	QVector<double> outputQVector = QVector<double>::fromStdVector(outputs);
 
 	int minIndex = outputs.calculate_maximal_index();
