@@ -61,6 +61,7 @@ private:
 
 	PoseRecognition m_pose;
 
+	QMutex m_processMutex;
 signals:
 	void got_poseUpdated(QString);
 	void got_learnNew(int);

@@ -49,6 +49,7 @@ Processing::~Processing(void)
 
 void Processing::process(bool secondarySource)
 {
+	QMutexLocker l(&m_processMutex);
 	const ImageSourceBase *src;
 	if (secondarySource) {
 		if (m_secondarySource) {
