@@ -593,8 +593,8 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	///
 	cv::ellipse(fingerMaskOutput, palmCenter, cv::Size(palmRadius, palmRadius), 0, 0, 360, cv::Scalar(100), 1);
 	cv::ellipse(fingerMaskOutput, palmCenter, cv::Size(palmRadius*PALM_RADIUS_RATIO, palmRadius*PALM_RADIUS_RATIO), 0, 0, 360, cv::Scalar(180), 1);
-	cv::putText(fingerMaskOutput, QString::number(handContour.size()).toStdString(), cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
-	cv::putText(fingerMaskOutput, QString::number(fingersContours.size()).toStdString(), cv::Point(10, 22), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+//	cv::putText(fingerMaskOutput, QString::number(handContour.size()).toStdString(), cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+//	cv::putText(fingerMaskOutput, QString::number(fingersContours.size()).toStdString(), cv::Point(10, 22), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
 //        cv::putText(fingerMaskOutput, QString::number(kkk).toStdString(), cv::Point(10, 35), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
 
 	/// Draw
