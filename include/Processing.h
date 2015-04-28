@@ -24,6 +24,8 @@ public:
 	void train();
 	PoseRecognition *pose();
 	void setSecondarySource(ImageSourceBase *secondarySource);
+	HandTracker::TemporaryResult handTrackerTemporaryResult() const;
+	HandTracker::Data handTrackerData() const;
 
 	static float pointDistance(const cv::Point &pt1, const cv::Point &pt2);
 	static cv::Point pointMean(const cv::Point &pt1, const cv::Point &pt2, const float ratio12 = 0.5f);
@@ -61,6 +63,8 @@ private:
 
 	PoseRecognition m_pose;
 
+	HandTracker::Data m_handTrackerResult;
+	HandTracker::TemporaryResult m_handTrackerTemporaryResult;
 	QMutex m_processMutex;
 signals:
 	void got_poseUpdated(QString);

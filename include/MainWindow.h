@@ -1,5 +1,6 @@
 #pragma once
 
+#include "HandTracker.h"
 #include <QMainWindow>
 
 class QComboBox;
@@ -11,6 +12,7 @@ class QSpinBox;
 
 namespace iez {
 class ImageSourceOpenNI;
+class ImageSourceArtificial;
 class Processing;
 
 class PoseTrainDialog : public QDialog {
@@ -48,6 +50,7 @@ private:
 	void buildNNTeachDialog();
 	void train();
 	void loadPoseDatabaseToTable();
+	void exportProcessData(QString prefix, HandTracker::Data result, HandTracker::TemporaryResult debugResult);
 
 	bool m_paused;
 
@@ -59,6 +62,8 @@ private:
 	QTableWidget *m_databaseTable;
 	QTextEdit *m_nnResultTextEdit;
 	QStatusBar *m_statusBar;
+
+	ImageSourceArtificial *m_secondaryImageSource;
 
 signals:
 	void got_pause(bool p);
@@ -81,6 +86,7 @@ private slots:
 	void on_init();
 	void on_buildVideo();
 	void on_buildProcessing();
+	void on_exportProcessData();
 };
 
 

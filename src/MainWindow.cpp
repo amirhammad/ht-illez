@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 
+#include "main.h"
 #include "WindowManager.h"
 #include "PoseRecognition.h"
 #include "Processing.h"
@@ -33,6 +34,7 @@ namespace iez {
 #define CHECK_PROCESSING() if (!m_processing) {QMessageBox::warning(this, "error", "Processing not initialized");return;}
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+,	m_secondaryImageSource(new ImageSourceArtificial())
 {
 	qRegisterMetaType<PoseTrainDialog::Result>();
 	PoseTrainDialog *poseTrainDialog = new PoseTrainDialog(this);
@@ -78,6 +80,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	poseDatabaseMenu->addAction(QIcon(), "save", this, SLOT(on_poseDatabaseSave()));
 
 	menuBar->addMenu(poseDatabaseMenu);
+
+	QMenu *debugMenu = new QMenu("Debug", this);
+	debugMenu->addAction(QIcon(), "export process data", this, SLOT(on_exportProcessData()));
+
+	menuBar->addMenu(debugMenu);
 
 	setMenuBar(menuBar);
 
@@ -181,6 +188,15 @@ void MainWindow::loadPoseDatabaseToTable()
 
 }
 
+void MainWindow::exportProcessData(QString prefix, HandTracker::Data result, HandTracker::TemporaryResult debugResult)
+{
+	if (!prefix.endsWith("/")) {
+		prefix += "/";
+	}
+
+	QImage res = WindowManager::Mat2QImage(debugResult.result);
+	res.save(prefix + "/result.jpg", "jpg", 100);
+}
 //void MainWindow::on_addButtonClicked()
 //{
 //	if (!m_processing)
@@ -298,6 +314,22 @@ void MainWindow::on_buildProcessing()
 	loadPoseDatabaseToTable();
 	QObject::connect(m_processing, SIGNAL(got_poseUpdated(QString)), m_nnResultTextEdit, SLOT(setText(QString)), Qt::QueuedConnection);
 	QObject::connect(m_processing, SIGNAL(got_trainingFinished()), this, SLOT(on_trainingFinished()), Qt::QueuedConnection);
+}
+
+void MainWindow::on_exportProcessData()
+{
+	CHECK_PROCESSING();
+
+	m_processing->setSecondarySource(m_secondaryImageSource);
+	m_secondaryImageSource->setColorMat(m_video->getColorMat());
+	m_secondaryImageSource->setDepthMat(m_video->getDepthMat());
+
+	m_processing->process(true);
+	QString prefix = QFileDialog::getExistingDirectory(this, "Select directory for output debug files");
+	if (prefix.isEmpty()) {
+		return;
+	}
+	exportProcessData(prefix, m_processing->handTrackerData(), m_processing->handTrackerTemporaryResult());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

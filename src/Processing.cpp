@@ -79,6 +79,11 @@ void Processing::process(bool secondarySource)
 					  handTrackerData.fingertips());
 	emit got_poseUpdated(poseString);
 	imageSourceArtificial->setColorMat(bgr);
+
+	if (secondarySource) {
+		m_handTrackerTemporaryResult = m_handTracker.temporaryResult();
+	}
+	m_handTrackerResult = m_handTracker.data();
 }
 
 void Processing::learnNew(enum PoseRecognition::POSE poseId)
@@ -264,6 +269,16 @@ PoseRecognition *Processing::pose()
 void Processing::setSecondarySource(ImageSourceBase *secondarySource)
 {
 	m_secondarySource = secondarySource;
+}
+
+HandTracker::TemporaryResult Processing::handTrackerTemporaryResult() const
+{
+	return m_handTrackerTemporaryResult;
+}
+
+HandTracker::Data Processing::handTrackerData() const
+{
+	return m_handTrackerResult;
 }
 
 cv::Point Processing::calculateWeightedMean(const std::vector<cv::Point> &pointVector)
