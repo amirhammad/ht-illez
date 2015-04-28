@@ -4,12 +4,11 @@
 #include <list>
 #include <string>
 #include "main.h"
-#include "ColorSegmentation.h"
 #include "ImageSourceFreenect.h"
 #include "WindowManager.h"
 #include "HandTracker.h"
-
-class QSound;
+#include <QPointer>
+#include <QThread>
 
 namespace iez {
 
@@ -54,12 +53,10 @@ private:
 	struct Data {
 		cv::Point center;
 	} data;
-	std::list<ImageStatistics> m_statsList;
 	HandTracker m_handTracker;
 	const ImageSourceBase *m_imageSource;
 	QPointer<ImageSourceBase> m_secondarySource;
 	bool m_calculateHandTracker;
-	const ColorSegmentation *m_segmentation;//not used
 
 	PoseRecognition m_pose;
 

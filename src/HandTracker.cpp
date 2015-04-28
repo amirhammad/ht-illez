@@ -4,6 +4,7 @@
 #include <vector>
 #include <limits>
 #include <queue>
+#include <QTime>
 
 namespace iez {
 

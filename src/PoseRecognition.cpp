@@ -5,6 +5,7 @@
 #include <container.h>
 #include <QVector>
 #include <QFile>
+#include <QDebug>
 
 #define NN_INPUT_VECTOR_SIZE 10
 #define NNDATA_FILENAME "NNData.csv"

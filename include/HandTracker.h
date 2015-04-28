@@ -1,7 +1,6 @@
 #pragma once
 #include <opencv2/opencv.hpp>
 #include "WindowManager.h"
-#include "ColorSegmentation.h"
 #include "Types.h"
 #include "PoseRecognition.h"
 
