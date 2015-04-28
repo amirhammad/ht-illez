@@ -13,12 +13,14 @@ public:
 	ImageSourceArtificial();
 	virtual ~ImageSourceArtificial();
 	cv::Mat getColorMat() const;
-	cv::Mat getDepthMat() const { return cv::Mat(640, 480, CV_16UC1); }
+	cv::Mat getDepthMat() const;
 	void setColorMat(const cv::Mat &src);
+	void setDepthMat(const cv::Mat &src);
 public slots:
 	void pause(bool p = true);
 private:
 	cv::Mat m_color;
+	cv::Mat m_depth;
 	mutable QMutex m_mutex;
 };
 
