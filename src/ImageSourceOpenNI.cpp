@@ -49,17 +49,21 @@ ImageSourceOpenNI::~ImageSourceOpenNI(void)
 	qDebug("X2 end");
 }
 
-int ImageSourceOpenNI::deviceInit(const char* deviceURI)
+int ImageSourceOpenNI::deviceInit(QString deviceURI)
 {
 	openni::Status rc = openni::STATUS_OK;
 
 	rc = openni::OpenNI::initialize();
 
-	rc = device.open(deviceURI);
+	if (deviceURI.isEmpty()) {
+		rc = device.open(openni::ANY_DEVICE);
+	} else {
+		rc = device.open(deviceURI.toStdString().c_str());
+	}
 
 	if (rc != openni::STATUS_OK)
 	{
-		printf("SimpleViewer: Device open failed:\n%s\n", openni::OpenNI::getExtendedError());
+		printf("Device open failed:\n%s\n", openni::OpenNI::getExtendedError());
 		openni::OpenNI::shutdown();
 		return openni::STATUS_ERROR;
 	}
@@ -77,13 +81,13 @@ int ImageSourceOpenNI::deviceInit(const char* deviceURI)
 		rc = m_depthStream.start();
 		if (rc != openni::STATUS_OK)
 		{
-			printf("SimpleViewer: Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+			printf("Couldn't start depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 			m_depthStream.destroy();
 		}
 	}
 	else
 	{
-		printf("SimpleViewer: Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
+		printf("Couldn't find depth stream:\n%s\n", openni::OpenNI::getExtendedError());
 	}
 
 	rc = m_colorStream.create(device, openni::SENSOR_COLOR);
@@ -92,18 +96,18 @@ int ImageSourceOpenNI::deviceInit(const char* deviceURI)
 		rc = m_colorStream.start();
 		if (rc != openni::STATUS_OK)
 		{
-			printf("SimpleViewer: Couldn't start color stream:\n%s\n", openni::OpenNI::getExtendedError());
+			printf("Couldn't start color stream:\n%s\n", openni::OpenNI::getExtendedError());
 			m_colorStream.destroy();
 		}
 	}
 	else
 	{
-		printf("SimpleViewer: Couldn't find color stream:\n%s\n", openni::OpenNI::getExtendedError());
+		printf("Couldn't find color stream:\n%s\n", openni::OpenNI::getExtendedError());
 	}
 
 	if (!m_depthStream.isValid() || !m_colorStream.isValid())
 	{
-		printf("SimpleViewer: No valid streams. Exiting\n");
+		printf("No valid streams. Exiting\n");
 		openni::OpenNI::shutdown();
 		return openni::STATUS_ERROR;
 	}
@@ -230,14 +234,14 @@ void ImageSourceOpenNI::update()
 
 bool ImageSourceOpenNI::init(QVariant args)
 {
-	const char * deviceURI;
+	QString deviceURI;
 	if (args.toString().isEmpty()) {
-		deviceURI = openni::ANY_DEVICE;
+		deviceURI = QString();
 	} else {
-		deviceURI = args.toString().toStdString().c_str();
+		deviceURI = args.toString();
+		qDebug() << "Opening file " << deviceURI;
 	}
 
-	qDebug() << "Opening device" << deviceURI;
 	if (m_initialized) {
 		return true;
 	}

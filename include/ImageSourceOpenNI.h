@@ -30,7 +30,7 @@ private:
 //	void run(); // Overriden QThread run
 
 
-	int deviceInit(const char* deviceURI);
+	int deviceInit(QString deviceURI);
 	int streamInit(void);
 
 	void readDepth();

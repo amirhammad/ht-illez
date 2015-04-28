@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	QMenuBar *menuBar = new QMenuBar(this);
 
 	QMenu *fileMenu = new QMenu("&File", this);
-	fileMenu->addAction(QIcon(), "Open &record", this, SLOT(on_openRecord()), QKeySequence(Qt::ALT + Qt::Key_R));
+	fileMenu->addAction(QIcon(), "&Open record", this, SLOT(on_openRecord()), QKeySequence(Qt::CTRL + Qt::Key_O));
 	fileMenu->addAction(QIcon(), "Open &camera", this, SLOT(on_buildVideo()), QKeySequence(Qt::ALT + Qt::Key_C));
 	fileMenu->addAction(QIcon(), "Open &processing", this, SLOT(on_buildProcessing()), QKeySequence(Qt::ALT + Qt::Key_P));
 	fileMenu->addSeparator();
@@ -305,8 +305,11 @@ void MainWindow::on_buildVideo(QString path)
 	m_video = new iez::ImageSourceOpenNI();
 	if (!m_video->init(path)) {
 		delete m_video;
-		QString what = path.isEmpty() ? "camera" : QString("file %1").arg(path);
-		QMessageBox::critical(this, QString("Cannot open %1 device").arg(what), "Try reconnect the camera device or restart the application");
+		if (path.isEmpty()) {
+			QMessageBox::critical(this, QString("Cannot open camera device"), "Try reconnect the camera device or restart the application");
+		} else {
+			QMessageBox::critical(this, QString("Error opening record"), QString("Cannot open file %1. Try other record").arg(path));
+		}
 		return;
 	}
 
