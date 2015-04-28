@@ -18,7 +18,7 @@ Processing::Processing(ImageSourceBase *imgsrc, QObject *parent)
 :	QObject(parent)
 ,	m_imageSource(imgsrc)
 ,	m_calculateHandTracker(false)
-,	m_handTracker(true)
+,	m_handTracker(false)
 {
 	m_thread = new QThread(QCoreApplication::instance()->thread());
 	moveToThread(m_thread);
