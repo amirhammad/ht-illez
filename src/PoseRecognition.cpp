@@ -328,13 +328,9 @@ void PoseRecognition::train()
 		s << errors << "/" << total;
 
 		errorRatio = static_cast<double>(errors) / total;
-//		if (errorRatio < 0.07) break;
-//		if (testNeuralNetwork()) break;
-		testNeuralNetwork();
+		if (testNeuralNetwork()) break;
+		::sleep(1);
 
-		int c = 0;
-		std::cin >> c;
-		if (c) return;
 
 	} while (true);
 }
