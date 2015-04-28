@@ -22,17 +22,7 @@ void HandTracker::distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &
 
 void HandTracker::findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint) const
 {
-	maxDTPoint = cv::Point(-1, -1);
-	float max = 0;
-	for (int i = 0; i < handDT.rows; i++) {
-		for (int j = 0; j < handDT.cols; j++) {
-			const float d = handDT.at<float>(i, j);
-			if (d > max) {
-				max = d;
-				maxDTPoint = cv::Point(j, i);
-			}
-		}
-	}
+	Q_UNUSED(Processing::findMax2(handDT, maxDTPoint));
 }
 
 float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::vector<cv::Point> contour) const

@@ -153,6 +153,29 @@ int Processing::findMin2(const cv::Mat& depth, cv::Point &point)
 	return minDepth;
 }
 
+float Processing::findMax(const cv::Mat &mat)
+{
+	cv::Point dummy;
+	return findMax2(mat, dummy);
+}
+
+float Processing::findMax2(const cv::Mat &mat, cv::Point &point)
+{
+	Q_ASSERT(mat.type() == CV_32FC1);
+
+	point = cv::Point(-1, -1);
+	float max = 0;
+	for (int i = 0; i < mat.rows; i++) {
+		for (int j = 0; j < mat.cols; j++) {
+			const float d = mat.at<float>(i, j);
+			if (d > max) {
+				max = d;
+				point = cv::Point(j, i);
+			}
+		}
+	}
+	return max;
+}
 
 void Processing::filterDepth(cv::Mat &dst, const cv::Mat &depth, int near, int far)
 {
