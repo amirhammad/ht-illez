@@ -369,11 +369,18 @@ void MainWindow::on_exportProcessData()
 	m_secondaryImageSource->setDepthMat(m_video->getDepthMat());
 
 	m_processing->process(true);
-	QString prefix = QFileDialog::getExistingDirectory(this, "Select directory for output debug files");
-	if (prefix.isEmpty()) {
-		return;
+
+	HandTracker::TemporaryResult tempResult;
+	bool valid = m_processing->handTrackerTemporaryResult(tempResult);
+	if (valid) {
+		QString prefix = QFileDialog::getExistingDirectory(this, "Select directory for output debug files");
+		if (prefix.isEmpty()) {
+			return;
+		}
+		exportProcessData(prefix, m_processing->handTrackerData(), tempResult);
+	} else {
+		QMessageBox::warning(this, "Debug not active", "close, edit, recompile, run, try again. Good luck. \nHint: Check constructor of m_handTracker");
 	}
-	exportProcessData(prefix, m_processing->handTrackerData(), m_processing->handTrackerTemporaryResult());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

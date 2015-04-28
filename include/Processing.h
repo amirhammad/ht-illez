@@ -23,7 +23,7 @@ public:
 	void train();
 	PoseRecognition *pose();
 	void setSecondarySource(ImageSourceBase *secondarySource);
-	HandTracker::TemporaryResult handTrackerTemporaryResult() const;
+	bool handTrackerTemporaryResult(HandTracker::TemporaryResult & temporaryResult) const;
 	HandTracker::Data handTrackerData() const;
 
 	static float pointDistance(const cv::Point &pt1, const cv::Point &pt2);

@@ -293,9 +293,12 @@ void Processing::setSecondarySource(ImageSourceBase *secondarySource)
 	m_secondarySource = secondarySource;
 }
 
-HandTracker::TemporaryResult Processing::handTrackerTemporaryResult() const
+bool Processing::handTrackerTemporaryResult(HandTracker::TemporaryResult &temporaryResult) const
 {
-	return m_handTrackerTemporaryResult;
+	if (m_handTracker.isDebug()) {
+		temporaryResult = m_handTrackerTemporaryResult;
+	}
+	return m_handTracker.isDebug();
 }
 
 HandTracker::Data Processing::handTrackerData() const
