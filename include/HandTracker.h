@@ -82,7 +82,6 @@ public:
 
 private:
 	Data m_data;
-	int m_maxThreads;
 };
 
 }
