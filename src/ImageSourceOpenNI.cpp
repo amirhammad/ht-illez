@@ -56,11 +56,6 @@ int ImageSourceOpenNI::deviceInit(const char* deviceURI)
 	rc = openni::OpenNI::initialize();
 
 	rc = device.open(deviceURI);
-	if (device.isFile()) {
-		m_fps = FILE_PLAY_SPEED;
-		device.getPlaybackControl()->setSpeed(m_fps);
-		device.getPlaybackControl()->setRepeatEnabled(true);
-	}
 
 	if (rc != openni::STATUS_OK)
 	{
@@ -68,6 +63,13 @@ int ImageSourceOpenNI::deviceInit(const char* deviceURI)
 		openni::OpenNI::shutdown();
 		return openni::STATUS_ERROR;
 	}
+
+	if (device.isFile()) {
+		m_fps = FILE_PLAY_SPEED;
+		device.getPlaybackControl()->setSpeed(m_fps);
+		device.getPlaybackControl()->setRepeatEnabled(true);
+	}
+
 
 	rc = m_depthStream.create(device, openni::SENSOR_DEPTH);
 	if (rc == openni::STATUS_OK)
