@@ -50,9 +50,6 @@ private slots:
 private:
 	QThread *m_thread;
 
-	struct Data {
-		cv::Point center;
-	} data;
 	HandTracker m_handTracker;
 	const ImageSourceBase *m_imageSource;
 	QPointer<ImageSourceBase> m_secondarySource;

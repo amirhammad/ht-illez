@@ -197,26 +197,6 @@ void MainWindow::exportProcessData(QString prefix, HandTracker::Data result, Han
 	QImage res = WindowManager::Mat2QImage(debugResult.result);
 	res.save(prefix + "/result.jpg", "jpg", 100);
 }
-//void MainWindow::on_addButtonClicked()
-//{
-//	if (!m_processing)
-//		return;
-
-//	m_teachDialog->hide();
-
-//	m_processing->learnNew(static_cast<enum PoseRecognition::POSE>(m_teachDialogProperties.classComboBox->currentIndex()));
-
-//	emit got_pause(false);
-//}
-
-//void MainWindow::on_cancelButtonClicked()
-//{
-//	if (!m_processing)
-//		return;
-
-//	m_teachDialog->hide();
-//	emit got_pause(false);
-//}
 
 void MainWindow::on_gestureTrainerFinished(int code)
 {
