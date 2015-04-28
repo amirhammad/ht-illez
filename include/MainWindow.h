@@ -14,6 +14,7 @@ namespace iez {
 class ImageSourceOpenNI;
 class ImageSourceArtificial;
 class Processing;
+class ImageRecorder;
 
 class PoseTrainDialog : public QDialog {
 	Q_OBJECT
@@ -46,6 +47,7 @@ private:
 
 	QPointer<ImageSourceOpenNI> m_video;
 	QPointer<Processing> m_processing;
+	ImageRecorder *m_imageRecorder;
 
 	void buildNNTeachDialog();
 	void train();
@@ -84,10 +86,12 @@ private slots:
 	void on_neuralNetworkLoad();
 	void on_neuralNetworkImport();
 	void on_init();
+	void on_recorderAttach();
 	void on_openRecord();
 	void on_buildVideo(QString path = QString());
 	void on_buildProcessing();
 	void on_exportProcessData();
+
 };
 
 

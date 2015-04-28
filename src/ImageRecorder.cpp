@@ -6,9 +6,9 @@ ImageRecorder::ImageRecorder()
 {
 }
 
-void ImageRecorder::init(iez::ImageSourceOpenNI *src, const char *path)
+void ImageRecorder::init(iez::ImageSourceOpenNI *src, QString path)
 {
-	m_recorder.create(path);
+	m_recorder.create(path.toStdString().c_str());
 	m_recorder.attach(src->getColorStream(), false);
 	m_recorder.attach(src->getDepthStream(), false);
 	m_recorder.start();

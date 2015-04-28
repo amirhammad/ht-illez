@@ -6,6 +6,7 @@
 #include "Processing.h"
 #include "ImageSource.h"
 #include "ImageSourceOpenNI.h"
+#include "ImageRecorder.h"
 
 #include <QToolBar>
 #include <QDebug>
@@ -35,6 +36,7 @@ namespace iez {
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 ,	m_secondaryImageSource(new ImageSourceArtificial())
+,	m_imageRecorder(new ImageRecorder())
 {
 	qRegisterMetaType<PoseTrainDialog::Result>();
 	PoseTrainDialog *poseTrainDialog = new PoseTrainDialog(this);
@@ -61,6 +63,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	fileMenu->addAction(QIcon(), "&Open record", this, SLOT(on_openRecord()), QKeySequence(Qt::CTRL + Qt::Key_O));
 	fileMenu->addAction(QIcon(), "Open &camera", this, SLOT(on_buildVideo()), QKeySequence(Qt::ALT + Qt::Key_C));
 	fileMenu->addAction(QIcon(), "Open &processing", this, SLOT(on_buildProcessing()), QKeySequence(Qt::ALT + Qt::Key_P));
+	fileMenu->addSeparator();
+	fileMenu->addAction(QIcon(), "Initialize recorder", this, SLOT(on_recorderAttach()));
 	fileMenu->addSeparator();
 	fileMenu->addAction(QIcon(), "&Quit", this, SLOT(deleteLater()), QKeySequence(Qt::ALT + Qt::Key_Q));
 
@@ -113,6 +117,9 @@ MainWindow::~MainWindow()
 		delete m_video;
 	}
 
+	if (m_imageRecorder) {
+		delete m_imageRecorder;
+	}
 	m_teachDialog->deleteLater();
 
 	WindowManager::destroy();
@@ -284,6 +291,23 @@ void MainWindow::on_neuralNetworkImport()
 
 void MainWindow::on_init()
 {
+
+}
+
+void MainWindow::on_recorderAttach()
+{
+	if (!m_video) {
+		QMessageBox::warning(this, "Error", "video not ready");
+		return;
+	}
+
+	QString path = QFileDialog::getSaveFileName(this, "Select output record file", QString(), "OpenNI Record (*.oni)");
+	if (!path.isEmpty()) {
+		if (!path.endsWith(".oni")) {
+			path.append(".oni");
+		}
+		m_imageRecorder->init(m_video.data(), path);
+	}
 
 }
 

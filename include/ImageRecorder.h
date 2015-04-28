@@ -9,7 +9,7 @@ class ImageRecorder {
 public:
 	ImageRecorder();
 
-	void init(iez::ImageSourceOpenNI *src, const char *path = "_defaultOutput.oni");
+	void init(iez::ImageSourceOpenNI *src, QString path);
 
 	~ImageRecorder();
 private:
