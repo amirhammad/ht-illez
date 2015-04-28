@@ -391,13 +391,13 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	cv::medianBlur(candidates, candidatesFiltered, 5);
 
 	if (isDebug()) {
-		QList<cv::Mat> medianList;
-		for (uint i = 1; i < 9; i += 2) {
+		m_temp.medianList.clear();
+		for (uint i = 1; i <= 9; i += 2) {
 			cv::Mat tmp;
 			cv::medianBlur(candidates, tmp, i);
-			medianList.append(tmp);
+			cv::putText(tmp, QString::number(i).toStdString(), cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+			m_temp.medianList.append(tmp);
 		}
-		m_temp.medianList = medianList;
 	}
 
 //		cv::Mat tmp;
