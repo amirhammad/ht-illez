@@ -247,9 +247,7 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 
 
 	int fingerCount = rectWidth/(palmRadius*FINGER_MAXWIDTH_FACTOR) + 1;
-	if (fingerCount == 0) {
-		return QList<cv::Point>();
-	} else if (fingerCount > 1) {
+	if (fingerCount > 1) {
 
 		// add factor, because when fingers are close to each other, they appear thinner
 		const float factor = 0.75f;
