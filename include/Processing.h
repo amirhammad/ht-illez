@@ -22,6 +22,8 @@ public:
 
 	void learnNew(enum PoseRecognition::POSE);
 	void train();
+	PoseRecognition *pose();
+	void setSecondarySource(ImageSourceBase *secondarySource);
 
 	static float pointDistance(const cv::Point &pt1, const cv::Point &pt2);
 	static cv::Point pointMean(const cv::Point &pt1, const cv::Point &pt2, const float ratio12 = 0.5f);
@@ -32,7 +34,6 @@ public:
 	static cv::Point calculateMean(const std::vector<cv::Point>&);
 	static cv::Point findNearestPoint(const std::vector<cv::Point> &pointVector, const cv::Point refPoint);
 	static void rotate(cv::Mat& src, double angle, cv::Mat& dst);
-	PoseRecognition *pose();
 
 private:
 	static cv::Point calculateWeightedMean(const std::vector<cv::Point>&);
@@ -40,7 +41,8 @@ private:
 	static cv::Point calculateMeanIndices(const cv::Mat&);
 
 public slots:
-	void process();
+	void process(bool secondarySource = false);
+
 private slots:
 	void on_learnNew(int poseId);
 	void on_train();
@@ -53,7 +55,7 @@ private:
 	std::list<ImageStatistics> m_statsList;
 	HandTracker m_handTracker;
 	const ImageSourceBase *m_imageSource;
-
+	QPointer<ImageSourceBase> m_secondarySource;
 	bool m_calculateHandTracker;
 	const ColorSegmentation *m_segmentation;//not used
 

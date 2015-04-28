@@ -47,8 +47,18 @@ Processing::~Processing(void)
 }
 
 
-void Processing::process()
+void Processing::process(bool secondarySource)
 {
+	const ImageSourceBase *src;
+	if (secondarySource) {
+		if (m_secondarySource) {
+			src = m_secondarySource.data();
+		} else {
+			Q_ASSERT("secondary source not initialized");
+		}
+	} else {
+		src = m_imageSource;
+	}
 	const cv::Mat &depth = m_imageSource->getDepthMat();
 	const cv::Mat &rgb = m_imageSource->getColorMat();
 	cv::Mat bgr;
@@ -248,6 +258,11 @@ void Processing::rotate(cv::Mat& src, double angle, cv::Mat& dst)
 PoseRecognition *Processing::pose()
 {
 	return &m_pose;
+}
+
+void Processing::setSecondarySource(ImageSourceBase *secondarySource)
+{
+	m_secondarySource = secondarySource;
 }
 
 cv::Point Processing::calculateWeightedMean(const std::vector<cv::Point> &pointVector)
