@@ -28,37 +28,35 @@ public:
 private:
 
 
-	static void distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT);
-	static void findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint);
+	void distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT) const;
+	void findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint) const;
 
-	static float findHandCenterRadius(const cv::Point &maxDTPoint,
-									  const std::vector<cv::Point> contour);
+	float findHandCenterRadius(const cv::Point &maxDTPoint,
+									  const std::vector<cv::Point> contour) const;
 
 
-	static void findPalm(cv::Mat &binaryPalmMask,
+	void findPalm(cv::Mat &binaryPalmMask,
 						 std::vector<cv::Point> &palmContour,
 						 const cv::Mat &binaryHand,
 						 const std::vector<cv::Point> &contour,
 						 const cv::Point &palmCenter,
-						 const float palmRadius);
+						 const float palmRadius) const;
 
-	static bool findWrist(const std::vector<cv::Point> &palmContour,
+	bool findWrist(const std::vector<cv::Point> &palmContour,
 						  const cv::Point &palmCenter,
 						  const float palmRadius,
-						  const Data &data,
-						  wristpair_t& outputWrist);
+						  wristpair_t& outputWrist) const;
 
-	static void findFingers(cv::Mat &binaryFingersMask,
+	void findFingers(cv::Mat &binaryFingersMask,
 							std::vector<std::vector<cv::Point> > &fingersContours,
 							const cv::Mat &binaryHand,
-							const cv::Mat &palmMask,
-							const Data &data);
+							const cv::Mat &palmMask) const;
 
-	static QList<cv::Point> findFingertip(const cv::RotatedRect &rotRect,
+	QList<cv::Point> findFingertip(const cv::RotatedRect &rotRect,
 										  const float palmRadius,
-										  const cv::Point &palmCenter);
+										  const cv::Point &palmCenter) const;
 
-	static wristpair_t wristPairFix(cv::Point palmCenter, float palmRadius, cv::Point wristMiddle);
+	wristpair_t wristPairFix(cv::Point palmCenter, float palmRadius, cv::Point wristMiddle) const;
 
 private:
 	static void orderFingertipsByAngle(wristpair_t wrist, QList<cv::Point> &fingertips);

@@ -14,12 +14,12 @@ namespace iez {
 #define FINGER_LENGTH_FACTOR (0.5f)
 #define FINGER_MAXWIDTH_FACTOR (0.57f)
 
-void HandTracker::distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT)
+void HandTracker::distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT) const
 {
 	cv::distanceTransform(binaryHandFiltered, handDT, CV_DIST_L2, 3);
 }
 
-void HandTracker::findHandCenter(const cv::Mat &handDT,	 cv::Point &maxDTPoint)
+void HandTracker::findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint) const
 {
 	maxDTPoint = cv::Point(-1, -1);
 	float max = 0;
@@ -34,7 +34,7 @@ void HandTracker::findHandCenter(const cv::Mat &handDT,	 cv::Point &maxDTPoint)
 	}
 }
 
-float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::vector<cv::Point> contour)
+float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::vector<cv::Point> contour) const
 {
 	float minDistance = std::numeric_limits<float>::max();
 
@@ -54,7 +54,7 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 						   const cv::Mat &binaryHand,
 						   const std::vector<cv::Point> &contour,
 						   const cv::Point &palmCenter,
-						   const float palmRadius)
+						   const float palmRadius) const
 {
 	const int maxValues = 100;
 
@@ -127,8 +127,7 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 							const cv::Point &palmCenter,
 							const float palmRadius,
-							const Data &data,
-							wristpair_t& outputWrist)
+							wristpair_t& outputWrist) const
 {
 	wristpair_t wristPointPair;
 
@@ -173,7 +172,7 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 
 	/// Find wrist(out of 5 got in previous algorithm step) nearest to previously saved wrist
 
-	wristpair_t wppData = data.wrist();
+	wristpair_t wppData = m_data.wrist();
 	cv::Point wppMeanData = Processing::pointMean(wppData.first, wppData.second);
 
 	wristpair_t wppFinal = wppData;
@@ -228,7 +227,7 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
  */
 QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 											const float palmRadius,
-											const cv::Point &palmCenter)
+											const cv::Point &palmCenter) const
 {
 	cv::Point2f rectPoints[4];
 	rotRect.points(rectPoints);
@@ -286,7 +285,7 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 	return l;
 }
 
-wristpair_t HandTracker::wristPairFix(cv::Point palmCenter, float palmRadius, cv::Point wristMiddle)
+wristpair_t HandTracker::wristPairFix(cv::Point palmCenter, float palmRadius, cv::Point wristMiddle) const
 {
 	const float distToCenter = Processing::pointDistance(palmCenter, wristMiddle);
 	cv::Point2f vecToCenter = (palmCenter - wristMiddle);
@@ -320,8 +319,7 @@ HandTracker::TemporaryResult HandTracker::temporaryResult() const
 void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 							  std::vector<std::vector<cv::Point> > &fingersContours,
 							  const cv::Mat &binaryHand,
-							  const cv::Mat &palmMask,
-							  const Data &data)
+							  const cv::Mat &palmMask) const
 {
 	cv::Mat tmp;
 	cv::dilate(palmMask, tmp, cv::Mat(), cv::Point(-1,-1), 2);// dilate main
@@ -331,7 +329,7 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 
 	/// use dot product with normal to remove contures under wrist line (half-plane filter out)
 
-	wristpair_t wrist = data.wrist();
+	wristpair_t wrist = m_data.wrist();
 	QList<std::vector<cv::Point> > l;
 	for (int i = 0; i < contours.size(); i++) {
 		cv::Point center = Processing::calculateMean(contours[i]);
@@ -485,7 +483,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	/// find wrist
 	wristpair_t wrist;
-	if (findWrist(palmContour, palmCenter, palmRadius, m_data, wrist) == false) {
+	if (findWrist(palmContour, palmCenter, palmRadius, wrist) == false) {
 		qDebug("ERROR %s %d", __FILE__, __LINE__);
 		return;
 	}
@@ -493,8 +491,8 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	/// find fingers
 
 	cv::Mat fingersMask;
-        std::vector<std::vector<cv::Point> > fingersContours;
-	findFingers(fingersMask, fingersContours, binaryHand, palmMask, m_data);
+	std::vector<std::vector<cv::Point> > fingersContours;
+	findFingers(fingersMask, fingersContours, binaryHand, palmMask);
 
 
 
