@@ -21,6 +21,10 @@ public:
 	class Data;
 	Data data() const;
 
+	class TemporaryResult;
+	TemporaryResult temporaryResult() const;
+
+
 private:
 
 
@@ -80,8 +84,12 @@ public:
 		QList<cv::Point> m_fingertips;
 	};
 
+	class TemporaryResult {
+
+	};
 private:
 	Data m_data;
+	TemporaryResult m_temporaryResult;
 };
 
 }

@@ -310,6 +310,13 @@ HandTracker::Data HandTracker::data() const
 {
 	return m_data;
 }
+
+// not thread-safe
+HandTracker::TemporaryResult HandTracker::temporaryResult() const
+{
+	return m_temporaryResult;
+}
+
 void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 							  std::vector<std::vector<cv::Point> > &fingersContours,
 							  const cv::Mat &binaryHand,
