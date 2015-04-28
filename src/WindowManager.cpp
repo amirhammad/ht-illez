@@ -14,7 +14,7 @@ void WindowManager::imShow(const QString name, const QImage& image)
 	QMutexLocker l(&m_mutex);
 	struct imShowMapData * data = &m_imShowMap[name];//.image = image;
 	data->image = image;
-	QMetaObject::invokeMethod(this, "on_imShow", Qt::AutoConnection, QGenericArgument("const QString", &name));
+	QMetaObject::invokeMethod(this, "on_imShow", Qt::QueuedConnection, QGenericArgument("const QString", &name));
 }
 
 void WindowManager::plot(const QString name,
@@ -26,7 +26,7 @@ void WindowManager::plot(const QString name,
 	QMutexLocker l(&m_mutex);
 	m_plotMap[name].x = QVector<double>(x);
 	m_plotMap[name].y = QVector<double>(y);
-	QMetaObject::invokeMethod(this, "on_plot", Qt::AutoConnection, QGenericArgument("const QString", &name));
+	QMetaObject::invokeMethod(this, "on_plot", Qt::QueuedConnection, QGenericArgument("const QString", &name));
 }
 
 
