@@ -424,17 +424,9 @@ bool PoseRecognition::testNeuralNetwork() const
 		qCopy(m_database.at(i).input.begin(), m_database.at(i).input.end(), row.begin());
 		normalizeVector(row);
 
-		const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(row);
-
-		int output = findBestMatchIndex(outputs, 1);
-
-		QString str;
-		str = QString::number(output) + QString::number(m_database.at(i).output);
-		foreach (double d, outputs) str += " {" + QString::number(d) + "} ,";
-		qDebug() << str;
+		int output = calculateOutput(row);
 
 		if (output != m_database.at(i).output) {
-
 			errors++;
 		}
 	}
