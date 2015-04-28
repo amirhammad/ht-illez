@@ -190,12 +190,37 @@ void MainWindow::loadPoseDatabaseToTable()
 
 void MainWindow::exportProcessData(QString prefix, HandTracker::Data result, HandTracker::TemporaryResult debugResult)
 {
+	int index;
+
 	if (!prefix.endsWith("/")) {
 		prefix += "/";
 	}
 
-	QImage res = WindowManager::Mat2QImage(debugResult.result);
-	res.save(prefix + "/result.jpg", "jpg", 100);
+	QImage res;
+	res = WindowManager::Mat2QImage(debugResult.result);
+	res.save(prefix + "result.jpg", "jpg", 100);
+
+	double max = Processing::findMax(debugResult.distanceTransform);
+	cv::Mat distanceTransformOutput;
+	debugResult.distanceTransform.convertTo(distanceTransformOutput, CV_8UC1, 255.0/max, 0);
+	res = WindowManager::Mat2QImage(distanceTransformOutput);
+	res.save(prefix + "distanceTransform.jpg", "jpg", 100);
+
+	index = 0;
+	foreach (cv::Mat img, debugResult.medianList) {
+		res = WindowManager::Mat2QImage(img);
+		res.save(prefix + QString("medianFilter-%1.jpg").arg(index++), "jpg", 100);
+	}
+
+	res = WindowManager::Mat2QImage(debugResult.handMask);
+	res.save(prefix + "handMask.jpg", "jpg", 100);
+
+	res = WindowManager::Mat2QImage(debugResult.palmMask);
+	res.save(prefix + "palmMask.jpg", "jpg", 100);
+
+	res = WindowManager::Mat2QImage(debugResult.fingersMask);
+	res.save(prefix + "fingersMask.jpg", "jpg", 100);
+
 }
 
 void MainWindow::on_gestureTrainerFinished(int code)
