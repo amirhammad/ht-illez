@@ -83,15 +83,8 @@ public slots:
 	void on_imShow(const QString name);
 	void on_plot(const QString name);
 
-	void keyPressEvent(QKeyEvent *keyEvent) {
-		emit keyPressed(keyEvent);
-	}
-//	void closeEvent() {
-//		emit closed();
-//	}
 signals:
 	void keyPressed(QKeyEvent *keyEvent);
-//	void closed();
 };
 }
 
