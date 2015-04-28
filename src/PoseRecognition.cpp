@@ -611,13 +611,8 @@ bool PoseRecognition::loadMLP(QString prefix, OpenNN::MultilayerPerceptron &mlp)
 void PoseRecognition::normalizeVector(OpenNN::Vector<double> &vec)
 {
 	for (int i = 0; i < NN_INPUT_VECTOR_SIZE; i += 2) {
-		if (vec[i] == 0 && vec[i + 1] == 0) {
-			vec[i] = (qrand()%1001)/1000.0;
-			vec[i + 1] = (qrand()%1001)/1000.0;
-		} else {
-			vec[i] = normalizeInto(vec[i], BOUND_X_LOW, BOUND_X_HIGH);//x
-			vec[i + 1] = normalizeInto(vec[i + 1], BOUND_Y_LOW, BOUND_Y_HIGH);//y
-		}
+		vec[i] = normalizeInto(vec[i], BOUND_X_LOW, BOUND_X_HIGH);//x
+		vec[i + 1] = normalizeInto(vec[i + 1], BOUND_Y_LOW, BOUND_Y_HIGH);//y
 	}
 }
 
