@@ -313,7 +313,12 @@ HandTracker::Data HandTracker::data() const
 // not thread-safe
 HandTracker::TemporaryResult HandTracker::temporaryResult() const
 {
-	return m_temporaryResult;
+	return m_temp;
+}
+
+bool HandTracker::isDebug() const
+{
+	return m_bDebug;
 }
 
 void HandTracker::findFingers(cv::Mat &binaryFingersMask,
@@ -331,6 +336,9 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 
 	wristpair_t wrist = m_data.wrist();
 	QList<std::vector<cv::Point> > l;
+	if (isDebug()) {
+		m_temp.fingerContoursIgnoredList.clear();
+	}
 	for (int i = 0; i < contours.size(); i++) {
 		cv::Point center = Processing::calculateMean(contours[i]);
 		const cv::Point &pt1 = wrist.first;
@@ -339,6 +347,8 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 		const cv::Point normal(pt2.y - pt1.y, pt1.x - pt2.x); // (from pt1 to pt2) -> normal -90*
 		if ((pt3 - pt1).dot(normal) < 0) {
 			l.append(contours[i]);
+		} else {
+			m_temp.fingerContoursIgnoredList.append(contours[i]);
 		}
 	}
 	std::vector<std::vector<cv::Point> > contoursNoWrist(l.size());
@@ -355,11 +365,11 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 	binaryFingersMask = cv::Mat::zeros(binaryHand.rows, binaryHand.cols, CV_8UC1);
 	cv::fillPoly(binaryFingersMask, contoursNoWrist, cv::Scalar_<uint8_t>(255));
 
-
 	fingersContours = contoursNoWrist;
 }
 
-HandTracker::HandTracker()
+HandTracker::HandTracker(bool debug)
+	: m_bDebug(debug)
 {
 }
 
@@ -388,6 +398,17 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	/// Filter
 	cv::Mat candidatesFiltered;
 	cv::medianBlur(candidates, candidatesFiltered, 5);
+
+	if (isDebug()) {
+		QList<cv::Mat> medianList;
+		for (uint i = 1; i < 9; i += 2) {
+			cv::Mat tmp;
+			cv::medianBlur(candidates, tmp, i);
+			medianList.append(tmp);
+		}
+		m_temp.medianList = medianList;
+	}
+
 //		cv::Mat tmp;
 //		cv::erode(frontMostObjects, tmp, cv::Mat(), cv::Point(-1,-1), 2);// dilate main
 //		cv::dilate(tmp, frontMostObjectsFiltered, cv::Mat(), cv::Point(-1,-1), 2);// dilate main
@@ -442,6 +463,10 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	/// save binary hand
 	out.copyTo(binaryHand);
+	if (isDebug()) {
+		m_temp.handContour = handContour;
+		binaryHand.copyTo(m_temp.handMask);
+	}
 
 	cv::ellipse(out, nearestPoint, cv::Size(5, 5), 0, 0, 360, cv::Scalar_<uint8_t>(200), 2);
 //	WindowManager::getInstance()->imShow("binaryHand", binaryHand);
@@ -452,16 +477,27 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	cv::Mat handDT;
 	distanceTransform(binaryHand, handDT);
+	if (isDebug()) {
+		m_temp.distanceTransform = handDT;
+	}
 
 	/// Find hand center
 
 	cv::Point palmCenter;
 	findHandCenter(handDT, palmCenter);
+	if (isDebug()) {
+		m_temp.palmCenter = palmCenter;
+	}
 
 
 	/// Find palm radius
 
 	const float palmRadius = findHandCenterRadius(palmCenter, handContour);
+
+	if (isDebug()) {
+		m_temp.palmRadius = palmRadius;
+	}
+
 	Q_ASSERT(palmRadius > 0);
 
 	/// ready: handCenter, innerCircleRadius, binaryHand(filtered), handContour
@@ -470,7 +506,10 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	cv::Mat palmMask;
 	std::vector<cv::Point> palmContour;
 	findPalm(palmMask, palmContour, binaryHand, handContour, palmCenter, palmRadius);
-
+	if (isDebug()) {
+		m_temp.palmMask = palmMask;
+		m_temp.palmContour = palmContour;
+	}
 
 	// ignore small palmContours
 	float area = cv::contourArea(palmContour);
@@ -494,12 +533,15 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	std::vector<std::vector<cv::Point> > fingersContours;
 	findFingers(fingersMask, fingersContours, binaryHand, palmMask);
 
+	if (isDebug()) {
+		m_temp.fingersContours = fingersContours;
+		m_temp.fingersMask = fingersMask;
+	}
 
 
 
 	cv::Mat fingerMaskOutput;
 	fingersMask.copyTo(fingerMaskOutput);
-
 
 	/// ~~~~
 	QList<cv::Point> fingertips;
@@ -524,6 +566,10 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 //				cv::ellipse(fingerMaskOutput, fingertip, cv::Size(2, 2), 0, 0, 360, cv::Scalar(100), 5);
 			}
 		}
+	}
+
+	if (isDebug()) {
+		m_temp.fingertipsNonSorted = fingertips;
 	}
 
 	orderFingertipsByAngle(wrist, fingertips);
@@ -563,6 +609,9 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	// draw only if valid, else results in flickering...
 	if (fingerMaskOutput.rows == binaryHand.rows) {
 		WindowManager::getInstance()->imShow("fingers", fingerMaskOutput);
+		if (isDebug()) {
+			m_temp.result = fingerMaskOutput;
+		}
 	}
 //	WindowManager::getInstance()->imShow("PALM", palmMask);
 

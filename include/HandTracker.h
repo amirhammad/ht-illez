@@ -13,7 +13,7 @@ class PoseRecognition;
 class HandTracker {
 
 public:
-	HandTracker();
+	explicit HandTracker(bool debug = false);
 	~HandTracker();
 
 	void process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId);
@@ -24,6 +24,7 @@ public:
 	class TemporaryResult;
 	TemporaryResult temporaryResult() const;
 
+	inline bool isDebug() const;
 
 private:
 
@@ -83,11 +84,35 @@ public:
 	};
 
 	class TemporaryResult {
+	public:
+		cv::Mat originalColor;
+		cv::Mat originalDepth;
 
+		QList<cv::Mat> medianList;
+
+		cv::Mat distanceTransform;
+
+		cv::Mat handMask;
+		std::vector<cv::Point> handContour;
+
+		float palmRadius;
+		cv::Point palmCenter;
+		cv::Mat palmMask;
+		std::vector<cv::Point> palmContour;
+
+
+		QList<std::vector<cv::Point> > fingerContoursIgnoredList;
+		cv::Mat fingersMask;
+		std::vector<std::vector<cv::Point> > fingersContours;
+
+		QList<cv::Point> fingertipsNonSorted;
+
+		cv::Mat result;
 	};
 private:
 	Data m_data;
-	TemporaryResult m_temporaryResult;
+	const bool m_bDebug;
+	mutable TemporaryResult m_temp;
 };
 
 }
