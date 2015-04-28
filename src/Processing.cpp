@@ -58,7 +58,7 @@ void Processing::process()
 
 //	WindowManager::getInstance()->imShow("Original", bgr);
 
-	m_handTracker.invokeProcess(bgr, depth, m_imageSource->getSequence());
+	m_handTracker.process(bgr, depth, m_imageSource->getSequence());
 	const HandTracker::Data handTrackerData = m_handTracker.data();
 
 	QString poseString = m_pose.categorize(handTrackerData.palmCenter(),

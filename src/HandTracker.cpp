@@ -305,6 +305,7 @@ wristpair_t HandTracker::wristPairFix(cv::Point palmCenter, float palmRadius, cv
 	return wrist;
 }
 
+// not thread-safe
 HandTracker::Data HandTracker::data() const
 {
 	return m_data;
@@ -357,16 +358,12 @@ HandTracker::HandTracker()
 {
 }
 
-void HandTracker::invokeProcess(const cv::Mat &bgr, const cv::Mat &depth, const int imageId)
-{
-	process(bgr, depth, imageId, m_data);
-}
-
 HandTracker::~HandTracker()
 {
 }
 
-void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId, Data &data)
+// not thread-safe
+void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId)
 {
 	QTime t;
 	t.start();
@@ -481,7 +478,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	/// find wrist
 	wristpair_t wrist;
-	if (findWrist(palmContour, palmCenter, palmRadius, data, wrist) == false) {
+	if (findWrist(palmContour, palmCenter, palmRadius, m_data, wrist) == false) {
 		qDebug("ERROR %s %d", __FILE__, __LINE__);
 		return;
 	}
@@ -490,7 +487,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	cv::Mat fingersMask;
         std::vector<std::vector<cv::Point> > fingersContours;
-	findFingers(fingersMask, fingersContours, binaryHand, palmMask, data);
+	findFingers(fingersMask, fingersContours, binaryHand, palmMask, m_data);
 
 
 
@@ -536,10 +533,10 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	}
 
 	{	// FINALIZE
-		data.setFingertips(fingertips);
-		data.setPalmCenter(palmCenter);
-		data.setPalmRadius(palmRadius);
-		data.setWrist(wrist);
+		m_data.setFingertips(fingertips);
+		m_data.setPalmCenter(palmCenter);
+		m_data.setPalmRadius(palmRadius);
+		m_data.setWrist(wrist);
 	}
 	///
 	cv::ellipse(fingerMaskOutput, palmCenter, cv::Size(palmRadius, palmRadius), 0, 0, 360, cv::Scalar(100), 1);

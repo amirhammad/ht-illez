@@ -14,12 +14,15 @@ class HandTracker {
 
 public:
 	HandTracker();
-	void invokeProcess(const cv::Mat &bgr, const cv::Mat &depth, const int imageId = 0);
-	class Data;
 	~HandTracker();
 
+	void process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId);
+
+	class Data;
+	Data data() const;
+
 private:
-	static void process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId, Data &data);
+
 
 	static void distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT);
 	static void findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint);
@@ -76,7 +79,6 @@ public:
 		wristpair_t m_wrist;
 		QList<cv::Point> m_fingertips;
 	};
-	Data data() const;
 
 private:
 	Data m_data;
