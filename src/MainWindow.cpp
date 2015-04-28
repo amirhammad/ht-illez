@@ -200,11 +200,12 @@ void MainWindow::exportProcessData(QString prefix, HandTracker::Data result, Han
 
 void MainWindow::on_gestureTrainerFinished(int code)
 {
+	CHECK_PROCESSING();
+
 	switch (code) {
 	case QDialog::Accepted:
-		if (m_processing) {
-			m_processing->learnNew(static_cast<enum PoseRecognition::POSE>(m_teachDialogProperties.classComboBox->currentIndex()));
-		}
+		m_processing->learnNew(static_cast<enum PoseRecognition::POSE>(m_teachDialogProperties.classComboBox->currentIndex()));
+
 		emit got_pause(false);
 		break;
 
@@ -281,7 +282,7 @@ void MainWindow::on_buildVideo()
 void MainWindow::on_buildProcessing()
 {
 	if (!m_video) {
-		qDebug("Error: video not ready");
+		QMessageBox::warning(this, "Error", "video not ready");
 		return;
 	}
 
