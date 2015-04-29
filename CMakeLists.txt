@@ -16,9 +16,16 @@ aux_source_directory(src out_SOURCES )
 aux_source_directory("external/qcustomplot" QCustomPlot_SOURCES)
 FILE(GLOB QCustomPlot_HEADERS "external/qcustomplot/*.h")
 FILE(GLOB out_HEADERS "include/*.h")
-#FILE(GLOB out_SOURCES src/*.cpp)
-#message("ahoj" + ${out_SOURCES})
-SET(OPENNI_DIR /home/amir/Downloads/OpenNI/OpenNI-Linux-x64-2.2)
+
+if (OPENNI_DIR)
+	if (NOT EXISTS ${OPENNI_DIR})
+		message(FATAL_ERROR "provided directory '" ${OPENNI_DIR} "'does not exist")
+	endif()
+	message("Found OpenNI: " ${OPENNI_DIR})
+else()
+	message(FATAL_ERROR "please provide path into OPENNI_DIR variable")
+endif()
+
 include_directories(${OPENNI_DIR}/Include)
 include_directories(external/qcustomplot)
 link_directories(${OPENNI_DIR}/Redist)
@@ -28,8 +35,15 @@ SET(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-std=c++11 -gdwarf-3")
 # Open CV
 find_package(OpenCV REQUIRED)
 
-# opennn
-set(OPENNN_DIR /home/amir/Downloads/opennn_2.0/opennn2.0/opennn)
+if (OPENNN_DIR)
+	if (NOT EXISTS ${OPENNN_DIR})
+		message(FATAL_ERROR "provided directory '" ${OPENNN_DIR} "'does not exist")
+	endif()
+	message("Found OpenNN: " ${OPENNN_DIR})
+else()
+	message(FATAL_ERROR "please provide path into OPENNN_DIR variable")
+endif()
+
 INCLUDE_DIRECTORIES(${OPENNN_DIR})
 LINK_DIRECTORIES(${OPENNN_DIR})
 
