@@ -23,7 +23,7 @@ public:
 	class TemporaryResult;
 	TemporaryResult temporaryResult() const;
 
-	inline bool isDebug() const;
+	inline bool isDebug() const { return m_bDebug; }
 
 private:
 

@@ -305,11 +305,6 @@ HandTracker::TemporaryResult HandTracker::temporaryResult() const
 	return m_temp;
 }
 
-bool HandTracker::isDebug() const
-{
-	return m_bDebug;
-}
-
 void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 							  std::vector<std::vector<cv::Point> > &fingersContours,
 							  const cv::Mat &binaryHand,
