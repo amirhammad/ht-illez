@@ -8,7 +8,7 @@
 //#include <QImage>
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.h>
-#include "main.h"
+#include "ImageSourceArtificial.h"
 #include <QApplication>
 
 //using namespace cv;
@@ -77,7 +77,7 @@ void Processing::process(bool secondarySource)
 					  handTrackerData.wrist(),
 					  handTrackerData.fingertips());
 	emit got_poseUpdated(poseString);
-	imageSourceArtificial->setColorMat(bgr);
+	ImageSourceArtificial::globalInstance()->setColorMat(bgr);
 
 	if (secondarySource) {
 		m_handTrackerTemporaryResult = m_handTracker.temporaryResult();

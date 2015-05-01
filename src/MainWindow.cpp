@@ -5,6 +5,7 @@
 #include "PoseRecognition.h"
 #include "Processing.h"
 #include "ImageSource.h"
+#include "ImageSourceArtificial.h"
 #include "ImageSourceOpenNI.h"
 #include "ImageRecorder.h"
 
