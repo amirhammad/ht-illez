@@ -238,10 +238,6 @@ void PoseRecognition::train(int hiddenCount)
 		const Matrix<std::string> inputs_information = variablesPointer->arrange_inputs_information();
 		const Matrix<std::string> targets_information = variablesPointer->arrange_targets_information();
 
-
-		const Vector< Statistics<double> > inputs_statistics = dataSet.scale_inputs_minimum_maximum();
-
-
 //		// Neural network
 
 		if (m_neuralNetwork) {
@@ -257,8 +253,6 @@ void PoseRecognition::train(int hiddenCount)
 		m_neuralNetwork->construct_scaling_layer();
 
 		ScalingLayer* scaling_layer_pointer = m_neuralNetwork->get_scaling_layer_pointer();
-
-		scaling_layer_pointer->set_statistics(inputs_statistics);
 
 		scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
 
