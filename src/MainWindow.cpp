@@ -8,6 +8,7 @@
 #include "ImageSourceArtificial.h"
 #include "ImageSourceOpenNI.h"
 #include "ImageRecorder.h"
+#include "Util.h"
 
 #include <QToolBar>
 #include <QDebug>
@@ -201,7 +202,7 @@ void MainWindow::exportProcessData(QString prefix, HandTracker::Data result, Han
 	res = WindowManager::Mat2QImage(debugResult.result);
 	res.save(prefix + "result.jpg", "jpg", 100);
 
-	double max = Processing::findMax(debugResult.distanceTransform);
+	double max = Util::findMax(debugResult.distanceTransform);
 	cv::Mat distanceTransformOutput;
 	debugResult.distanceTransform.convertTo(distanceTransformOutput, CV_8UC1, 255.0/max, 0);
 	res = WindowManager::Mat2QImage(distanceTransformOutput);

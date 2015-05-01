@@ -1,5 +1,5 @@
 #include "HandTracker.h"
-#include "Processing.h"
+#include "Util.h"
 
 #include <vector>
 #include <limits>
@@ -22,7 +22,7 @@ void HandTracker::distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &
 
 void HandTracker::findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint) const
 {
-	Q_UNUSED(Processing::findMax2(handDT, maxDTPoint));
+	Q_UNUSED(Util::findMax2(handDT, maxDTPoint));
 }
 
 float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::vector<cv::Point> contour) const
@@ -30,7 +30,7 @@ float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::
 	float minDistance = std::numeric_limits<float>::max();
 
 	for (int i = 0; i < contour.size(); i++) {
-		float dist = Processing::pointDistance(maxDTPoint, contour[i]);
+		float dist = Util::pointDistance(maxDTPoint, contour[i]);
 		if ( dist < minDistance) {
 			minDistance = dist;
 		}
@@ -63,9 +63,9 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 		&& (randomPoint.x < 0 && randomPoint.x >= binaryHand.cols)) {
 			continue;
 		}
-		cv::Point nearestPoint = Processing::findNearestPoint(contour, randomPoint);
+		cv::Point nearestPoint = Util::findNearestPoint(contour, randomPoint);
 		if (!boundaryPointList.isEmpty()) {
-			const float d = Processing::pointDistance(nearestPoint, boundaryPointList.last());
+			const float d = Util::pointDistance(nearestPoint, boundaryPointList.last());
 			if (d < 10.0f) {
 				// Relax
 			} else {
@@ -135,10 +135,10 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 	/// calculate distances between neighbors
 	QVector<float> distanceToNeighbor(palmContour.size());
 	distanceToNeighbor[distanceToNeighbor.size() - 1] =
-			Processing::pointDistance(palmContour[0], palmContour[palmContour.size() - 1]);
+			Util::pointDistance(palmContour[0], palmContour[palmContour.size() - 1]);
 	for (int i = 0; i < palmContour.size() - 1; i++) {
 		distanceToNeighbor[i] =
-				Processing::pointDistance(palmContour[i], palmContour[i + 1]);
+				Util::pointDistance(palmContour[i], palmContour[i + 1]);
 	}
 
 
@@ -164,7 +164,7 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 	/// Find wrist(out of 5 got in previous algorithm step) nearest to previously saved wrist
 
 	wristpair_t wppData = m_data.wrist();
-	cv::Point wppMeanData = Processing::pointMean(wppData.first, wppData.second);
+	cv::Point wppMeanData = Util::pointMean(wppData.first, wppData.second);
 
 	wristpair_t wppFinal = wppData;
 	float minDist = std::numeric_limits<float>::max();
@@ -174,8 +174,8 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 	int cnt = 0;
 	while (wristPairCandidatesOrdered.size() > 0 && cnt < 5) {
 		wristpair_t wpp(palmContour[wristPairCandidatesOrdered[cnt]], palmContour[(wristPairCandidatesOrdered[cnt] + 1)%palmContour.size()]);
-		cv::Point wppMean = Processing::pointMean(wpp.first, wpp.second);
-		float d = Processing::pointDistance(wppMean, wppMeanData);
+		cv::Point wppMean = Util::pointMean(wpp.first, wpp.second);
+		float d = Util::pointDistance(wppMean, wppMeanData);
 
 		//using physical depth instead of ~size of hand... it is equal..
 		if (minDist > d && ( wppMeanData == cv::Point(0, 0) || d < HAND_MAX_PHYSICAL_DEPTH)) {
@@ -199,14 +199,14 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 
 	/// lowpassing
 	const float ratio = 0.8f;
-	wristPointPair = wristpair_t(Processing::pointMean(wppFinal.first, wppData.first, ratio),
-							   Processing::pointMean(wppFinal.second, wppData.second, ratio));
+	wristPointPair = wristpair_t(Util::pointMean(wppFinal.first, wppData.first, ratio),
+							   Util::pointMean(wppFinal.second, wppData.second, ratio));
 
 	/// return wristpair
 	if (0) {
 		outputWrist = wristPointPair;
 	} else {
-		outputWrist = wristPairFix(palmCenter, palmRadius, Processing::pointMean(wristPointPair.first, wristPointPair.second));
+		outputWrist = wristPairFix(palmCenter, palmRadius, Util::pointMean(wristPointPair.first, wristPointPair.second));
 	}
 	return true;
 }
@@ -232,8 +232,8 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 		}
 
 		int operator()(cv::Point2f p1, cv::Point2f p2) {
-			float p1d = Processing::pointDistance(p1, m_palmCenter);
-			float p2d = Processing::pointDistance(p2, m_palmCenter);
+			float p1d = Util::pointDistance(p1, m_palmCenter);
+			float p2d = Util::pointDistance(p2, m_palmCenter);
 			return p1d < p2d;
 		}
 		cv::Point m_palmCenter;
@@ -258,13 +258,13 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 	Q_ASSERT(fingerCount > 0);
 
 	if (fingerCount == 1) {
-		cv::Point fingertip = Processing::pointMean(rectPointsVector[2], rectPointsVector[3]);
+		cv::Point fingertip = Util::pointMean(rectPointsVector[2], rectPointsVector[3]);
 
 		l.append(fingertip);
 	} else if (fingerCount < 5) {
 		for (int i = 0; i < fingerCount; i++) {
 			const float ratio = (i + 0.5f)/fingerCount;
-			cv::Point fingertip = Processing::pointMean(rectPointsVector[2], rectPointsVector[3], ratio);
+			cv::Point fingertip = Util::pointMean(rectPointsVector[2], rectPointsVector[3], ratio);
 			l.append(fingertip);
 		}
 	} else {
@@ -276,7 +276,7 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 
 wristpair_t HandTracker::wristPairFix(cv::Point palmCenter, float palmRadius, cv::Point wristMiddle) const
 {
-	const float distToCenter = Processing::pointDistance(palmCenter, wristMiddle);
+	const float distToCenter = Util::pointDistance(palmCenter, wristMiddle);
 	cv::Point2f vecToCenter = (palmCenter - wristMiddle);
 	// normalize
 	vecToCenter.x /= distToCenter;
@@ -324,7 +324,7 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 		m_temp.fingerContoursIgnoredList.clear();
 	}
 	for (int i = 0; i < contours.size(); i++) {
-		cv::Point center = Processing::calculateMean(contours[i]);
+		cv::Point center = Util::calculateMean(contours[i]);
 		const cv::Point &pt1 = wrist.first;
 		const cv::Point &pt2 = wrist.second;
 		const cv::Point &pt3 = center;
@@ -380,10 +380,10 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 	cv::Point nearestPoint; // used for selection of hand from multiple components (nearest)
 
-	int near = Processing::findMin2(depth, nearestPoint);
+	int near = Util::findMin2(depth, nearestPoint);
 	int far = near + HAND_MAX_PHYSICAL_DEPTH;
 
-	candidates = Processing::filterDepthMask(depth, near, far);
+	candidates = Util::filterDepthMask(depth, near, far);
 
 	/// Filter
 	cv::Mat candidatesFiltered;
@@ -397,12 +397,15 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 			cv::putText(tmp, QString::number(i).toStdString(), cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
 			m_temp.medianList.append(tmp);
 		}
+
 		m_temp.originalColor = bgr;
 		m_temp.originalDepth = depth;
 		cv::Mat l;
 		bgr.copyTo(l, candidatesFiltered);
 		m_temp.depthMaskedImage = l;
 	}
+
+
 
 //		cv::Mat tmp;
 //		cv::erode(frontMostObjects, tmp, cv::Mat(), cv::Point(-1,-1), 2);// dilate main
@@ -425,8 +428,8 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 		int minIndex = -1;
 		cv::Point mid;
 		for (int i = 0; i < contours.size(); i++) {
-			const cv::Point tmpmid = Processing::calculateMean(contours[i]);
-			const float d = Processing::pointDistance(tmpmid, nearestPoint);
+			const cv::Point tmpmid = Util::calculateMean(contours[i]);
+			const float d = Util::pointDistance(tmpmid, nearestPoint);
 			if (contours[i].size() < 20) {
 				continue;
 			}
@@ -615,7 +618,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 
 void HandTracker::orderFingertipsByAngle(wristpair_t wrist, QList<cv::Point> &fingertips)
 {
-	const cv::Point2f wristMiddlePoint = Processing::pointMean(wrist.first, wrist.second);
+	const cv::Point2f wristMiddlePoint = Util::pointMean(wrist.first, wrist.second);
 	// sort by angle
 	struct compare {
 		compare(cv::Point palmCenter, float offs)

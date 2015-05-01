@@ -1,11 +1,12 @@
 #include "PoseRecognition.h"
-#include "Processing.h"
+#include "Util.h"
 
 #include <opennn.h>
 #include <container.h>
 #include <QVector>
 #include <QFile>
 #include <QDebug>
+#include <QStringList>
 
 #define NN_INPUT_VECTOR_SIZE 10
 #define NNDATA_FILENAME "NNData.csv"
@@ -644,7 +645,7 @@ OpenNN::Vector<double> PoseRecognition::constructFeatureVector( const cv::Point 
 	b1_tmp.y /= norm;
 	const cv::Point2f b1 = b1_tmp;
 	const cv::Point2f b2 = cv::Point2f(b1.y, -b1.x);
-	const cv::Point2f wristMiddlePoint = Processing::pointMean(wrist.first, wrist.second);
+	const cv::Point2f wristMiddlePoint = Util::pointMean(wrist.first, wrist.second);
 
 	OpenNN::Vector<double> featureVector(NN_INPUT_VECTOR_SIZE, 0);
 	if (fingertips.size() > 5) {

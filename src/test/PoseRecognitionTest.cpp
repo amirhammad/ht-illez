@@ -1,6 +1,7 @@
 #include "../PoseRecognition.cpp"
+#include "Util.h"
 using namespace iez;
-	cv::Point Processing::pointMean(const cv::Point &pt1, const cv::Point &pt2, const float ratio12)
+	cv::Point Util::pointMean(const cv::Point &pt1, const cv::Point &pt2, const float ratio12)
 	{
 		return cv::Point((pt1.x*ratio12 + pt2.x*(1 - ratio12)), (pt1.y*ratio12 + pt2.y*(1 - ratio12)));
 	}
