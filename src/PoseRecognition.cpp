@@ -396,7 +396,7 @@ QString PoseRecognition::categorize(const cv::Point palmCenter,
 
 int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const
 {
-	const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(featureVector);
+	const OpenNN::Vector<double> &outputs = m_neuralNetwork->calculate_outputs(featureVector);
 
 	return findBestMatchIndex(outputs, 1);
 }
