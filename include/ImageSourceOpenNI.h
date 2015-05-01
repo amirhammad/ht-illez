@@ -10,7 +10,7 @@
 #include <QKeyEvent>
 
 namespace iez {
-class ImageSourceOpenNI : public ImageSourceBase
+class ImageSourceOpenNI : public ImageSource
 {
 	Q_OBJECT
 public:

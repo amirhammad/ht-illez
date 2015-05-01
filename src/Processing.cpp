@@ -14,7 +14,7 @@
 //using namespace cv;
 namespace iez {
 
-Processing::Processing(ImageSourceBase *imgsrc, QObject *parent)
+Processing::Processing(ImageSource *imgsrc, QObject *parent)
 :	QObject(parent)
 ,	m_imageSource(imgsrc)
 ,	m_calculateHandTracker(false)
@@ -49,7 +49,7 @@ Processing::~Processing(void)
 void Processing::process(bool secondarySource)
 {
 	QMutexLocker l(&m_processMutex);
-	const ImageSourceBase *src;
+	const ImageSource *src;
 	if (secondarySource) {
 		if (m_secondarySource) {
 			src = m_secondarySource.data();
@@ -288,7 +288,7 @@ PoseRecognition *Processing::pose()
 	return &m_pose;
 }
 
-void Processing::setSecondarySource(ImageSourceBase *secondarySource)
+void Processing::setSecondarySource(ImageSource *secondarySource)
 {
 	m_secondarySource = secondarySource;
 }

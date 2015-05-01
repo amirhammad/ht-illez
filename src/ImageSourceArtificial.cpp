@@ -15,7 +15,7 @@ cv::Mat iez::ImageSourceArtificial::getDepthMat() const
 }
 
 iez::ImageSourceArtificial::ImageSourceArtificial()
-:	ImageSourceBase()
+:	ImageSource()
 {
         QMutexLocker locker(&m_mutex);
         m_color.create(480, 640, CV_8UC3);
@@ -35,13 +35,13 @@ void iez::ImageSourceArtificial::setColorMat(const cv::Mat& src)
 void iez::ImageSourceArtificial::setDepthMat(const cv::Mat &src)
 {
         QMutexLocker locker(&m_mutex);
-        m_depth = src;
+		m_depth = src;
 }
 
 iez::ImageSourceArtificial *iez::ImageSourceArtificial::globalInstance()
 {
-    static ImageSourceArtificial artif;
-    return &artif;
+	static ImageSourceArtificial artif;
+	return &artif;
 }
 
 void iez::ImageSourceArtificial::pause(bool p)

@@ -4,10 +4,10 @@
 
 namespace iez {
 
-class ImageSourceBase : public QObject {
+class ImageSource : public QObject {
 	Q_OBJECT
 public:
-	ImageSourceBase(QObject *parent = 0)
+	ImageSource(QObject *parent = 0)
 	:	m_sequence(-1) {
 
 	}
@@ -15,7 +15,7 @@ public:
 	virtual cv::Mat getColorMat() const = 0;
 	virtual cv::Mat getDepthMat() const = 0;
 
-	virtual ~ImageSourceBase(){}
+	virtual ~ImageSource(){}
 
 	int getSequence() const {
 		return m_sequence;

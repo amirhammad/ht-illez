@@ -10,11 +10,11 @@ namespace iez {
 class ImageDescriptorImage : public QLabel {
 	Q_OBJECT
 public:
-	ImageDescriptorImage(ImageSourceBase *kinect = 0);
+	ImageDescriptorImage(ImageSource *kinect = 0);
 
 private:
 	cv::VideoCapture m_cap;
-	iez::ImageSourceBase *m_kinect;
+	iez::ImageSource *m_kinect;
 	std::list<QPoint> m_pointList;
 	int m_pointListCurrent;
 	bool pressed;
@@ -42,7 +42,7 @@ signals:
 class ImageDescriptor : private QObject {
 	Q_OBJECT
 public:
-	ImageDescriptor(ImageSourceBase *kinect = 0);
+	ImageDescriptor(ImageSource *kinect = 0);
 	~ImageDescriptor();
 
 public slots:

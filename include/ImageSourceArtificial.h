@@ -7,7 +7,7 @@
 namespace iez {
 class ImageSourceArtificial;
 
-class ImageSourceArtificial : public ImageSourceBase {
+class ImageSourceArtificial : public ImageSource {
 	Q_OBJECT
 public:
 	ImageSourceArtificial();

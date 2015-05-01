@@ -16,13 +16,13 @@ namespace iez {
 class Processing : public QObject {
 	Q_OBJECT
 public:
-	explicit Processing(ImageSourceBase *imgsrc, QObject *parent = 0);
+	explicit Processing(ImageSource *imgsrc, QObject *parent = 0);
 	~Processing(void);
 
 	void learnNew(enum PoseRecognition::POSE);
 	void train();
 	PoseRecognition *pose();
-	void setSecondarySource(ImageSourceBase *secondarySource);
+	void setSecondarySource(ImageSource *secondarySource);
 	bool handTrackerTemporaryResult(HandTracker::TemporaryResult & temporaryResult) const;
 	HandTracker::Data handTrackerData() const;
 
@@ -53,8 +53,8 @@ private:
 	QThread *m_thread;
 
 	HandTracker m_handTracker;
-	const ImageSourceBase *m_imageSource;
-	QPointer<ImageSourceBase> m_secondarySource;
+	const ImageSource *m_imageSource;
+	QPointer<ImageSource> m_secondarySource;
 	bool m_calculateHandTracker;
 
 	PoseRecognition m_pose;

@@ -11,7 +11,7 @@ namespace iez_private {
 
 
 namespace iez {
-class ImageSourceFreenect:public ImageSourceBase
+class ImageSourceFreenect:public ImageSource
 {
 public:
 	ImageSourceFreenect(const int index = 0);
