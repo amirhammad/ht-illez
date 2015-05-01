@@ -1,4 +1,10 @@
 
+// Custom
+#include "main.h"
+#include "ImageSourceOpenNI.h"
+#include "MainWindow.h"
+
+
 // opencv
 #include <opencv2/opencv.hpp>
 
@@ -13,150 +19,19 @@
 //#include <QThread>
 #include <QApplication>
 #include <QKeyEvent>
-// Custom
-#include "ImageSource.h"
-#include "ImageSourceFreenect.h"
-#include "ImageSourceOpenNI.h"
-#include "ImageRecorder.h"
-#include "ColorSegmentation.h"
-#include "ImageDescriptor.h"
-#include "Processing.h"
-#include "WindowManager.h"
-#include "MainWindow.h"
-#include "main.h"
-
-#include "unistd.h"
-#include "getopt.h"
-
 
 
 iez::ImageSourceArtificial *iez::imageSourceArtificial;
 
-static struct {
-	const char * recordName;
-	bool recording;
-	bool playingRecord;
-	bool artifical;
-
-} options;
-
-static void getOptions(int argc, char *argv[])
-{
-	using namespace std;
-	options.recordName = 0;
-	options.recording = false;
-	options.playingRecord = false;
-	options.artifical = false;
-	static struct option long_options[] = {
-			{"record", optional_argument, 0, 'r'},
-			{"artifical", no_argument, 0, 'a'},
-//			{"segment", optional_argument, 0, 'a'},
-			{0, 0, 0, 0},
-	};
-	int index;
-	while (1) {
-		char c = getopt_long(argc, argv, "p:r:a", long_options, &index);
-		if (c == -1) {
-			break;
-		}
-		switch (c) {
-		case 0:
-			// long opts
-			break;
-		case 'r':
-			if (options.playingRecord) {
-				cerr << "playing record, cannot record" << endl;
-				break;
-			}
-			options.recording = true;
-			if (optarg) {
-				options.recordName = optarg;
-			} else {
-				options.recordName = "_defaultOutput.oni";
-			}
-			break;
-		case 'p':
-			if (options.recording) {
-				options.recording = false;
-				cerr << "playing record, cannot record" << endl;
-				break;
-			}
-			options.playingRecord = true;
-			if (optarg) {
-				options.recordName = optarg;
-			} else {
-				options.recordName = "_defaultInput.oni";
-			}
-			break;
-
-		}
-	}
-}
-
 int main(int argc, char *argv[])
 {
-//	using namespace iez;
-//	using namespace std;
-//	using namespace cv;
 	QApplication app(argc, argv);
-//	new MainWindow();
-//	QApplication::exec();
-//	return 0;
-	getOptions(argc, argv);
 
-
-	// Camera init
-//	iez::ImageSourceFreenect *kinectFreenect = new iez::ImageSourceFreenect(0);
-
-//	iez::ImageSourceOpenNI *kinect = new iez::ImageSourceOpenNI();
-
-//	if (options.playingRecord) {
-//		kinect->init(options.recordName);
-//		if (!kinect->isInitialized()) {
-//			cerr << "cannot open file" << options.recordName << endl;
-//			return -1;
-//		}
-//	} else {
-//		kinect->init();
-//		if (!kinect->isInitialized()) {
-//			cerr << "cannot open kinect" << endl;
-//			return -1;
-//		}
-//	}
-
-	//TEST
-//	for (int i = 20; i < 100; i += 5) {
-//		qWarning("\n#####");
-//		QList<cv::Point> points = iez::HandTracker::findFingertip(
-//					cv::RotatedRect(cv::Point2f(400, 400), cv::Size2f(i, 500), 0),
-//					30,
-//					cv::Point(300, 300));
-//		foreach (cv::Point pt, points) {
-//			qWarning("(%d %d) ", pt.x, pt.y);
-//		}
-//	}
-//	return 0;
 	iez::ImageSourceArtificial artif;
 	iez::imageSourceArtificial = &artif;
 	new iez::MainWindow();
 
-	// TODO: can edit files
-//	iez::ImageRecorder *recorder;
-//	if (options.recording) {
-//		iez::ImageDescriptor *imageDescriptor = new iez::ImageDescriptor(kinect);
-//		recorder = new iez::ImageRecorder();
-//		recorder->init(kinect, options.recordName);
-//	} else {
-//		/**
-//		 * Processing
-//		 */
-//		iez::Processing *processing = new iez::Processing(kinect);
-//	}
-
-//	iez::ColorSegmentation::buildDatabaseFromFiles("../database/colorDB_files.txt");
-
-	QApplication::exec();
-	return 0;
+	return QApplication::exec();
 }
 
 cv::Mat iez::ImageSourceArtificial::getColorMat() const
