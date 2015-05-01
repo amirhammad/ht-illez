@@ -391,6 +391,11 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 			cv::putText(tmp, QString::number(i).toStdString(), cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
 			m_temp.medianList.append(tmp);
 		}
+		m_temp.originalColor = bgr;
+		m_temp.originalDepth = depth;
+		cv::Mat l;
+		bgr.copyTo(l, candidatesFiltered);
+		m_temp.depthMaskedImage = l;
 	}
 
 //		cv::Mat tmp;

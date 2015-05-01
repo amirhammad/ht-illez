@@ -87,6 +87,8 @@ public:
 		cv::Mat originalColor;
 		cv::Mat originalDepth;
 
+		cv::Mat depthMaskedImage;
+
 		QList<cv::Mat> medianList;
 
 		cv::Mat distanceTransform;

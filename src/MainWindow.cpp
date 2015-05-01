@@ -221,6 +221,9 @@ void MainWindow::exportProcessData(QString prefix, HandTracker::Data result, Han
 	res = WindowManager::Mat2QImage(debugResult.fingersMask);
 	res.save(prefix + "fingersMask.jpg", "jpg", 100);
 
+	res = WindowManager::Mat2QImage(debugResult.depthMaskedImage);
+	res.save(prefix + "depthMaskedImage.jpg", "jpg", 100);
+
 }
 
 void MainWindow::on_gestureTrainerFinished(int code)
