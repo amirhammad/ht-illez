@@ -23,7 +23,7 @@ Processing::Processing(ImageSource *imgsrc, QObject *parent)
 	m_thread = new QThread(QCoreApplication::instance()->thread());
 	moveToThread(m_thread);
 
-	connect(imgsrc, SIGNAL(frameReceived()), this, SLOT(process()));
+	connect(imgsrc, SIGNAL(frameReceived()), this, SLOT(process()), Qt::QueuedConnection);
 	connect(this, SIGNAL(got_learnNew(int)), this, SLOT(on_learnNew(int)));
 	connect(this, SIGNAL(got_train()), this, SLOT(on_train()));
 	m_thread->start();
