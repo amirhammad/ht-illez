@@ -11,11 +11,12 @@
 #define NNDATA_FILENAME "NNData.csv"
 #define NN_DEFAULT_IMPORT_PATH "/home/amir/neural_data/megadb"
 
+#define BOUND_X_LOW (0)
+#define BOUND_X_HIGH (0)
+#define BOUND_Y_LOW (0)
+#define BOUND_Y_HIGH (0)
+
 // Serialization operations
-#define BOUND_X_LOW (-3.0)
-#define BOUND_X_HIGH (3.0)
-#define BOUND_Y_LOW (-6.0)
-#define BOUND_Y_HIGH (0.0)
 
 QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
 {
@@ -483,7 +484,10 @@ int PoseRecognition::inputVectorSize()
 
 double PoseRecognition::normalizeInto(double value, double low, double high)
 {
-	Q_ASSERT(low <= high);
+	if (low == 0 && high == 0) {
+		return value;
+	}
+	Q_ASSERT(low < high);
 	double range = high - low;
 
 	if (value < low) {
