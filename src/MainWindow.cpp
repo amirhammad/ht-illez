@@ -331,8 +331,7 @@ void MainWindow::on_buildVideo(QString path)
 void MainWindow::on_buildProcessing()
 {
 	if (!m_video) {
-		QMessageBox::warning(this, "Error", "video not ready");
-		return;
+		QMessageBox::information(this, "Error", "video not ready, using processing without image source");
 	}
 
 	if (m_processing) {
@@ -340,7 +339,11 @@ void MainWindow::on_buildProcessing()
 		delete m_processing;
 	}
 
-	m_processing = new iez::Processing(m_video, 0);
+	if (m_video) {
+		m_processing = new iez::Processing(m_video, 0);
+	} else {
+		m_processing = new iez::Processing(m_secondaryImageSource, 0);
+	}
 	loadPoseDatabaseToTable();
 	QObject::connect(m_processing, SIGNAL(got_poseUpdated(QString)), m_nnResultTextEdit, SLOT(setText(QString)), Qt::QueuedConnection);
 	QObject::connect(m_processing, SIGNAL(got_trainingFinished()), this, SLOT(on_trainingFinished()), Qt::QueuedConnection);
