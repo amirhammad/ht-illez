@@ -85,7 +85,6 @@ private slots:
 	void on_neuralNetworkSave();
 	void on_neuralNetworkLoad();
 	void on_neuralNetworkImport();
-	void on_init();
 	void on_recorderAttach();
 	void on_openRecord();
 	void on_buildVideo(QString path = QString());

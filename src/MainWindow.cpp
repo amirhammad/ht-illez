@@ -98,8 +98,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	m_statusBar = new QStatusBar(this);
 	setStatusBar(m_statusBar);
 
-	QMetaObject::invokeMethod(this, "on_init");
-
 	// Handle window manager key events
 	QObject::connect(WindowManager::getInstance(), SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(keyEvent(QKeyEvent*)), Qt::QueuedConnection);
 
@@ -288,11 +286,6 @@ void MainWindow::on_neuralNetworkImport()
 	if (!path.isEmpty()) {
 		m_processing->pose()->neuralNetworkImport(path);
 	}
-}
-
-void MainWindow::on_init()
-{
-
 }
 
 void MainWindow::on_recorderAttach()
