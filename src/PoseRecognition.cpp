@@ -244,7 +244,7 @@ void PoseRecognition::train(int hiddenCount)
 			delete m_neuralNetwork;
 		}
 		m_neuralNetwork = new NeuralNetwork(NN_INPUT_VECTOR_SIZE, hiddenCount, POSE_END);
-		m_neuralNetwork->randomize_parameters_normal(-0.0005, 0.0005);
+		m_neuralNetwork->randomize_parameters_normal(-0.01, 0.01);
 
 		Inputs* inputs_pointer = m_neuralNetwork->get_inputs_pointer();
 
