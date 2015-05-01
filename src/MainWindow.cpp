@@ -34,6 +34,7 @@ namespace iez {
 #define PATH_TO_VIDEO
 
 #define CHECK_PROCESSING() if (!m_processing) {QMessageBox::warning(this, "error", "Processing not initialized");return;}
+#define CHECK_VIDEO() if (!m_video) {QMessageBox::warning(this, "error", "Video not initialized");return;}
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 ,	m_secondaryImageSource(new ImageSourceArtificial())
@@ -355,6 +356,7 @@ void MainWindow::on_buildProcessing()
 void MainWindow::on_exportProcessData()
 {
 	CHECK_PROCESSING();
+	CHECK_VIDEO();
 
 	m_processing->setSecondarySource(m_secondaryImageSource);
 	m_secondaryImageSource->setColorMat(m_video->getColorMat());
