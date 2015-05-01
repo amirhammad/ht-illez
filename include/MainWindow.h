@@ -50,7 +50,6 @@ private:
 	ImageRecorder *m_imageRecorder;
 
 	void buildNNTeachDialog();
-	void train();
 	void loadPoseDatabaseToTable();
 	void exportProcessData(QString prefix, HandTracker::Data result, HandTracker::TemporaryResult debugResult);
 

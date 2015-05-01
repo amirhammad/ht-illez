@@ -157,14 +157,6 @@ void MainWindow::buildNNTeachDialog()
 	m_teachDialog = dialog;
 }
 
-void MainWindow::train()
-{
-	CHECK_PROCESSING();
-	setStatusTip("Training database");
-	emit got_pause(true);
-	m_processing->train();
-}
-
 void MainWindow::loadPoseDatabaseToTable()
 {
 	CHECK_PROCESSING();
@@ -394,10 +386,6 @@ void MainWindow::keyEvent(QKeyEvent *event)
 		m_paused = !m_paused;
 		break;
 
-	case Qt::Key_T:
-		train();
-		break;
-
 	case Qt::Key_Q:
 		deleteLater();
 		break;
@@ -415,7 +403,10 @@ void MainWindow::keyEvent(QKeyEvent *event)
 void MainWindow::on_poseTrainDialogAccepted(PoseTrainDialog::Result result)
 {
 	qDebug("Neurons %d", result.hiddenNeurons);
-	train();
+	CHECK_PROCESSING();
+	setStatusTip("Training database");
+	emit got_pause(true);
+	m_processing->train(result.hiddenNeurons);
 }
 
 void MainWindow::on_poseDatabaseLoad()

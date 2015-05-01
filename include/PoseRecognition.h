@@ -39,7 +39,7 @@ public:
 	void neuralNetworkImport(QString path);
 	void neuralNetworkLoad(QString path);
 	void neuralNetworkSave(QString path);
-	void train();
+	void train(int hiddenCount);
 	QString databaseToString() const;
 
 	QString categorize(const cv::Point palmCenter,

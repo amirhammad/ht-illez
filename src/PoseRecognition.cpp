@@ -190,7 +190,7 @@ void PoseRecognition::neuralNetworkImport(QString path)
 	}
 }
 
-void PoseRecognition::train()
+void PoseRecognition::train(int hiddenCount)
 {
 	using namespace OpenNN;
 
@@ -247,7 +247,7 @@ void PoseRecognition::train()
 		if (m_neuralNetwork) {
 			delete m_neuralNetwork;
 		}
-		m_neuralNetwork = new NeuralNetwork(NN_INPUT_VECTOR_SIZE, 25, POSE_END);
+		m_neuralNetwork = new NeuralNetwork(NN_INPUT_VECTOR_SIZE, hiddenCount, POSE_END);
 		m_neuralNetwork->randomize_parameters_normal(-0.0005, 0.0005);
 
 		Inputs* inputs_pointer = m_neuralNetwork->get_inputs_pointer();
@@ -277,7 +277,7 @@ void PoseRecognition::train()
 		// Training strategy
 
 		TrainingStrategy training_strategy(&performance_functional);
-		int method = 1;
+		int method = 3;
 		switch (method) {
 		case 0:
 			training_strategy.set_main_type(OpenNN::TrainingStrategy::CONJUGATE_GRADIENT);

@@ -25,7 +25,7 @@ Processing::Processing(ImageSource *imgsrc, QObject *parent)
 
 	connect(imgsrc, SIGNAL(frameReceived()), this, SLOT(process()), Qt::QueuedConnection);
 	connect(this, SIGNAL(got_learnNew(int)), this, SLOT(on_learnNew(int)));
-	connect(this, SIGNAL(got_train()), this, SLOT(on_train()));
+	connect(this, SIGNAL(got_train(int)), this, SLOT(on_train(int)));
 	m_thread->start();
 }
 
@@ -112,15 +112,15 @@ void Processing::on_learnNew(int poseId)
 					data.fingertips());
 }
 
-void Processing::train()
+void Processing::train(int hiddenCount)
 {
-	emit got_train();
+	emit got_train(hiddenCount);
 }
 
-void Processing::on_train()
+void Processing::on_train(int hiddenCount)
 {
 	try {
-		m_pose.train();
+		m_pose.train(hiddenCount);
 	} catch (std::logic_error e) {
 		qDebug("%s", e.what());
 		QApplication::quit();
