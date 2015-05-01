@@ -354,6 +354,7 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 
 HandTracker::HandTracker(bool debug)
 	: m_bDebug(debug)
+	, m_lastImageId(-100)
 {
 }
 
@@ -364,6 +365,11 @@ HandTracker::~HandTracker()
 // not thread-safe
 void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId)
 {
+	if (imageId <= m_lastImageId) {
+		return;
+	} else {
+		m_lastImageId = imageId;
+	}
 	QTime t;
 	t.start();
 	/// Create binary hand

@@ -109,11 +109,13 @@ public:
 		QList<cv::Point> fingertipsNonSorted;
 
 		cv::Mat result;
+
 	};
 private:
 	Data m_data;
 	const bool m_bDebug;
 	mutable TemporaryResult m_temp;
+	long m_lastImageId;
 };
 
 }
