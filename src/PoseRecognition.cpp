@@ -172,6 +172,7 @@ void PoseRecognition::neuralNetworkLoad(QString path)
 		m_neuralNetwork = new OpenNN::NeuralNetwork();
 	}
 	m_neuralNetwork->load(path.toStdString());
+	testNeuralNetwork();
 }
 
 void PoseRecognition::neuralNetworkImport(QString path)
