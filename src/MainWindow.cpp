@@ -31,8 +31,6 @@
 #include <QStatusBar>
 
 namespace iez {
-//#define PATH_TO_VIDEO "/home/amir/git/amirhammad/diplomovka/ht-illez/build/_record001.oni"
-#define PATH_TO_VIDEO
 
 #define CHECK_PROCESSING() if (!m_processing) {QMessageBox::warning(this, "error", "Processing not initialized");return;}
 #define CHECK_VIDEO() if (!m_video) {QMessageBox::warning(this, "error", "Video not initialized");return;}

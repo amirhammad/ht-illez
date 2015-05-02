@@ -9,8 +9,6 @@
 #include <QStringList>
 
 #define NN_INPUT_VECTOR_SIZE 10
-#define NNDATA_FILENAME "NNData.csv"
-#define NN_DEFAULT_IMPORT_PATH "/home/amir/neural_data/megadb"
 
 #define BOUND_X_LOW (0)
 #define BOUND_X_HIGH (0)
@@ -101,13 +99,6 @@ namespace iez {
 PoseRecognition::PoseRecognition()
 {
 	m_neuralNetwork = 0;
-	m_database = loadDatabaseFromFile(NNDATA_FILENAME);
-	if (m_database.size() > 0) {
-		m_matrix = convertToNormalizedMatrix(m_database);
-	}
-#ifdef NN_DEFAULT_IMPORT_PATH
-	neuralNetworkImport(NN_DEFAULT_IMPORT_PATH);
-#endif
 }
 
 void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
@@ -234,7 +225,6 @@ void PoseRecognition::train(int hiddenCount)
 		// Instances
 
 		Instances* instancesPointer = dataSet.get_instances_pointer();
-//		instancesPointer->set_training();
 		instancesPointer->split_random_indices(2.0, 0.2, 0.5);
 
 		const Matrix<std::string> inputs_information = variablesPointer->arrange_inputs_information();
@@ -495,6 +485,10 @@ double PoseRecognition::normalizeInto(double value, double low, double high)
 	}
 }
 
+
+/**
+ * Assumes Logistic layers
+ */
 bool PoseRecognition::loadLayer(QFile &fBias, QFile &fWeights, const int inputCount, const int neuronCount, OpenNN::PerceptronLayer &layer)
 {
 	bool ret = true;
@@ -630,8 +624,8 @@ OpenNN::Matrix<double> PoseRecognition::convertToNormalizedMatrix(const QList<Da
 
 }
 
-/*
- *  assume, fingertips are ordered
+/**
+ *  assume fingertips are ordered
  */
 OpenNN::Vector<double> PoseRecognition::constructFeatureVector( const cv::Point palmCenter,
 																const float palmRadius,
@@ -652,7 +646,6 @@ OpenNN::Vector<double> PoseRecognition::constructFeatureVector( const cv::Point 
 		return featureVector;
 	}
 
-	// [0] must be the first finger in direction of thumb->pointer
 	int i = 0;
 	foreach (const cv::Point2f p, fingertips) {
 		const cv::Point2f v = p - wristMiddlePoint;
