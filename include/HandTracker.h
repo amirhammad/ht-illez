@@ -15,8 +15,18 @@ public:
 	explicit HandTracker(bool debug = false);
 	~HandTracker();
 
+	/**
+	 * @brief process
+	 * @param bgr BGR formatted image
+	 * @param depth	Depth map of the same size as bgr
+	 * @param imageId monotonically rising ID of current image
+	 */
 	void process(const cv::Mat &bgr, const cv::Mat &depth, const int imageId);
 
+	/**
+	 * @brief data
+	 * @return returns result of process
+	 */
 	class Data;
 	Data data() const;
 

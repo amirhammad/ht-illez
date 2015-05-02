@@ -15,16 +15,33 @@ namespace iez {
 #define FINGER_LENGTH_FACTOR (0.5f)
 #define FINGER_MAXWIDTH_FACTOR (0.57f)
 
+
+/**
+ * @brief HandTracker::distanceTransform - distance transformation on binary image, uses Euclidean norm
+ * @param binaryHandFiltered[in] binary image
+ * @param handDT[out] distance transform matrix
+ */
 void HandTracker::distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT) const
 {
 	cv::distanceTransform(binaryHandFiltered, handDT, CV_DIST_L2, 3);
 }
 
+/**
+ * @brief HandTracker::findHandCenter
+ * @param handDT[in] matrix containing distance transform information
+ * @param maxDTPoint[out]
+ */
 void HandTracker::findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint) const
 {
 	Q_UNUSED(Util::findMax2(handDT, maxDTPoint));
 }
 
+/**
+ * @brief HandTracker::findHandCenterRadius
+ * @param maxDTPoint[in] hand center point
+ * @param contour[in] contour of hand
+ * @return minimal distance to point on contour
+ */
 float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::vector<cv::Point> contour) const
 {
 	float minDistance = std::numeric_limits<float>::max();
@@ -39,7 +56,15 @@ float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::
 }
 
 
-
+/**
+ * @brief HandTracker::findPalm
+ * @param binaryPalmMask[out]
+ * @param palmContour[out]
+ * @param binaryHand[in]
+ * @param contour[in]  hand contour
+ * @param palmCenter[in]
+ * @param palmRadius[in]
+ */
 void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 						   std::vector<cv::Point> &palmContour,
 						   const cv::Mat &binaryHand,
@@ -115,6 +140,14 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 	cv::fillPoly(binaryPalmMask, hc, cv::Scalar_<uint8_t>(255));
 }
 
+/**
+ * @brief HandTracker::findWrist
+ * @param palmContour[in]
+ * @param palmCenter[in]
+ * @param palmRadius[in]
+ * @param outputWrist[out]
+ * @return
+ */
 bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 							const cv::Point &palmCenter,
 							const float palmRadius,
@@ -203,18 +236,17 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 							   Util::pointMean(wppFinal.second, wppData.second, ratio));
 
 	/// return wristpair
-	if (0) {
-		outputWrist = wristPointPair;
-	} else {
-		outputWrist = wristPairFix(palmCenter, palmRadius, Util::pointMean(wristPointPair.first, wristPointPair.second));
-	}
+	outputWrist = wristPairFix(palmCenter, palmRadius, Util::pointMean(wristPointPair.first, wristPointPair.second));
+
 	return true;
 }
 
-
-/*
- * returns one or more fingertips contained in bounding rectangle defined by rectPoints
- * TODO: more precise
+/**
+ * @brief HandTracker::findFingertip returns one or more fingertips contained in bounding rectangle defined by rotRect
+ * @param rotRect[in]
+ * @param palmRadius[in]
+ * @param palmCenter[in]
+ * @return list of fingertips contained in the current rectangle
  */
 QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 											const float palmRadius,
@@ -273,7 +305,18 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 
 	return l;
 }
-
+/**
+ * @brief HandTracker::wristPairFix
+ * @param palmCenter[in]
+ * @param palmRadius[in]
+ * @param wristMiddle[in]
+ * @return fixed wrist
+ *
+ * Rotates and scales wrist based on wrists' middle point, palmRadius, palmCenter
+ * Line created by wristpair points is perpendicular to the line between palmCenter and wristMiddle.
+ * This line has wristMiddle in the middle and has length of palmRadius
+ *
+ */
 wristpair_t HandTracker::wristPairFix(cv::Point palmCenter, float palmRadius, cv::Point wristMiddle) const
 {
 	const float distToCenter = Util::pointDistance(palmCenter, wristMiddle);
@@ -616,6 +659,11 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	qDebug("ID=%5d fps: %4.1f ... %3dms", imageId, (1000/30.f)/t.elapsed()*30, t.elapsed());
 }
 
+/**
+ * @brief HandTracker::orderFingertipsByAngle
+ * @param wrist[in]
+ * @param fingertips[in/out]
+ */
 void HandTracker::orderFingertipsByAngle(wristpair_t wrist, QList<cv::Point> &fingertips)
 {
 	const cv::Point2f wristMiddlePoint = Util::pointMean(wrist.first, wrist.second);
