@@ -1,4 +1,3 @@
-#include "qcustomplot.h"
 #include "WindowManager.h"
 
 #include <QCoreApplication>
@@ -17,78 +16,6 @@ void WindowManager::imShow(const QString name, const QImage& image)
 	QMetaObject::invokeMethod(this, "on_imShow", Qt::QueuedConnection, QGenericArgument("const QString", &name));
 }
 
-void WindowManager::plot(const QString name,
-		const QVector<double> &x,
-		const QVector<double> &y)
-{
-//	QMainWindow *w = new QMainWindow();
-//	w->setFixedSize(QSize(640, 480));
-	QMutexLocker l(&m_mutex);
-	m_plotMap[name].x = QVector<double>(x);
-	m_plotMap[name].y = QVector<double>(y);
-	QMetaObject::invokeMethod(this, "on_plot", Qt::QueuedConnection, QGenericArgument("const QString", &name));
-}
-
-
-void WindowManager::plot(const QString name,
-		const std::vector<double> &x,
-		const std::vector<double> &y)
-{
-	plot(name, QVector<double>::fromStdVector(x), QVector<double>::fromStdVector(y));
-}
-
-void WindowManager::on_plot(const QString name)
-{
-	QMutexLocker l(&m_mutex);
-	struct plotMapData *data= &m_plotMap[name];
-
-	if (!data->widget) {
-		Window *widget = new Window();
-		widget->setWindowTitle(name);
-		widget->setFixedSize(QSize(900, 450));
-//		connect(widget, SIGNAL(keyPressed(QKeyEvent *)), this, SLOT(keyPressEvent(QKeyEvent *)));
-//		connect(widget, SIGNAL(closed()), this, SLOT(closeEvent()));
-		data->widget = widget;
-
-		m_plotMap[name].customPlot = new QCustomPlot(data->widget);
-
-	}
-	QCustomPlot *customPlot = m_plotMap[name].customPlot;
-	customPlot->clearGraphs();
-//	customPlot->setViewport(QRect(QPoint(0,0), QSize(640,480)));
-//	customPlot->setBaseSize(QSize(640,480);
-	customPlot->setFixedSize(800, 400);
-	// generate some data:
-
-	// create graph and assign data to it:
-	customPlot->addGraph();
-
-	double min[2],max[2];
-	min[1]=std::numeric_limits<double>::max();
-	max[1]=0;
-	foreach(double val, data->y) {
-		if (val > max[1] ) max[1] = val;
-		if (val < min[1] ) min[1] = val;
-	}
-	min[0]=std::numeric_limits<double>::max();
-	max[0]=0;
-	foreach(double val, data->x) {
-		if (val > max[0] ) max[0] = val;
-		if (val < min[0] ) min[0] = val;
-	}
-
-
-	customPlot->graph(0)->setData(data->x, data->y);
-	// give the axes some labels:
-	customPlot->xAxis->setLabel("x");
-	customPlot->yAxis->setLabel("y");
-//	std::cout<<"["<<min[0]<<" "<<min[1]<<"]["<<max[0]<<" "<<max[1]<<"]"<<std::endl;
-	// set axes ranges, so we see all data:
-	customPlot->xAxis->setRange(0, 1);
-	customPlot->yAxis->setRange(-5, 5);
-	customPlot->replot();
-	data->widget->show();
-}
 QImage WindowManager::Mat2QImage(const cv::Mat& src)
 {
 	using namespace cv;

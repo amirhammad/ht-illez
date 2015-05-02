@@ -5,8 +5,6 @@
 #include <QtGui/qevent.h>
 #include <QtCore/qmutex.h>
 
-class QCustomPlot;
-
 namespace iez {
 
 class Window : public QLabel {
@@ -31,7 +29,7 @@ class WindowManager: public QObject {
 public:
 	static WindowManager * getInstance()
 	{
-		static WindowManager *instance = new WindowManager(); // Guaranteed to be destroyed.
+		static WindowManager *instance = new WindowManager();
 		return instance;
 	}
 	static void destroy()
@@ -55,8 +53,6 @@ private:
 public:
 	void imShow(const QString name, const cv::Mat &image);
 	void imShow(const QString name, const QImage& image);
-	void plot(const QString name, const QVector<double> &x, const QVector<double> &y);
-	void plot(const QString name, const std::vector<double> &x, const std::vector<double> &y);
 
 	static cv::Mat QImage2Mat(QImage const& src);
 	static QImage Mat2QImage(cv::Mat const& src);
@@ -69,23 +65,12 @@ private:
 	};
 	QHash<QString, struct imShowMapData > m_imShowMap;
 
-	struct plotMapData {
-		Window *widget;
-		QVector<double> x;
-		QVector<double> y;
-		QCustomPlot *customPlot;
-	};
-	QHash<QString, struct plotMapData> m_plotMap;
-
 	QMutex m_mutex;
 
 public slots:
 	void on_imShow(const QString name);
-	void on_plot(const QString name);
 
 signals:
 	void keyPressed(QKeyEvent *keyEvent);
 };
 }
-
-Q_DECLARE_METATYPE(const char*)

@@ -13,8 +13,6 @@ SET(outputname HandTrackerApp)
 project(${outputname})
 SET(CMAKE_BUILD_TYPE Debug)
 aux_source_directory(src out_SOURCES )
-aux_source_directory("external/qcustomplot" QCustomPlot_SOURCES)
-FILE(GLOB QCustomPlot_HEADERS "external/qcustomplot/*.h")
 FILE(GLOB out_HEADERS "include/*.h")
 
 if (OPENNI_DIR)
@@ -49,7 +47,6 @@ LINK_DIRECTORIES(${OPENNN_DIR})
 
 # libfreenect
 find_package(libfreenect REQUIRED)
-message("HELLO: " ${QCustomPlot_SOURCES} ${FREENECT_INCLUDE_DIRS})
 include_directories(${FREENECT_INCLUDE_DIRS})
 link_directories(${FREENECT_LIBRARY_DIRS})
 
@@ -62,10 +59,10 @@ include_directories(/usr/include/libusb-1.0)
 find_package(Qt COMPONENTS QtCore REQUIRED)
 INCLUDE(${QT_USE_FILE})
 include_directories(${QT_INCLUDES})
-QT4_WRAP_CPP(out_HEADERS_MOC ${out_HEADERS} ${QCustomPlot_HEADERS})
+QT4_WRAP_CPP(out_HEADERS_MOC ${out_HEADERS})
 ADD_DEFINITIONS(${QT_DEFINITIONS})
 
-add_executable(${outputname} ${QCustomPlot_SOURCES} ${out_SOURCES} ${out_HEADERS_MOC} ${out_HEADERS})
+add_executable(${outputname} ${out_SOURCES} ${out_HEADERS_MOC} ${out_HEADERS})
 target_link_libraries(${outputname} ${OpenCV_LIBS})
 target_link_libraries(${outputname} ${QT_LIBRARIES} OpenNI2 pthread opennn ${FREENECT_LIBRARIES})
 
