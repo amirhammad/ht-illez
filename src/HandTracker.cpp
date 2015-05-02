@@ -1,9 +1,9 @@
 #include "HandTracker.h"
 #include "Util.h"
+#include "WindowManager.h"
 
 #include <vector>
 #include <limits>
-#include <queue>
 #include <QTime>
 
 namespace iez {
@@ -348,6 +348,11 @@ HandTracker::TemporaryResult HandTracker::temporaryResult() const
 	return m_temp;
 }
 
+void HandTracker::imshow(QString name, cv::Mat mat)
+{
+	WindowManager::getInstance()->imShow(name, mat);
+}
+
 void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 							  std::vector<std::vector<cv::Point> > &fingersContours,
 							  const cv::Mat &binaryHand,
@@ -510,7 +515,7 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	}
 
 	cv::ellipse(out, nearestPoint, cv::Size(5, 5), 0, 0, 360, cv::Scalar_<uint8_t>(200), 2);
-//	WindowManager::getInstance()->imShow("binaryHand", binaryHand);
+//	imshow("binaryHand", binaryHand);
 
 
 
@@ -645,16 +650,16 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 	cv::ellipse(centerHighlited, palmCenter, cv::Size(palmRadius, palmRadius), 0, 0, 360, cv::Scalar(100, 0, 255), 10);
 
 
-	WindowManager::getInstance()->imShow("handCenter", centerHighlited);
+	imshow("handCenter", centerHighlited);
 
 	// draw only if valid, else results in flickering...
 	if (fingerMaskOutput.rows == binaryHand.rows) {
-		WindowManager::getInstance()->imShow("fingers", fingerMaskOutput);
+		imshow("fingers", fingerMaskOutput);
 		if (isDebug()) {
 			m_temp.result = fingerMaskOutput;
 		}
 	}
-//	WindowManager::getInstance()->imShow("PALM", palmMask);
+//	imshow("PALM", palmMask);
 
 	qDebug("ID=%5d fps: %4.1f ... %3dms", imageId, (1000/30.f)/t.elapsed()*30, t.elapsed());
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <opencv2/opencv.hpp>
-#include "WindowManager.h"
 #include "Types.h"
+#include <QList>
 
 namespace iez {
 
@@ -35,7 +35,7 @@ public:
 	inline bool isDebug() const { return m_bDebug; }
 
 private:
-
+	static inline void imshow(QString name, cv::Mat mat);
 
 	void distanceTransform(const cv::Mat &binaryHandFiltered, cv::Mat &handDT) const;
 	void findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint) const;
