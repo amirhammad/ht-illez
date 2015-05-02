@@ -59,8 +59,7 @@ link_directories(${FREENECT_LIBRARY_DIRS})
 include_directories(/usr/include/libusb-1.0)
 
 # QT
-find_package(Qt COMPONENTS QtCore QtOpenGL REQUIRED)
-SET(QT_USE_QTOPENGL TRUE)
+find_package(Qt COMPONENTS QtCore REQUIRED)
 INCLUDE(${QT_USE_FILE})
 include_directories(${QT_INCLUDES})
 QT4_WRAP_CPP(out_HEADERS_MOC ${out_HEADERS} ${QCustomPlot_HEADERS})
