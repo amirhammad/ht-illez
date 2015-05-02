@@ -7,6 +7,7 @@
 #include "ImageSourceFreenect.h"
 #include "WindowManager.h"
 #include "HandTracker.h"
+#include "PoseRecognition.h"
 #include <QPointer>
 #include <QThread>
 

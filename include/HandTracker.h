@@ -2,7 +2,6 @@
 #include <opencv2/opencv.hpp>
 #include "WindowManager.h"
 #include "Types.h"
-#include "PoseRecognition.h"
 
 namespace iez {
 
