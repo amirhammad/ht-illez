@@ -425,6 +425,12 @@ void MainWindow::keyEvent(int key)
 		loadPoseDatabaseToTable();
 		break;
 
+	case Qt::Key_A:
+		if (modifiers & Qt::ControlModifier) {
+			on_teachDialog();
+		}
+		break;
+
 	default:
 		break;
 
