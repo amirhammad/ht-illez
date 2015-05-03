@@ -95,7 +95,7 @@ signals:
 public slots:
 
 	void closeEvent(QCloseEvent *event);
-	void keyEvent(QKeyEvent *event);
+	void keyEvent(int);
 
 private slots:
 	void on_poseTrainDialogAccepted(PoseTrainDialog::Result);

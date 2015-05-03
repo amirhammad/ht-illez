@@ -85,10 +85,10 @@ private:
 
 	QMutex m_mutex;
 
-public slots:
+private slots:
 	void on_imShow(const QString name);
-
+	void on_keyPressed(QKeyEvent *);
 signals:
-	void keyPressed(QKeyEvent *keyEvent);
+	void keyPressed(int);
 };
 }

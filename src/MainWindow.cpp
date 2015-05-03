@@ -122,7 +122,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	setStatusBar(m_statusBar);
 
 	// Handle window manager key events
-	QObject::connect(WindowManager::getInstance(), SIGNAL(keyPressed(QKeyEvent*)), this, SLOT(keyEvent(QKeyEvent*)), Qt::QueuedConnection);
+	QObject::connect(WindowManager::getInstance(), SIGNAL(keyPressed(int)), this, SLOT(keyEvent(int)), Qt::QueuedConnection);
 
 	m_paused = false;
 
@@ -405,10 +405,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
 	deleteLater();
 }
 
-void MainWindow::keyEvent(QKeyEvent *event)
+void MainWindow::keyEvent(int key)
 {
-	int key = event->key();
 	qDebug("%d pressed", key);
+	int modifiers = key&Qt::KeyboardModifierMask;
+	key &= ~Qt::KeyboardModifierMask;
 	switch (key) {
 	case Qt::Key_Space:
 		qDebug("pause emited");
