@@ -32,18 +32,14 @@ namespace iez {
 class Window : public QLabel {
 	Q_OBJECT
 public:
-	Window(){};
+	Window(){}
 
 private:
 	void keyPressEvent(QKeyEvent *keyEvent) {
 		emit keyPressed(keyEvent);
 	}
-	void closeEvent() {
-//		emit closed();
-	}
 signals:
 	void keyPressed(QKeyEvent *keyEvent);
-	void closed();
 };
 
 class WindowManager: public QObject {
