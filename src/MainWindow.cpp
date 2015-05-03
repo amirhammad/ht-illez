@@ -62,9 +62,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 ,	m_secondaryImageSource(new ImageSourceArtificial())
 ,	m_imageRecorder(new ImageRecorder())
 {
-	qRegisterMetaType<PoseTrainDialog::Result>();
+	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
+
 	PoseTrainDialog *poseTrainDialog = new PoseTrainDialog(this);
-	connect(poseTrainDialog, SIGNAL(got_accepted(PoseTrainDialog::Result)), this, SLOT(on_poseTrainDialogAccepted(PoseTrainDialog::Result)));
+	connect(poseTrainDialog, SIGNAL(got_accepted(iez::PoseRecognition::TrainArgs)), this, SLOT(on_poseTrainDialogAccepted(iez::PoseRecognition::TrainArgs)));
 
 	setWindowTitle("::: Hand Tracker - IEZ - Main Window :::");
 	QDockWidget *databaseWidget = new QDockWidget("database", this);
@@ -437,13 +438,13 @@ void MainWindow::keyEvent(int key)
 	}
 }
 
-void MainWindow::on_poseTrainDialogAccepted(PoseTrainDialog::Result result)
+void MainWindow::on_poseTrainDialogAccepted(PoseRecognition::TrainArgs result)
 {
-	qDebug("Neurons %d", result.hiddenNeurons);
+	qDebug("Neurons %d", result.hiddenNeuronCount);
 	CHECK_PROCESSING();
 	setStatusTip("Training database");
 	emit got_pause(true);
-	m_processing->train(result.hiddenNeurons);
+	m_processing->train(result);
 }
 
 void MainWindow::on_poseDatabaseLoad()
@@ -479,24 +480,40 @@ PoseTrainDialog::PoseTrainDialog(QWidget *parent)
 	setWindowTitle("Train NN");
 	QVBoxLayout *mainLayout = new QVBoxLayout(this);
 	// Forms
+
+	int row = 0;
 	// First row
-	QHBoxLayout *layout = new QHBoxLayout();
+	QGridLayout *layout = new QGridLayout();
 	QLabel *label = new QLabel("Number of hidden neurons", this);
 	label->setAlignment(Qt::AlignRight);
 	m_spinBox = new QSpinBox(this);
 	m_spinBox->setValue(5);
-	layout->addWidget(label);
-	layout->addWidget(m_spinBox);
+	layout->addWidget(label, row, 0);
+	layout->addWidget(m_spinBox, row, 1);
 	mainLayout->addLayout(layout);
+	row++;
 
-	// First row
-	layout = new QHBoxLayout();
+	// Second row
+	layout = new QGridLayout();
+	label = new QLabel("Activation function", this);
+	label->setAlignment(Qt::AlignRight);
+	m_comboBox = new QComboBox(this);
+	m_comboBox->addItem("Hyperbolic Tangent");
+	m_comboBox->addItem("Logistic Sigmoid");
+	m_comboBox->addItem("Linear");
+	layout->addWidget(label, row, 0);
+	layout->addWidget(m_comboBox, row, 1);
+	mainLayout->addLayout(layout);
+	row++;
+
+	// last row
+	QHBoxLayout *buttonLayout = new QHBoxLayout();
 	QPushButton *acceptButton = new QPushButton("accept", this);
 	QPushButton *cancelButton = new QPushButton("cancel", this);
 
-	layout->addWidget(acceptButton);
-	layout->addWidget(cancelButton);
-	mainLayout->addLayout(layout);
+	buttonLayout->addWidget(acceptButton);
+	buttonLayout->addWidget(cancelButton);
+	mainLayout->addLayout(buttonLayout);
 
 	connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
 	connect(acceptButton, SIGNAL(clicked()), this, SLOT(accept()));
@@ -510,12 +527,35 @@ PoseTrainDialog::~PoseTrainDialog()
 
 void PoseTrainDialog::on_accepted()
 {
-	Result result;
-	result.hiddenNeurons = m_spinBox->value();
+	PoseRecognition::TrainArgs result;
+	result.hiddenNeuronCount = m_spinBox->value();
+
+	const int index = m_comboBox->currentIndex();
+	PoseRecognition::TrainArgs::ActivationFunction function;
+	switch (index) {
+	case 0:
+		function = PoseRecognition::TrainArgs::HYPERBOLIC_TANGENT;
+		break;
+
+	case 1:
+		function = PoseRecognition::TrainArgs::LOGISTIC_SIGMOID;
+		break;
+
+	case 2:
+		function = PoseRecognition::TrainArgs::LINEAR;
+		break;
+
+
+	default:
+		Q_ASSERT(0);
+		break;
+	}
+
+	result.activationFunction = function;
 	emit got_accepted(result);
 }
 
 
 }
 
-Q_DECLARE_METATYPE(iez::PoseTrainDialog::Result)
+Q_DECLARE_METATYPE(iez::PoseRecognition::TrainArgs)

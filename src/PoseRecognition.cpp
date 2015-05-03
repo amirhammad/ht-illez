@@ -121,6 +121,7 @@ namespace iez {
 
 PoseRecognition::PoseRecognition()
 {
+	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
 	m_neuralNetwork = 0;
 }
 
@@ -206,7 +207,7 @@ void PoseRecognition::neuralNetworkImport(QString path)
 	}
 }
 
-void PoseRecognition::train(int hiddenCount)
+void PoseRecognition::train(TrainArgs args)
 {
 	using namespace OpenNN;
 
@@ -258,7 +259,7 @@ void PoseRecognition::train(int hiddenCount)
 		if (m_neuralNetwork) {
 			delete m_neuralNetwork;
 		}
-		m_neuralNetwork = new NeuralNetwork(NN_INPUT_VECTOR_SIZE, hiddenCount, POSE_END);
+		m_neuralNetwork = new NeuralNetwork(NN_INPUT_VECTOR_SIZE, args.hiddenNeuronCount, POSE_END);
 		m_neuralNetwork->randomize_parameters_normal(-0.01, 0.01);
 
 		Inputs* inputs_pointer = m_neuralNetwork->get_inputs_pointer();
@@ -273,7 +274,22 @@ void PoseRecognition::train(int hiddenCount)
 
 		MultilayerPerceptron* multilayer_perceptron_pointer = m_neuralNetwork->get_multilayer_perceptron_pointer();
 
-		multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::HyperbolicTangent);
+		Perceptron::ActivationFunction activationFunction;
+		switch (args.activationFunction) {
+		case TrainArgs::LINEAR:
+			activationFunction = Perceptron::Linear;
+			break;
+
+		case TrainArgs::HYPERBOLIC_TANGENT:
+			activationFunction = Perceptron::HyperbolicTangent;
+			break;
+
+		case TrainArgs::LOGISTIC_SIGMOID:
+			activationFunction = Perceptron::Logistic;
+			break;
+		}
+
+		multilayer_perceptron_pointer->set_layer_activation_function(1, activationFunction);
 
 		Outputs* outputs_pointer = m_neuralNetwork->get_outputs_pointer();
 
@@ -683,3 +699,5 @@ OpenNN::Vector<double> PoseRecognition::constructFeatureVector( const cv::Point 
 
 
 }
+
+Q_DECLARE_METATYPE(iez::PoseRecognition::TrainArgs)

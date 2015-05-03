@@ -44,7 +44,7 @@ public:
 	~Processing(void);
 
 	void learnNew(enum PoseRecognition::POSE);
-	void train(int hiddenCount);
+	void train(PoseRecognition::TrainArgs args);
 	PoseRecognition *pose();
 	void setSecondarySource(ImageSource *secondarySource);
 	bool handTrackerTemporaryResult(HandTracker::TemporaryResult & temporaryResult) const;
@@ -55,7 +55,7 @@ public slots:
 
 private slots:
 	void on_learnNew(int poseId);
-	void on_train(int hiddenCount);
+	void on_train(iez::PoseRecognition::TrainArgs args);
 private:
 	QThread *m_thread;
 
@@ -72,7 +72,7 @@ private:
 signals:
 	void got_poseUpdated(QString);
 	void got_learnNew(int);
-	void got_train(int);
+	void got_train(iez::PoseRecognition::TrainArgs);
 	void got_trainingFinished();
 };
 

@@ -28,6 +28,8 @@
 #include <QVector>
 #include <opennn.h>
 #include <QMutex>
+#include <QMetaType>
+
 class QFile;
 namespace iez {
 
@@ -62,7 +64,6 @@ public:
 	void neuralNetworkImport(QString path);
 	void neuralNetworkLoad(QString path);
 	void neuralNetworkSave(QString path);
-	void train(int hiddenCount);
 	QString databaseToString() const;
 
 	QString categorize(const cv::Point palmCenter,
@@ -107,6 +108,17 @@ public:
 	static double normalizeInto(double value, double low = 0.0, double high = 0.0);
 	static QList<Data> loadDatabaseFromFile(QString path);
 	static void saveDatabaseToFile(QString path, QList<Data> database);
+
+	struct TrainArgs {
+	uint hiddenNeuronCount;
+	enum ActivationFunction {
+		LINEAR,
+		LOGISTIC_SIGMOID,
+		HYPERBOLIC_TANGENT
+	} activationFunction;
+	};
+	void train(TrainArgs args);
+
 private:
 
 
@@ -138,4 +150,3 @@ private:
 };
 
 }
-

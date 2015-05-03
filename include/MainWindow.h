@@ -24,12 +24,14 @@
 #pragma once
 
 #include "HandTracker.h"
+#include "PoseRecognition.h"
 #include <QMainWindow>
 
 class QComboBox;
 class QTextEdit;
 class QTableWidget;
 class QSpinBox;
+class QComboBox;
 #include <QPointer>
 #include <QDialog>
 
@@ -45,18 +47,15 @@ public:
 	PoseTrainDialog(QWidget *parent = 0);
 	virtual ~PoseTrainDialog();
 
-	struct Result {
-		int hiddenNeurons;
-	};
-
 signals:
-	void got_accepted(PoseTrainDialog::Result);
+	void got_accepted(iez::PoseRecognition::TrainArgs);
 
 private slots:
 	void on_accepted();
 
 private:
 	QSpinBox *m_spinBox;
+	QComboBox *m_comboBox;
 };
 
 class MainWindow : public QMainWindow
@@ -98,7 +97,7 @@ public slots:
 	void keyEvent(int);
 
 private slots:
-	void on_poseTrainDialogAccepted(PoseTrainDialog::Result);
+	void on_poseTrainDialogAccepted(iez::PoseRecognition::TrainArgs);
 	void on_poseDatabaseLoad();
 	void on_poseDatabaseSave();
 	void on_teachDialog();
