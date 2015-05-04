@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 2.4)
-#SET(CMAKE_CXX_COMPILER g++-4.8)
-#SET(CMAKE_C_COMPILER gcc-4.8)
 
 execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
                 OUTPUT_VARIABLE GCC_VERSION)
 if (GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8)
-        message(STATUS "Version >= 4.8")
+	message(STATUS "Version >= 4.8")
 else()
-#        message(FATAL_ERROR "OLD GCC, must be >= 4.8, is " + ${GCC_VERSION})
+	message(FATAL_ERROR "OLD GCC, must be >= 4.8, is " ${GCC_VERSION} "Define it via defining CMAKE_C_COMPILER and CMAKE_CXX_COMPILER")
 endif()
 SET(outputname HandTrackerApp)
 project(${outputname})
