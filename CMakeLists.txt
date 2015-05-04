@@ -73,7 +73,7 @@ target_link_libraries(${outputname} ${QT_LIBRARIES} OpenNI2 pthread opennn ${FRE
 #tests
 find_library(gtest REQUIRED)
 set(PROJECT_TEST_NAME test)
-set(TEST_SRC_FILES src/test/PoseRecognitionTest.cpp)
+set(TEST_SRC_FILES src/test/PoseRecognitionTest.cpp src/test/PoseResultAnalyzerTest.cpp)
 
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)

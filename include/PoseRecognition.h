@@ -23,6 +23,7 @@
 
 #pragma once
 #include "Types.h"
+
 #include <opencv2/opencv.hpp>
 #include <QObject>
 #include <QVector>
@@ -31,8 +32,9 @@
 #include <QMetaType>
 
 class QFile;
-namespace iez {
 
+namespace iez {
+class PoseResultAnalyzer;
 class PoseRecognition {
 public:
 	enum POSE {
@@ -53,7 +55,7 @@ public:
 	};
 
 	PoseRecognition();
-
+	~PoseRecognition();
 	void learnNew(const POSE pose,
 			   const cv::Point palmCenter,
 			   const float palmRadius,
@@ -69,7 +71,7 @@ public:
 	QString categorize(const cv::Point palmCenter,
 					const float palmRadius,
 					const wristpair_t &wrist,
-					const QList<cv::Point> &fingertips) const;
+					const QList<cv::Point> &fingertips);
 
 	int calculateOutput(OpenNN::Vector<double> featureVector) const;
 
@@ -147,6 +149,8 @@ private:
 	OpenNN::NeuralNetwork *m_neuralNetwork;
 	mutable QMutex m_nnMutex;
 	mutable QMutex m_dbMutex;
+
+	PoseResultAnalyzer *m_poseResultAnalyzer;
 };
 
 }

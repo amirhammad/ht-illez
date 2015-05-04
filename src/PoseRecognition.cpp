@@ -23,6 +23,7 @@
 
 #include "PoseRecognition.h"
 #include "Util.h"
+#include "PoseResultAnalyzer.h"
 
 #include <opennn.h>
 #include <container.h>
@@ -122,7 +123,13 @@ namespace iez {
 PoseRecognition::PoseRecognition()
 {
 	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
+	m_poseResultAnalyzer = new PoseResultAnalyzer(10);
 	m_neuralNetwork = 0;
+}
+
+PoseRecognition::~PoseRecognition()
+{
+	delete m_poseResultAnalyzer;
 }
 
 void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
@@ -380,7 +387,7 @@ QString PoseRecognition::databaseToString() const
 QString PoseRecognition::categorize(const cv::Point palmCenter,
 												  const float palmRadius,
 												  const wristpair_t &wrist,
-												  const QList<cv::Point> &fingertips) const
+												  const QList<cv::Point> &fingertips)
 {
 	if (!m_neuralNetwork) {
 		return QString("Nope, just chuck testa");
@@ -395,20 +402,10 @@ QString PoseRecognition::categorize(const cv::Point palmCenter,
 	const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(featureVectorNormalized);
 	QVector<double> outputQVector = QVector<double>::fromStdVector(outputs);
 
-	int minIndex = outputs.calculate_maximal_index();
-//	double minValue = std::numeric_limits<double>::max();
-
-//	for (int i = 0; i < outputQVector.size(); i++) {
-//		double val = outputQVector[i];
-//		double err = fabs(1 - val);
-//		if (minValue > err) {
-//			minValue = err;
-//			minIndex = i;
-//		}
-//	}
+	int minIndex = calculateOutput(featureVectorNormalized);
 
 	QString outputString;
-	outputString += poseToString(minIndex) + "\n";
+	outputString += poseToString(m_poseResultAnalyzer->feed(minIndex)) + "\n";
 
 	foreach (double d, featureVectorNormalized) {
 		outputString += QString::number(d, 'f', 3) + " ";
