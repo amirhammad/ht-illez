@@ -46,12 +46,12 @@ public:
 		POSE_5 = 5,
 		POSE_6 = 6,
 		POSE_7 = 7,
-//		POSE_8 = 8,
-//		POSE_9 = 9,
-//		POSE_10 = 10,
-//		POSE_11 = 11,
+		POSE_8 = 8,
+		POSE_9 = 9,
+		POSE_10 = 10,
+		POSE_11 = 11,
 
-		POSE_END = 8
+		POSE_END
 	};
 
 	PoseRecognition();
