@@ -23,6 +23,7 @@
 
 #pragma once
 #include "Types.h"
+#include "PoseResultAnalyzer.h"
 
 #include <opencv2/opencv.hpp>
 #include <QObject>
@@ -35,7 +36,7 @@
 class QFile;
 
 namespace iez {
-class PoseResultAnalyzer;
+
 class PoseRecognition {
 public:
 	enum POSE {
@@ -158,7 +159,7 @@ private:
 	mutable QMutex m_nnMutex;
 	mutable QMutex m_dbMutex;
 
-	PoseResultAnalyzer *m_poseResultAnalyzer;
+	PoseResultAnalyzer m_poseResultAnalyzer;
 };
 
 }

@@ -121,15 +121,15 @@ namespace iez {
 
 
 PoseRecognition::PoseRecognition()
+	: m_poseResultAnalyzer(10)
 {
 	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
-	m_poseResultAnalyzer = new PoseResultAnalyzer(10);
 	m_neuralNetwork = 0;
 }
 
 PoseRecognition::~PoseRecognition()
 {
-	delete m_poseResultAnalyzer;
+
 }
 
 void PoseRecognition::poseDatabaseAppend(const PoseRecognition::POSE pose,
@@ -409,7 +409,7 @@ QVariantList PoseRecognition::categorize(const cv::Point palmCenter,
 		output.append(val);
 	}
 
-	output.append(m_poseResultAnalyzer->feed(minIndex));
+	output.append(m_poseResultAnalyzer.feed(minIndex));
 	return output;
 }
 
