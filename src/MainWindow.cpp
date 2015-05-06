@@ -257,7 +257,7 @@ void MainWindow::on_gestureTrainerFinished(int code)
 
 	switch (code) {
 	case QDialog::Accepted:
-		m_processing->learnNew(m_teachDialogProperties.classComboBox->currentIndex());
+		m_processing->poseDatabaseAppend(m_teachDialogProperties.classComboBox->currentIndex());
 
 		emit got_pause(false);
 		break;

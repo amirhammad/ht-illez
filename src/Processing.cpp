@@ -49,7 +49,7 @@ Processing::Processing(ImageSource *imgsrc, QObject *parent)
 	moveToThread(m_thread);
 
 	connect(imgsrc, SIGNAL(frameReceived()), this, SLOT(process()), Qt::QueuedConnection);
-	connect(this, SIGNAL(got_learnNew(int)), this, SLOT(on_learnNew(int)));
+	connect(this, SIGNAL(got_learnNew(int)), this, SLOT(on_poseDatabaseAppend(int)));
 	connect(this, SIGNAL(got_train(iez::PoseRecognition::TrainArgs)), this, SLOT(on_train(iez::PoseRecognition::TrainArgs)));
 	m_thread->start();
 }
@@ -110,12 +110,12 @@ void Processing::process(bool secondarySource)
 	m_handTrackerResult = m_handTracker.data();
 }
 
-void Processing::learnNew(const int poseId)
+void Processing::poseDatabaseAppend(const int poseId)
 {
 	emit got_learnNew(poseId);
 }
 
-void Processing::on_learnNew(int poseId)
+void Processing::on_poseDatabaseAppend(int poseId)
 {
 	const HandTracker::Data data = m_handTracker.data();
 	qDebug("LEARNING");

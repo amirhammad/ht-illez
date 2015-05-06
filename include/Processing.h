@@ -43,7 +43,7 @@ public:
 	explicit Processing(ImageSource *imgsrc, QObject *parent = 0);
 	~Processing(void);
 
-	void learnNew(const int);
+	void poseDatabaseAppend(const int);
 	void train(PoseRecognition::TrainArgs args);
 	PoseRecognition *pose();
 	void setSecondarySource(ImageSource *secondarySource);
@@ -54,7 +54,7 @@ public slots:
 	void process(bool secondarySource = false);
 
 private slots:
-	void on_learnNew(int poseId);
+	void on_poseDatabaseAppend(int poseId);
 	void on_train(iez::PoseRecognition::TrainArgs args);
 private:
 	QThread *m_thread;
