@@ -121,7 +121,7 @@ private:
 						  OpenNN::PerceptronLayer &layer);
 	static bool loadMLP(QString prefix, OpenNN::MultilayerPerceptron& mlp);
 
-	QList<Data> m_database;
+
 
 	static OpenNN::Vector<double> constructFeatureVector(	const cv::Point palmCenter,
 															const float palmRadius,
@@ -130,12 +130,14 @@ private:
 
 	static OpenNN::Matrix<double> convertToMatrix(const QList<Data> &db);
 
+	QList<Data> m_database;
 	OpenNN::Matrix<double> m_matrix;
-	OpenNN::NeuralNetwork *m_neuralNetwork;
-	mutable QMutex m_nnMutex;
-	mutable QMutex m_dbMutex;
 
 	PoseResultAnalyzer m_poseResultAnalyzer;
+	OpenNN::NeuralNetwork *m_neuralNetwork;
+
+	mutable QMutex m_nnMutex;
+	mutable QMutex m_dbMutex;
 };
 
 }
