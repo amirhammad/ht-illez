@@ -97,11 +97,11 @@ void Processing::process(bool secondarySource)
 	m_handTracker.process(bgr, depth, m_imageSource->getSequence());
 	const HandTracker::Data handTrackerData = m_handTracker.data();
 
-	QString poseString = m_pose.categorize(handTrackerData.palmCenter(),
+	QVariantList poseResultList = m_pose.categorize(handTrackerData.palmCenter(),
 					  handTrackerData.palmRadius(),
 					  handTrackerData.wrist(),
 					  handTrackerData.fingertips());
-	emit got_poseUpdated(poseString);
+	emit got_poseUpdated(poseResultList);
 	ImageSourceArtificial::globalInstance()->setColorMat(bgr);
 
 	if (secondarySource) {

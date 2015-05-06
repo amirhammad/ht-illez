@@ -30,6 +30,7 @@
 #include <opennn.h>
 #include <QMutex>
 #include <QMetaType>
+#include <QVariantList>
 
 class QFile;
 
@@ -68,7 +69,7 @@ public:
 	void neuralNetworkSave(QString path);
 	QString databaseToString() const;
 
-	QString categorize(const cv::Point palmCenter,
+	QVariantList categorize(const cv::Point palmCenter,
 					const float palmRadius,
 					const wristpair_t &wrist,
 					const QList<cv::Point> &fingertips);

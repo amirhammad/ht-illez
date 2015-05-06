@@ -384,13 +384,13 @@ QString PoseRecognition::databaseToString() const
 	return output;
 }
 
-QString PoseRecognition::categorize(const cv::Point palmCenter,
+QVariantList PoseRecognition::categorize(const cv::Point palmCenter,
 												  const float palmRadius,
 												  const wristpair_t &wrist,
 												  const QList<cv::Point> &fingertips)
 {
 	if (!m_neuralNetwork) {
-		return QString("Nope, just chuck testa");
+		return QVariantList();
 	}
 
 	const OpenNN::Vector<double> &featureVector = constructFeatureVector(palmCenter, palmRadius, wrist, fingertips);
@@ -404,22 +404,13 @@ QString PoseRecognition::categorize(const cv::Point palmCenter,
 
 	int minIndex = calculateOutput(featureVectorNormalized);
 
-	QString outputString;
-	outputString += poseToString(m_poseResultAnalyzer->feed(minIndex)) + "\n";
-
-	foreach (double d, featureVectorNormalized) {
-		outputString += QString::number(d, 'f', 3) + " ";
-	}
-
-	outputString += "\n\n##########\n";
+	QVariantList output;
 	foreach (double val, outputQVector) {
-		outputString += QString("%1\n").arg(val);
+		output.append(val);
 	}
 
-//	}
-//	emit foundPose(outputString);
-//	qDebug("%s", outputString.toStdString().c_str());
-	return outputString;
+	output.append(m_poseResultAnalyzer->feed(minIndex));
+	return output;
 }
 
 int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const

@@ -32,6 +32,9 @@ class QTextEdit;
 class QTableWidget;
 class QSpinBox;
 class QComboBox;
+class QProgressBar;
+class QLabel;
+
 #include <QPointer>
 #include <QDialog>
 
@@ -56,6 +59,20 @@ private slots:
 private:
 	QSpinBox *m_spinBox;
 	QComboBox *m_comboBox;
+};
+
+class NeuralNetworkResultWidget : public QWidget {
+public:
+	NeuralNetworkResultWidget(QWidget *parent = 0);
+	~NeuralNetworkResultWidget();
+
+	void setNeurons(QVector<float> neurons, int winner);
+
+private:
+	enum {MIN = 0, MAX = 100};
+	int scaleNeuronToInt(float neuronValue);
+	QVector<QProgressBar *> m_neuronVector;
+	QLabel *m_winnerLabel;
 };
 
 class MainWindow : public QMainWindow
@@ -83,7 +100,7 @@ private:
 	QWidget *m_teachDialog;
 
 	QTableWidget *m_databaseTable;
-	QTextEdit *m_nnResultTextEdit;
+	NeuralNetworkResultWidget *m_neuralNetworkResultWidget;
 	QStatusBar *m_statusBar;
 
 	ImageSourceArtificial *m_secondaryImageSource;
@@ -111,6 +128,7 @@ private slots:
 	void on_buildVideo(QString path = QString());
 	void on_buildProcessing();
 	void on_exportProcessData();
+	void on_poseUpdated(QVariantList);
 
 };
 

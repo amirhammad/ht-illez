@@ -52,6 +52,7 @@
 #include <QInputDialog>
 #include <QFileDialog>
 #include <QStatusBar>
+#include <QProgressBar>
 
 namespace iez {
 
@@ -68,17 +69,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	connect(poseTrainDialog, SIGNAL(got_accepted(iez::PoseRecognition::TrainArgs)), this, SLOT(on_poseTrainDialogAccepted(iez::PoseRecognition::TrainArgs)));
 
 	setWindowTitle("::: Hand Tracker - IEZ - Main Window :::");
-	QDockWidget *databaseWidget = new QDockWidget("database", this);
-	addDockWidget(Qt::TopDockWidgetArea, databaseWidget);
-	databaseWidget->setAcceptDrops(false);
+	setMinimumWidth(400);
 	m_databaseTable = new QTableWidget(this);
-	databaseWidget->setWidget(m_databaseTable);
 
-	QDockWidget *nnResultWidget = new QDockWidget("results", this);
-	addDockWidget(Qt::TopDockWidgetArea, nnResultWidget);
-	m_nnResultTextEdit = new QTextEdit(this);
-	m_nnResultTextEdit->setReadOnly(true);
-	nnResultWidget->setWidget(m_nnResultTextEdit);
+	m_neuralNetworkResultWidget = new NeuralNetworkResultWidget(this);
+
+	QTabWidget *tabWidget = new QTabWidget(this);
+	tabWidget->addTab(m_databaseTable, "Database");
+	tabWidget->addTab(m_neuralNetworkResultWidget, "Results");
+	tabWidget->setCurrentIndex(1);
+
+	setCentralWidget(tabWidget);
 
 	buildNNTeachDialog();
 
@@ -362,7 +363,7 @@ void MainWindow::on_buildProcessing()
 	}
 
 	if (m_processing) {
-		QObject::disconnect(m_processing, SIGNAL(got_poseUpdated(QString)), m_nnResultTextEdit, SLOT(setText(QString)));
+		QObject::disconnect(m_processing, SIGNAL(got_poseUpdated(QVariantList)), this, SLOT(on_poseUpdated(QVariantList)));
 		delete m_processing;
 	}
 
@@ -372,7 +373,7 @@ void MainWindow::on_buildProcessing()
 		m_processing = new iez::Processing(m_secondaryImageSource, 0);
 	}
 	loadPoseDatabaseToTable();
-	QObject::connect(m_processing, SIGNAL(got_poseUpdated(QString)), m_nnResultTextEdit, SLOT(setText(QString)), Qt::QueuedConnection);
+	QObject::connect(m_processing, SIGNAL(got_poseUpdated(QVariantList)), this, SLOT(on_poseUpdated(QVariantList)), Qt::QueuedConnection);
 	QObject::connect(m_processing, SIGNAL(got_trainingFinished()), this, SLOT(on_trainingFinished()), Qt::QueuedConnection);
 }
 
@@ -398,6 +399,24 @@ void MainWindow::on_exportProcessData()
 	} else {
 		QMessageBox::warning(this, "Debug not active", "close, edit, recompile, run, try again. Good luck. \nHint: Check constructor of m_handTracker");
 	}
+}
+
+void MainWindow::on_poseUpdated(QVariantList list)
+{
+	if (list.empty()) {
+		return;
+	}
+	Q_ASSERT(list.size() == PoseRecognition::POSE_END + 1);
+	QVector<float> neuronOutputs(PoseRecognition::POSE_END);
+	for (int i = 0; i < neuronOutputs.size(); i++) {
+		bool ok = true;
+		neuronOutputs[i] = list[i].toFloat(&ok);
+		Q_ASSERT(ok);
+	}
+	bool ok = true;
+	int winner = list[PoseRecognition::POSE_END].toInt(&ok);
+	Q_ASSERT(ok);
+	m_neuralNetworkResultWidget->setNeurons(neuronOutputs, winner);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -455,6 +474,7 @@ void MainWindow::on_poseDatabaseLoad()
 	if (!path.isEmpty()) {
 		m_processing->pose()->loadPoseDatabase(path);
 	}
+	loadPoseDatabaseToTable();
 }
 
 void MainWindow::on_poseDatabaseSave()
@@ -553,6 +573,54 @@ void PoseTrainDialog::on_accepted()
 
 	result.activationFunction = function;
 	emit got_accepted(result);
+}
+
+NeuralNetworkResultWidget::NeuralNetworkResultWidget(QWidget *parent)
+	: QWidget(parent)
+{
+	QHBoxLayout *mainLayout = new QHBoxLayout(this);
+	QVBoxLayout *neuronLayout = new QVBoxLayout();
+	m_neuronVector.resize(PoseRecognition::POSE_END);
+	for (int i = 0; i < PoseRecognition::POSE_END; i++) {
+		m_neuronVector[i] = new QProgressBar(this);
+		m_neuronVector[i]->setMinimum(0);
+		m_neuronVector[i]->setMaximum(100);
+		m_neuronVector[i]->setTextVisible(false);
+		neuronLayout->addWidget(m_neuronVector[i]);
+	}
+	mainLayout->addLayout(neuronLayout);
+
+	m_winnerLabel = new QLabel(this);
+	m_winnerLabel->setText("--");
+	m_winnerLabel->setMinimumWidth(100);
+	QFont f = m_winnerLabel->font();
+	f.setPointSize(50);
+	m_winnerLabel->setFont(f);
+	mainLayout->addWidget(m_winnerLabel);
+}
+
+NeuralNetworkResultWidget::~NeuralNetworkResultWidget()
+{
+
+}
+
+void NeuralNetworkResultWidget::setNeurons(QVector<float> neurons, int winner)
+{
+	Q_ASSERT(neurons.size() == PoseRecognition::POSE_END);
+	for (int i = 0; i < PoseRecognition::POSE_END; i++) {
+		m_neuronVector[i]->setValue(scaleNeuronToInt(neurons[i]));
+	}
+	m_winnerLabel->setText(QString::number(winner));
+}
+
+int NeuralNetworkResultWidget::scaleNeuronToInt(float neuronValue)
+{
+	if (neuronValue < 0) {
+		return MIN;
+	} else if (neuronValue > 1) {
+		return MAX;
+	}
+	return neuronValue*(MAX - MIN);
 }
 
 

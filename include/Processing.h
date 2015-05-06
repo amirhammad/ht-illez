@@ -70,7 +70,7 @@ private:
 	HandTracker::TemporaryResult m_handTrackerTemporaryResult;
 	QMutex m_processMutex;
 signals:
-	void got_poseUpdated(QString);
+	void got_poseUpdated(QVariantList);
 	void got_learnNew(int);
 	void got_train(iez::PoseRecognition::TrainArgs);
 	void got_trainingFinished();
