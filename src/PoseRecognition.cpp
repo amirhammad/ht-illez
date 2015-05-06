@@ -33,12 +33,6 @@
 #include <QStringList>
 
 #define NN_INPUT_VECTOR_SIZE 10
-
-#define BOUND_X_LOW (0)
-#define BOUND_X_HIGH (0)
-#define BOUND_Y_LOW (0)
-#define BOUND_Y_HIGH (0)
-
 // Serialization operations
 
 QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
@@ -156,7 +150,7 @@ void PoseRecognition::poseDatabaseAppend(const PoseRecognition::POSE pose,
 	QMutexLocker l(&m_dbMutex);
 
 	m_database.append(d);
-	m_matrix = convertToNormalizedMatrix(m_database);
+	m_matrix = convertToMatrix(m_database);
 }
 
 void PoseRecognition::poseDatabaseSave(QString path) const
@@ -171,7 +165,7 @@ void PoseRecognition::poseDatabaseLoad(QString path)
 
 	m_database = loadDatabaseFromFile(path);
 	if (m_database.size() != 0) {
-		m_matrix = convertToNormalizedMatrix(m_database);
+		m_matrix = convertToMatrix(m_database);
 	} else {
 		qDebug("Error loading pose database");
 	}
@@ -394,15 +388,10 @@ QVariantList PoseRecognition::categorize(const cv::Point palmCenter,
 	}
 
 	const OpenNN::Vector<double> &featureVector = constructFeatureVector(palmCenter, palmRadius, wrist, fingertips);
-	OpenNN::Vector<double> featureVectorNormalized(featureVector.size());
-
-	qCopy(featureVector.begin(), featureVector.end(), featureVectorNormalized.begin());
-	normalizeVector(featureVectorNormalized);
-
-	const OpenNN::Vector<double> &outputs = m_neuralNetwork->get_multilayer_perceptron_pointer()->calculate_outputs(featureVectorNormalized);
+	const OpenNN::Vector<double> &outputs = m_neuralNetwork->calculate_outputs(featureVector);
 	QVector<double> outputQVector = QVector<double>::fromStdVector(outputs);
 
-	int minIndex = calculateOutput(featureVectorNormalized);
+	int minIndex = calculateOutput(featureVector);
 
 	QVariantList output;
 	foreach (double val, outputQVector) {
@@ -433,7 +422,6 @@ bool PoseRecognition::neuralNetworkTest() const
 		OpenNN::Vector<double> row(NN_INPUT_VECTOR_SIZE);
 
 		qCopy(m_database.at(i).input.begin(), m_database.at(i).input.end(), row.begin());
-		normalizeVector(row);
 
 		int output = calculateOutput(row);
 
@@ -494,24 +482,6 @@ int PoseRecognition::inputVectorSize()
 {
 	return NN_INPUT_VECTOR_SIZE;
 }
-
-double PoseRecognition::normalizeInto(double value, double low, double high)
-{
-	if (low == 0 && high == 0) {
-		return value;
-	}
-	Q_ASSERT(low < high);
-	double range = high - low;
-
-	if (value < low) {
-		return 0.0;
-	} else if (value > high) {
-		return 1.0;
-	} else {
-		return (value - low)/range;
-	}
-}
-
 
 /**
  * Assumes Logistic layers
@@ -618,17 +588,8 @@ bool PoseRecognition::loadMLP(QString prefix, OpenNN::MultilayerPerceptron &mlp)
 	return true;
 }
 
-void PoseRecognition::normalizeVector(OpenNN::Vector<double> &vec)
+OpenNN::Matrix<double> PoseRecognition::convertToMatrix(const QList<Data> &db)
 {
-	for (int i = 0; i < NN_INPUT_VECTOR_SIZE; i += 2) {
-		vec[i] = normalizeInto(vec[i], BOUND_X_LOW, BOUND_X_HIGH);//x
-		vec[i + 1] = normalizeInto(vec[i + 1], BOUND_Y_LOW, BOUND_Y_HIGH);//y
-	}
-}
-
-OpenNN::Matrix<double> PoseRecognition::convertToNormalizedMatrix(const QList<Data> &db)
-{
-	// normalize X from <-3, 3> -> <0, 1>
 	OpenNN::Matrix<double> mat(db.size(), NN_INPUT_VECTOR_SIZE + POSE_END);
 	// convert To Matrix
 	int index = 0;
@@ -636,14 +597,9 @@ OpenNN::Matrix<double> PoseRecognition::convertToNormalizedMatrix(const QList<Da
 		OpenNN::Vector<double> k(NN_INPUT_VECTOR_SIZE + POSE_END, 0);
 		Q_ASSERT(data.input.size() == NN_INPUT_VECTOR_SIZE);
 		qCopy(data.input.begin(), data.input.end(), k.begin());
-		normalizeVector(k);
 
 		Q_ASSERT(data.output >= 0 && data.output < POSE_END);
 		k[NN_INPUT_VECTOR_SIZE + data.output] = 1;
-
-//		QStringList rowString;
-//		foreach (double d, k) rowString.append(QString::number(d));
-//		qDebug() << "____________________________"<< rowString;
 
 		mat.set_row(index++, k);
 	}

@@ -115,7 +115,6 @@ public:
 	static QString poseToString(enum POSE pose);
 	static QString poseToString(int pose);
 	static int inputVectorSize();
-	static double normalizeInto(double value, double low = 0.0, double high = 0.0);
 	static QList<Data> loadDatabaseFromFile(QString path);
 	static void saveDatabaseToFile(QString path, QList<Data> database);
 
@@ -145,14 +144,12 @@ private:
 
 	QList<Data> m_database;
 
-	static void normalizeVector(OpenNN::Vector<double> &vec);
-
 	static OpenNN::Vector<double> constructFeatureVector(	const cv::Point palmCenter,
 															const float palmRadius,
 															const wristpair_t &wrist,
 															const QList<cv::Point> &fingertips);
 
-	static OpenNN::Matrix<double> convertToNormalizedMatrix(const QList<Data> &db);
+	static OpenNN::Matrix<double> convertToMatrix(const QList<Data> &db);
 
 	OpenNN::Matrix<double> m_matrix;
 	OpenNN::NeuralNetwork *m_neuralNetwork;
