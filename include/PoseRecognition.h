@@ -57,7 +57,7 @@ public:
 	void neuralNetworkImport(QString path);
 	void neuralNetworkLoad(QString path);
 	void neuralNetworkSave(QString path) const;
-	bool neuralNetworkTest() const;
+	bool neuralNetworkTest(float precision) const;
 	class TrainArgs;
 	void neuralNetworkTrain(TrainArgs args);
 

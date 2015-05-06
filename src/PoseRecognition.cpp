@@ -33,6 +33,8 @@
 #include <QStringList>
 
 #define NN_INPUT_VECTOR_SIZE 10
+#define NN_PRECISION_MIN	0.95
+
 // Serialization operations
 
 QDataStream& operator>>(QDataStream& stream, iez::PoseRecognition::Data &data)
@@ -189,7 +191,7 @@ void PoseRecognition::neuralNetworkLoad(QString path)
 		m_neuralNetwork = new OpenNN::NeuralNetwork();
 	}
 	m_neuralNetwork->load(path.toStdString());
-	neuralNetworkTest();
+	neuralNetworkTest(NN_PRECISION_MIN);
 }
 
 void PoseRecognition::neuralNetworkImport(QString path)
@@ -202,7 +204,7 @@ void PoseRecognition::neuralNetworkImport(QString path)
 			delete m_neuralNetwork;
 		}
 		m_neuralNetwork = new OpenNN::NeuralNetwork(mlp);
-		neuralNetworkTest();
+		neuralNetworkTest(NN_PRECISION_MIN);
 	} else {
 		qDebug("error loading neural network");
 	}
@@ -355,7 +357,7 @@ void PoseRecognition::neuralNetworkTrain(TrainArgs args)
 		s << errors << "/" << total;
 
 		errorRatio = static_cast<double>(errors) / total;
-		if (neuralNetworkTest()) break;
+		if (neuralNetworkTest(NN_PRECISION_MIN)) break;
 		::sleep(1);
 
 
@@ -410,7 +412,7 @@ int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const
 }
 
 // Not thread safe
-bool PoseRecognition::neuralNetworkTest() const
+bool PoseRecognition::neuralNetworkTest(float precision) const
 {
 	int errors = 0;
 	OpenNN::Vector<size_t> selectedColumns(NN_INPUT_VECTOR_SIZE);
@@ -429,9 +431,9 @@ bool PoseRecognition::neuralNetworkTest() const
 			errors++;
 		}
 	}
-	float ratio = static_cast<float>(errors)/m_database.size();
-	qWarning("RATIO: %f", ratio);
-	return ratio < 0.1f;
+	float resultPrecision = 1.0f - (static_cast<float>(errors)/m_database.size());
+	qWarning("RATIO: %f", resultPrecision);
+	return resultPrecision > precision;
 }
 
 QString PoseRecognition::poseToString(const int pose)
