@@ -126,7 +126,7 @@ PoseRecognition::~PoseRecognition()
 
 }
 
-void PoseRecognition::poseDatabaseAppend(const PoseRecognition::POSE pose,
+void PoseRecognition::poseDatabaseAppend(const int pose,
 							const cv::Point palmCenter,
 							const float palmRadius,
 							const wristpair_t &wrist,
@@ -434,22 +434,9 @@ bool PoseRecognition::neuralNetworkTest() const
 	return ratio < 0.1f;
 }
 
-QString PoseRecognition::poseToString(enum POSE pose)
+QString PoseRecognition::poseToString(const int pose)
 {
-	switch (pose) {
-		default:
-			return QString::number(static_cast<int>(pose));
-			break;
-	}
-}
-
-QString PoseRecognition::poseToString(int pose)
-{
-	if (pose < POSE_END) {
-		return poseToString(static_cast<enum POSE>(pose));
-	} else {
-		return "";
-	}
+	return QString::number(pose);
 }
 
 QList<PoseRecognition::Data> PoseRecognition::loadDatabaseFromFile(QString path)

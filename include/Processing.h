@@ -43,7 +43,7 @@ public:
 	explicit Processing(ImageSource *imgsrc, QObject *parent = 0);
 	~Processing(void);
 
-	void learnNew(enum PoseRecognition::POSE);
+	void learnNew(const int);
 	void train(PoseRecognition::TrainArgs args);
 	PoseRecognition *pose();
 	void setSecondarySource(ImageSource *secondarySource);

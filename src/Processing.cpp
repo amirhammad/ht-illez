@@ -110,7 +110,7 @@ void Processing::process(bool secondarySource)
 	m_handTrackerResult = m_handTracker.data();
 }
 
-void Processing::learnNew(enum PoseRecognition::POSE poseId)
+void Processing::learnNew(const int poseId)
 {
 	emit got_learnNew(poseId);
 }
@@ -130,7 +130,7 @@ void Processing::on_learnNew(int poseId)
 		qDebug("\t(%d, %d)", p.x, p.y);
 	}
 
-	m_pose.poseDatabaseAppend(static_cast<enum PoseRecognition::POSE>(poseId),
+	m_pose.poseDatabaseAppend(poseId,
 				  data.palmCenter(),
 				  data.palmRadius(),
 				  data.wrist(),

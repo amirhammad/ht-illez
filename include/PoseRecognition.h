@@ -39,27 +39,14 @@ namespace iez {
 
 class PoseRecognition {
 public:
-	enum POSE {
-		POSE_0 = 0,
-		POSE_1 = 1,
-		POSE_2 = 2,
-		POSE_3 = 3,
-		POSE_4 = 4,
-		POSE_5 = 5,
-		POSE_6 = 6,
-		POSE_7 = 7,
-		POSE_8 = 8,
-		POSE_9 = 9,
-		POSE_10 = 10,
-		POSE_11 = 11,
-
-		POSE_END
+	enum {
+		POSE_END = 12
 	};
 
 	PoseRecognition();
 	~PoseRecognition();
 
-	void poseDatabaseAppend(const POSE pose,
+	void poseDatabaseAppend(const int pose,
 			   const cv::Point palmCenter,
 			   const float palmRadius,
 			   const wristpair_t &wrist,
@@ -108,8 +95,7 @@ public:
 		return minIndex;
 	}
 
-	static QString poseToString(enum POSE pose);
-	static QString poseToString(int pose);
+	static QString poseToString(const int pose);
 	static int inputVectorSize();
 	static QList<Data> loadDatabaseFromFile(QString path);
 	static void saveDatabaseToFile(QString path, QList<Data> database);
