@@ -81,10 +81,6 @@ public:
 					const wristpair_t &wrist,
 					const QList<cv::Point> &fingertips);
 
-	int calculateOutput(OpenNN::Vector<double> featureVector) const;
-
-
-
 	struct Data {
 		Data(int size)
 		: input(size) {
@@ -130,7 +126,7 @@ public:
 
 
 private:
-
+	int calculateOutput(OpenNN::Vector<double> featureVector) const;
 
 	static bool loadLayer(QFile &fBias,
 						  QFile &fWeights,
@@ -138,9 +134,6 @@ private:
 						  const int neuronCount,
 						  OpenNN::PerceptronLayer &layer);
 	static bool loadMLP(QString prefix, OpenNN::MultilayerPerceptron& mlp);
-
-
-
 
 	QList<Data> m_database;
 
