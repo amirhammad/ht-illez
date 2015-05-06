@@ -472,7 +472,7 @@ void MainWindow::on_poseDatabaseLoad()
 
 	QString path = QFileDialog::getOpenFileName(this, QString("load pose database"), QString(), QString("*.csv"));
 	if (!path.isEmpty()) {
-		m_processing->pose()->loadPoseDatabase(path);
+		m_processing->pose()->poseDatabaseLoad(path);
 	}
 	loadPoseDatabaseToTable();
 }
@@ -484,7 +484,7 @@ void MainWindow::on_poseDatabaseSave()
 	QString path = QFileDialog::getSaveFileName(this, QString("save pose database"), QString(), QString("*.csv"));
 	if (!path.endsWith(".csv")) path.append(".csv");
 	if (!path.isEmpty()) {
-		m_processing->pose()->savePoseDatabase(path);
+		m_processing->pose()->poseDatabaseSave(path);
 	}
 }
 
@@ -579,14 +579,17 @@ NeuralNetworkResultWidget::NeuralNetworkResultWidget(QWidget *parent)
 	: QWidget(parent)
 {
 	QHBoxLayout *mainLayout = new QHBoxLayout(this);
-	QVBoxLayout *neuronLayout = new QVBoxLayout();
+	QGridLayout *neuronLayout = new QGridLayout();
 	m_neuronVector.resize(PoseRecognition::POSE_END);
 	for (int i = 0; i < PoseRecognition::POSE_END; i++) {
 		m_neuronVector[i] = new QProgressBar(this);
 		m_neuronVector[i]->setMinimum(0);
 		m_neuronVector[i]->setMaximum(100);
 		m_neuronVector[i]->setTextVisible(false);
-		neuronLayout->addWidget(m_neuronVector[i]);
+		QLabel *label = new QLabel(QString::number(i), this);
+		label->setAlignment(Qt::AlignRight);
+		neuronLayout->addWidget(label, i, 0);
+		neuronLayout->addWidget(m_neuronVector[i], i, 1);
 	}
 	mainLayout->addLayout(neuronLayout);
 

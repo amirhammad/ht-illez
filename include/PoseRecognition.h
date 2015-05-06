@@ -57,16 +57,22 @@ public:
 
 	PoseRecognition();
 	~PoseRecognition();
-	void learnNew(const POSE pose,
+
+	void poseDatabaseAppend(const POSE pose,
 			   const cv::Point palmCenter,
 			   const float palmRadius,
 			   const wristpair_t &wrist,
 			   const QList<cv::Point> &fingertips);
-	void savePoseDatabase(QString path);
-	void loadPoseDatabase(QString path);
+
+	void poseDatabaseSave(QString path) const;
+	void poseDatabaseLoad(QString path);
 	void neuralNetworkImport(QString path);
 	void neuralNetworkLoad(QString path);
-	void neuralNetworkSave(QString path);
+	void neuralNetworkSave(QString path) const;
+	bool neuralNetworkTest() const;
+	class TrainArgs;
+	void neuralNetworkTrain(TrainArgs args);
+
 	QString databaseToString() const;
 
 	QVariantList categorize(const cv::Point palmCenter,
@@ -76,7 +82,7 @@ public:
 
 	int calculateOutput(OpenNN::Vector<double> featureVector) const;
 
-	bool testNeuralNetwork() const;
+
 
 	struct Data {
 		Data(int size)
@@ -112,15 +118,16 @@ public:
 	static QList<Data> loadDatabaseFromFile(QString path);
 	static void saveDatabaseToFile(QString path, QList<Data> database);
 
-	struct TrainArgs {
-	uint hiddenNeuronCount;
-	enum ActivationFunction {
-		LINEAR,
-		LOGISTIC_SIGMOID,
-		HYPERBOLIC_TANGENT
-	} activationFunction;
+	class TrainArgs {
+	public:
+		uint hiddenNeuronCount;
+		enum ActivationFunction {
+			LINEAR,
+			LOGISTIC_SIGMOID,
+			HYPERBOLIC_TANGENT
+		} activationFunction;
 	};
-	void train(TrainArgs args);
+
 
 private:
 

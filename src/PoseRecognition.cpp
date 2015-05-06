@@ -132,7 +132,7 @@ PoseRecognition::~PoseRecognition()
 	delete m_poseResultAnalyzer;
 }
 
-void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
+void PoseRecognition::poseDatabaseAppend(const PoseRecognition::POSE pose,
 							const cv::Point palmCenter,
 							const float palmRadius,
 							const wristpair_t &wrist,
@@ -159,13 +159,13 @@ void PoseRecognition::learnNew(const PoseRecognition::POSE pose,
 	m_matrix = convertToNormalizedMatrix(m_database);
 }
 
-void PoseRecognition::savePoseDatabase(QString path)
+void PoseRecognition::poseDatabaseSave(QString path) const
 {
 	QMutexLocker l(&m_dbMutex);
 	saveDatabaseToFile(path, m_database);
 }
 
-void PoseRecognition::loadPoseDatabase(QString path)
+void PoseRecognition::poseDatabaseLoad(QString path)
 {
 	QMutexLocker l(&m_dbMutex);
 
@@ -177,7 +177,7 @@ void PoseRecognition::loadPoseDatabase(QString path)
 	}
 }
 
-void PoseRecognition::neuralNetworkSave(QString path)
+void PoseRecognition::neuralNetworkSave(QString path) const
 {
 	QMutexLocker l(&m_nnMutex);
 
@@ -195,7 +195,7 @@ void PoseRecognition::neuralNetworkLoad(QString path)
 		m_neuralNetwork = new OpenNN::NeuralNetwork();
 	}
 	m_neuralNetwork->load(path.toStdString());
-	testNeuralNetwork();
+	neuralNetworkTest();
 }
 
 void PoseRecognition::neuralNetworkImport(QString path)
@@ -208,13 +208,13 @@ void PoseRecognition::neuralNetworkImport(QString path)
 			delete m_neuralNetwork;
 		}
 		m_neuralNetwork = new OpenNN::NeuralNetwork(mlp);
-		testNeuralNetwork();
+		neuralNetworkTest();
 	} else {
 		qDebug("error loading neural network");
 	}
 }
 
-void PoseRecognition::train(TrainArgs args)
+void PoseRecognition::neuralNetworkTrain(TrainArgs args)
 {
 	using namespace OpenNN;
 
@@ -361,7 +361,7 @@ void PoseRecognition::train(TrainArgs args)
 		s << errors << "/" << total;
 
 		errorRatio = static_cast<double>(errors) / total;
-		if (testNeuralNetwork()) break;
+		if (neuralNetworkTest()) break;
 		::sleep(1);
 
 
@@ -421,7 +421,7 @@ int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const
 }
 
 // Not thread safe
-bool PoseRecognition::testNeuralNetwork() const
+bool PoseRecognition::neuralNetworkTest() const
 {
 	int errors = 0;
 	OpenNN::Vector<size_t> selectedColumns(NN_INPUT_VECTOR_SIZE);

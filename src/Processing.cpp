@@ -130,7 +130,7 @@ void Processing::on_learnNew(int poseId)
 		qDebug("\t(%d, %d)", p.x, p.y);
 	}
 
-	m_pose.learnNew(static_cast<enum PoseRecognition::POSE>(poseId),
+	m_pose.poseDatabaseAppend(static_cast<enum PoseRecognition::POSE>(poseId),
 				  data.palmCenter(),
 				  data.palmRadius(),
 				  data.wrist(),
@@ -145,7 +145,7 @@ void Processing::train(PoseRecognition::TrainArgs args)
 void Processing::on_train(PoseRecognition::TrainArgs args)
 {
 	try {
-		m_pose.train(args);
+		m_pose.neuralNetworkTrain(args);
 	} catch (std::logic_error e) {
 		qDebug("%s", e.what());
 		QApplication::quit();
