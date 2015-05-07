@@ -58,9 +58,11 @@ find_package(Qt COMPONENTS QtCore REQUIRED)
 INCLUDE(${QT_USE_FILE})
 include_directories(${QT_INCLUDES})
 QT4_WRAP_CPP(out_HEADERS_MOC ${out_HEADERS})
+QT4_WRAP_UI(out_UI_H widgetik.ui)
+include_directories(${CMAKE_BINARY_DIR})
 ADD_DEFINITIONS(${QT_DEFINITIONS})
 
-add_executable(${outputname} ${out_SOURCES} ${out_HEADERS_MOC} ${out_HEADERS})
+add_executable(${outputname} ${out_SOURCES} ${out_HEADERS_MOC} ${out_HEADERS} ${out_UI_H})
 target_link_libraries(${outputname} ${OpenCV_LIBS})
 target_link_libraries(${outputname} ${QT_LIBRARIES} OpenNI2 pthread opennn ${FREENECT_LIBRARIES})
 

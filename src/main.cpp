@@ -23,6 +23,7 @@
 
 #include "main.h"
 #include "MainWindow.h"
+#include "ui_widgetik.h"
 
 #include <QApplication>
 #include <chrono>
@@ -30,7 +31,10 @@
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
-
+	QWidget *w = new QWidget(0);
+	Ui_Form f;
+	f.setupUi(w);
+	w->show();
 	// Initialize random number generator
 	std::srand(std::time(0));
 
