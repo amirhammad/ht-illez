@@ -1,6 +1,5 @@
 /*
  * This file is part of the project HandTrackerApp - ht-illez
- * hosted at http://github.com/amirhammad/ht-illez
  *
  * Copyright (C) 2015 Amir Hammad <amir.hammad@hotmail.com>
  *
