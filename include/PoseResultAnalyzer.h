@@ -19,6 +19,9 @@
  *
  */
 
+#include <vector>
+#include <limits>
+#include <QtAlgorithms>
 
 #pragma once
 namespace iez {
@@ -28,7 +31,24 @@ public:
 	explicit PoseResultAnalyzer(int acceptableCount);
 	~PoseResultAnalyzer();
 
-	int feed(int poseId);
+	int feed(int poseId);// deprecated
+
+	template <typename Container>
+	static int analyzeMethod1(const Container &poseOutputVector, float minValue = 0.8, float diffValue = 0.5)
+	{
+		const size_t vecSize = poseOutputVector.size();
+		Container sortedVector(poseOutputVector);
+		qSort(sortedVector);
+		if (sortedVector[vecSize - 1] > minValue) {
+			Q_ASSERT(sortedVector[vecSize - 1] >= sortedVector[vecSize - 2]);
+			if (sortedVector[vecSize - 1] - sortedVector[vecSize - 2] > diffValue) {
+				return findBestMatchIndex(poseOutputVector, 1.0);
+			}
+		}
+
+		return POSE_UNDEF;
+	}
+
 	template <typename Container>
 	static int findBestMatchIndex(const Container &container, double target = 1.0)
 	{

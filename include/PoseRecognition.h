@@ -22,7 +22,6 @@
 
 #pragma once
 #include "Types.h"
-#include "PoseResultAnalyzer.h"
 
 #include <opencv2/opencv.hpp>
 #include <QObject>
@@ -115,7 +114,6 @@ private:
 	QList<Data> m_database;
 	OpenNN::Matrix<double> m_matrix;
 
-	PoseResultAnalyzer m_poseResultAnalyzer;
 	OpenNN::NeuralNetwork *m_neuralNetwork;
 
 	mutable QMutex m_nnMutex;

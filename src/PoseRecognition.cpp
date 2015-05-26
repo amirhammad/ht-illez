@@ -116,7 +116,6 @@ namespace iez {
 
 
 PoseRecognition::PoseRecognition()
-	: m_poseResultAnalyzer(10)
 {
 	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
 	m_neuralNetwork = 0;
@@ -392,14 +391,14 @@ QVariantList PoseRecognition::categorize(const cv::Point palmCenter,
 	const OpenNN::Vector<double> &outputs = m_neuralNetwork->calculate_outputs(featureVector);
 	QVector<double> outputQVector = QVector<double>::fromStdVector(outputs);
 
-	int minIndex = calculateOutput(featureVector);
+	int minIndex = PoseResultAnalyzer::analyzeMethod1(outputs);
 
 	QVariantList output;
 	foreach (double val, outputQVector) {
 		output.append(val);
 	}
 
-	output.append(m_poseResultAnalyzer.feed(minIndex));
+	output.append(minIndex);
 	return output;
 }
 
