@@ -29,6 +29,23 @@ public:
 	~PoseResultAnalyzer();
 
 	int feed(int poseId);
+	template <typename Container>
+	static int findBestMatchIndex(const Container &container, double target = 1.0)
+	{
+		int minIndex = 0;
+		double minValue = std::numeric_limits<double>::max();
+
+		for (int i = 0; i < container.size(); i++) {
+			double err = qAbs(target - container[i]);
+			if (minValue > err) {
+				minValue = err;
+				minIndex = i;
+			}
+		}
+
+		return minIndex;
+	}
+
 	int poseId() const;
 	enum {POSE_UNDEF = -1};
 private:

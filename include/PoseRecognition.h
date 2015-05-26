@@ -77,23 +77,6 @@ public:
 		int output;
 	};
 
-	template <typename Container>
-	static int findBestMatchIndex(Container container, double target)
-	{
-		int minIndex = 0;
-		double minValue = std::numeric_limits<double>::max();
-
-		for (int i = 0; i < container.size(); i++) {
-			double err = qAbs(target - container[i]);
-			if (minValue > err) {
-				minValue = err;
-				minIndex = i;
-			}
-		}
-
-		return minIndex;
-	}
-
 	static QString poseToString(const int pose);
 	static int inputVectorSize();
 	static QList<Data> loadDatabaseFromFile(QString path);

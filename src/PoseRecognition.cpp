@@ -407,7 +407,7 @@ int PoseRecognition::calculateOutput(OpenNN::Vector<double> featureVector) const
 {
 	const OpenNN::Vector<double> &outputs = m_neuralNetwork->calculate_outputs(featureVector);
 
-	return findBestMatchIndex(outputs, 1);
+	return PoseResultAnalyzer::findBestMatchIndex(outputs, 1);
 }
 
 // Not thread safe
