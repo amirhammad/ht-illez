@@ -125,27 +125,19 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 	}
 
 	/// SORT by angle
-
-	struct compare {
-		compare(cv::Point palmCenter)
-		:	m_palmCenter(palmCenter){
-
-		}
-
-		float getAngle(cv::Point point) {
-			const float dy = point.y - m_palmCenter.y;
-			const float dx = point.x - m_palmCenter.x;
-			const float angle = atan2(dy, dx);
-			return angle;
-		}
-
-		bool operator() (cv::Point a, cv::Point b) {
-			return getAngle(a) < getAngle(b);
-		}
-
-		cv::Point m_palmCenter;
+	auto getAngleF = [&palmCenter] (cv::Point point) -> float
+	{
+		const float dy = point.y - palmCenter.y;
+		const float dx = point.x - palmCenter.x;
+		const float angle = atan2(dy, dx);
+		return angle;
 	};
-	qSort(boundaryPointList.begin(), boundaryPointList.end(), compare(palmCenter));
+
+	qSort(boundaryPointList.begin(), boundaryPointList.end(),
+		[&getAngleF] (const cv::Point &a, const cv::Point &b) -> bool
+		{
+			return getAngleF(a) < getAngleF(b);
+		});
 
 
 	/// produce output
