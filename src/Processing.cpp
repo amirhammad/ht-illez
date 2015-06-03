@@ -40,7 +40,7 @@ Processing::Processing(ImageSource *imgsrc, QObject *parent)
 :	QObject(parent)
 ,	m_imageSource(imgsrc)
 ,	m_calculateHandTracker(false)
-,	m_handTracker(false)
+,	m_handTracker(true)
 {
 	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
 
@@ -105,6 +105,12 @@ void Processing::process(bool secondarySource)
 
 	if (secondarySource) {
 		m_handTrackerTemporaryResult = m_handTracker.temporaryResult();
+
+        // add fingertipsNormalized
+        m_handTrackerTemporaryResult.fingertipsNormalized = PoseRecognition::constructFeatureQVector(handTrackerData.palmCenter(),
+                                                                                                     handTrackerData.palmRadius(),
+                                                                                                     handTrackerData.wrist(),
+                                                                                                     handTrackerData.fingertips());
 	}
 	m_handTrackerResult = m_handTracker.data();
 }

@@ -127,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	m_paused = false;
 
-	showMaximized();
+	show();
 }
 
 
@@ -247,6 +247,45 @@ void MainWindow::exportProcessData(QString prefix, HandTracker::Data result, Han
 
 	res = WindowManager::Mat2QImage(debugResult.depthMaskedImage);
 	res.save(prefix + "depthMaskedImage.jpg", "jpg", 100);
+
+
+    QFile resultFile(prefix + "result.txt");
+    resultFile.open(QFile::WriteOnly);
+    QTextStream resultStream(&resultFile);
+    wristpair_t wp = result.wrist();
+    resultStream << "# Wrist Pair [px]\n"
+                 << "# A.x A.y B.x B.y\n"
+                 << wp.first.x << "\t"
+                 << wp.first.y << "\t"
+                 << wp.second.x << "\t"
+                 << wp.second.y << "\n";
+    resultStream << "# Palm Center [px]\n"
+                 << "# A.x A.y\n"
+                 << result.palmCenter().x << "\t"
+                 << result.palmCenter().y << "\n";
+    resultStream << "# Palm Radius [px]\n"
+                 << "# radius\n"
+                 << result.palmRadius() << "\n";
+    resultStream << "# Tracked fingers [px]\n"
+                 << "# n F1.x F1.y .. Fn.x Fn.y\n"
+                 << result.fingertips().count();
+    for (int i = 0; i < result.fingertips().count(); i++) {
+        resultStream << "\t" << result.fingertips()[i].x  << "\t" << result.fingertips()[i].y;
+    }
+    resultStream << "\n";
+
+    resultStream << "# Tracked fingers - normalized [px]\n"
+                 << "# n F1.x F1.y .. Fn.x Fn.y\n"
+                 << result.fingertips().count();
+    for (int i = 0; i < debugResult.fingertipsNormalized.count(); i++) {
+        resultStream << "\t" << debugResult.fingertipsNormalized[i];
+    }
+    resultStream << "\n";
+
+//    foreach (const QPoint &p, result.fingertips()) {
+//        resultStream << p.x << "";
+//    }
+
 
 }
 

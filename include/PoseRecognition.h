@@ -91,7 +91,10 @@ public:
 		} activationFunction;
 	};
 
-
+    static QVector<double> constructFeatureQVector(	const cv::Point palmCenter,
+                                                    const float palmRadius,
+                                                    const wristpair_t &wrist,
+                                                    const QList<cv::Point> &fingertips);
 private:
 	int calculateOutput(OpenNN::Vector<double> featureVector) const;
 
