@@ -64,7 +64,7 @@ private:
 	void findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint) const;
 
 	float findHandCenterRadius(const cv::Point &maxDTPoint,
-									  const std::vector<cv::Point> contour) const;
+									  const std::vector<cv::Point> &contour) const;
 
 
 	void findPalm(cv::Mat &binaryPalmMask,
@@ -95,6 +95,7 @@ private:
 public:
 	class Data {
 	public:
+		Data(){}
 		void setWrist(wristpair_t wrist);
 		wristpair_t wrist() const;
 

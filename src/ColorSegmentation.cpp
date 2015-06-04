@@ -138,7 +138,6 @@ void ColorSegmentation::saveStats(QString path) {
 
 void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPolygon> &polygonList)
 {
-	static int id = 0;
 	cv::Mat maskedImage;
 	cv::Mat yuv;
 	cvtColor(image, yuv, cv::COLOR_BGR2YUV);
@@ -192,7 +191,7 @@ void ColorSegmentation::scanNewImage(const cv::Mat &image, const std::list<QPoly
  * Separate Skin/Non-skin color in row
  * return list of areas
  */
-const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row, const std::list<QPolygon> polygonList)
+const std::vector<int> ColorSegmentation::separateSkinNonskinColorInRow(int row, const std::list<QPolygon> &polygonList)
 {
 	std::vector<int> edgePointsVector(30, 0);
 

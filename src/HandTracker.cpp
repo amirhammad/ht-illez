@@ -64,7 +64,7 @@ void HandTracker::findHandCenter(const cv::Mat &handDT, cv::Point &maxDTPoint) c
  * @param contour[in] contour of hand
  * @return minimal distance to point on contour
  */
-float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::vector<cv::Point> contour) const
+float HandTracker::findHandCenterRadius(const cv::Point& maxDTPoint, const std::vector<cv::Point> &contour) const
 {
 	float minDistance = std::numeric_limits<float>::max();
 
@@ -132,7 +132,7 @@ void HandTracker::findPalm(cv::Mat &binaryPalmMask,
 
 		}
 
-		float getAngle(cv::Point point) {
+		float getAngle(cv::Point point) const {
 			const float dy = point.y - m_palmCenter.y;
 			const float dx = point.x - m_palmCenter.x;
 			const float angle = atan2(dy, dx);
@@ -221,7 +221,7 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 	wristpair_t wppData = m_data.wrist();
 	cv::Point wppMeanData = Util::pointMean(wppData.first, wppData.second);
 
-	wristpair_t wppFinal = wppData;
+	wristpair_t wppFinal;
 	float minDist = std::numeric_limits<float>::max();
 	wppFinal = wristpair_t(palmContour[wristPairCandidatesOrdered[0]], palmContour[(wristPairCandidatesOrdered[0] + 1)%palmContour.size()]);
 
@@ -702,7 +702,7 @@ void HandTracker::orderFingertipsByAngle(wristpair_t wrist, QList<cv::Point> &fi
 
 		}
 
-		float getAngle(cv::Point point) {
+		float getAngle(cv::Point point) const {
 			const float dy = point.y - m_palmCenter.y;
 			const float dx = point.x - m_palmCenter.x;
 			const float angle = atan2f(dy, dx) - (m_offs);

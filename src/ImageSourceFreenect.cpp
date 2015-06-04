@@ -31,9 +31,9 @@ iez_private::ImageSourceFreenectDevice_private::ImageSourceFreenectDevice_privat
 :	FreenectDevice(_ctx, _index)
 ,	m_fps(30)
 ,	m_sequence(0)
-,	m_initialized(false)
 ,	m_width(0)
 ,	m_height(0)
+,	m_initialized(false)
 {
 
 }

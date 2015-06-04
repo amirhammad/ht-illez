@@ -103,7 +103,7 @@ void ImageDescriptorImage::paintEvent(QPaintEvent *ev)
 		painter.setBrush(brush);
 		painter.drawConvexPolygon(p);
 	}
-	if (m_pointList.size()>1) {
+	if (m_pointList.size() > 1) {
 		painter.drawEllipse(*m_pointList.begin(), circleSize, circleSize);
 		for (std::list<QPoint>::iterator it = ++m_pointList.begin(); it != m_pointList.end(); it++) {
 			std::list<QPoint>::iterator prev = it;
@@ -177,7 +177,7 @@ ImageDescriptor::ImageDescriptor(ImageSource *kinect)
 
 
 
-	QVBoxLayout *polygonLayout = new QVBoxLayout(m_polygonsWidget);
+//	QVBoxLayout *polygonLayout = new QVBoxLayout(m_polygonsWidget);
 	mainLayout->addWidget(m_backgroundImage);
 	mainLayout->addWidget(m_polygonsWidget);
 //	static_cast<QVBoxLayout*>(m_polygonsWidget->layout())->addWidget(resetButton, false, Qt::AlignTop);
@@ -219,7 +219,7 @@ void ImageDescriptorImage::refresh(const QImage &image)
 	setPixmap(QPixmap::fromImage(image));
 }
 
-void ImageDescriptor::on_descriptionComplete(const QImage& image, const std::list<QPolygon> polygonList)
+void ImageDescriptor::on_descriptionComplete(const QImage& image, const std::list<QPolygon> &polygonList)
 {
 	m_image = image;
 	m_polygonList = polygonList;

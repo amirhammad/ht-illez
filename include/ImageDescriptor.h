@@ -73,7 +73,7 @@ public slots:
 //	}
 
 private slots:
-	void on_descriptionComplete(const QImage& image, const std::list<QPolygon> polygonList);
+	void on_descriptionComplete(const QImage& image, const std::list<QPolygon> &polygonList);
 	void on_descriptionFileSelected(const QString &file);
 	void pause();
 //	void on_polygonSelected(QPolygon polygon);

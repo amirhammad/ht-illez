@@ -62,7 +62,7 @@ private:
 
 class NeuralNetworkResultWidget : public QWidget {
 public:
-	NeuralNetworkResultWidget(QWidget *parent = 0);
+	NeuralNetworkResultWidget(int poseCount, QWidget *parent = 0);
 	~NeuralNetworkResultWidget();
 
 	void setNeurons(QVector<float> neurons, int winner);
@@ -72,6 +72,7 @@ private:
 	int scaleNeuronToInt(float neuronValue);
 	QVector<QProgressBar *> m_neuronVector;
 	QLabel *m_winnerLabel;
+	const int m_poseCount;
 };
 
 class MainWindow : public QMainWindow

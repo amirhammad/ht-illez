@@ -71,7 +71,7 @@ public:
 	static bool buildDatabaseFromFiles(const QString &path);
 	static std::list<QPolygon> polygonsFromFile(const QString &imagePath);
 	static void scanNewImage(const cv::Mat &image, const std::list<QPolygon> &polygonList);
-	static const std::vector<int> separateSkinNonskinColorInRow(int row, const std::list<QPolygon> polygonList);
+	static const std::vector<int> separateSkinNonskinColorInRow(int row, const std::list<QPolygon> &polygonList);
 
 	double getTMax() const
 	{

@@ -39,7 +39,7 @@ class ImageSourceFreenectDevice_private:public Freenect::FreenectDevice
 			memcpy(m_depthMat.data, depth, m_width*m_height*2);
 		}
 
-		int m_width, m_height;
+
 
 		cv::Mat m_depthMat;
 		cv::Mat m_colorMat;
@@ -47,8 +47,10 @@ class ImageSourceFreenectDevice_private:public Freenect::FreenectDevice
 		mutable QMutex depth_mutex;
 		mutable QMutex color_mutex;
 
-		int m_sequence;
+
 		const int m_fps;
+		int m_sequence;
+		int m_width, m_height;
 		bool m_initialized;
 
 //		uint16_t m_t_gamma[2048];

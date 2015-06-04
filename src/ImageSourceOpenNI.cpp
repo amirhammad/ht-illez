@@ -73,7 +73,7 @@ ImageSourceOpenNI::~ImageSourceOpenNI(void)
 
 int ImageSourceOpenNI::deviceInit(QString deviceURI)
 {
-	openni::Status rc = openni::STATUS_OK;
+	openni::Status rc;
 
 	rc = openni::OpenNI::initialize();
 

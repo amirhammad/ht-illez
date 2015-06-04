@@ -151,7 +151,7 @@ void Processing::on_train(PoseRecognition::TrainArgs args)
 {
 	try {
 		m_pose.neuralNetworkTrain(args);
-	} catch (std::logic_error e) {
+	} catch (std::logic_error &e) {
 		qDebug("%s", e.what());
 		QApplication::quit();
 	}

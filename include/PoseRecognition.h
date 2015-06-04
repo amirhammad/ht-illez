@@ -68,7 +68,8 @@ public:
 
 	struct Data {
 		Data(int size)
-		: input(size) {
+		: input(size)
+		, output(-1) {
 
 		}
 
