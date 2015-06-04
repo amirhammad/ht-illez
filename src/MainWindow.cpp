@@ -56,7 +56,6 @@
 
 namespace iez {
 
-#define CHECK_PROCESSING() if (!m_processing) {QMessageBox::warning(this, "error", "Processing not initialized");return;}
 #define CHECK_VIDEO() if (!m_video) {QMessageBox::warning(this, "error", "Video not initialized");return;}
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
@@ -187,9 +186,6 @@ void MainWindow::buildNNTeachDialog()
 
 void MainWindow::loadPoseDatabaseToTable()
 {
-	CHECK_PROCESSING();
-
-
 	QString poseDB = m_processing->pose()->databaseToString();
 	QStringList poseDBLineList = poseDB.split('\n', QString::SkipEmptyParts);
 	m_databaseTable->setRowCount(poseDBLineList.count());
@@ -290,8 +286,6 @@ void MainWindow::exportProcessData(QString prefix, HandTracker::Data result, Han
 
 void MainWindow::on_gestureTrainerFinished(int code)
 {
-	CHECK_PROCESSING();
-
 	switch (code) {
 	case QDialog::Accepted:
 		m_processing->poseDatabaseAppend(m_teachDialogProperties.classComboBox->currentIndex());
@@ -316,8 +310,6 @@ void MainWindow::on_trainingFinished()
 
 void MainWindow::on_neuralNetworkSave()
 {
-	CHECK_PROCESSING();
-
 	QString path = QFileDialog::getSaveFileName(this, QString("save neural network"), QString(), QString("*.nndb"));
 	if (!path.endsWith(".nndb")) path.append(".nndb");
 	if (!path.isEmpty()) {
@@ -327,8 +319,6 @@ void MainWindow::on_neuralNetworkSave()
 
 void MainWindow::on_neuralNetworkLoad()
 {
-	CHECK_PROCESSING();
-
 	QString path = QFileDialog::getOpenFileName(this, QString("load neural network"), QString(), QString("*.nndb"));
 	if (!path.isEmpty()) {
 		m_processing->pose()->neuralNetworkLoad(path);
@@ -337,8 +327,6 @@ void MainWindow::on_neuralNetworkLoad()
 
 void MainWindow::on_neuralNetworkImport()
 {
-	CHECK_PROCESSING();
-
 	QString path = QFileDialog::getExistingDirectory(this, QString("Import neural network"), QString(""));
 	if (!path.isEmpty()) {
 		m_processing->pose()->neuralNetworkImport(path);
@@ -396,7 +384,6 @@ void MainWindow::on_buildVideo(QString path)
 
 void MainWindow::on_exportProcessData()
 {
-	CHECK_PROCESSING();
 	CHECK_VIDEO();
 
 	m_processing->setSecondaryImageSource(m_secondaryImageSource);
@@ -477,7 +464,6 @@ void MainWindow::keyEvent(int key)
 void MainWindow::on_poseTrainDialogAccepted(PoseRecognition::TrainArgs result)
 {
 	qDebug("Neurons %d", result.hiddenNeuronCount);
-	CHECK_PROCESSING();
 	setStatusTip("Training database");
 	emit got_pause(true);
 	m_processing->train(result);
@@ -485,8 +471,6 @@ void MainWindow::on_poseTrainDialogAccepted(PoseRecognition::TrainArgs result)
 
 void MainWindow::on_poseDatabaseLoad()
 {
-	CHECK_PROCESSING();
-
 	QString path = QFileDialog::getOpenFileName(this, QString("load pose database"), QString(), QString("*.csv"));
 	if (!path.isEmpty()) {
 		m_processing->pose()->poseDatabaseLoad(path);
@@ -496,8 +480,6 @@ void MainWindow::on_poseDatabaseLoad()
 
 void MainWindow::on_poseDatabaseSave()
 {
-	CHECK_PROCESSING();
-
 	QString path = QFileDialog::getSaveFileName(this, QString("save pose database"), QString(), QString("*.csv"));
 	if (!path.endsWith(".csv")) path.append(".csv");
 	if (!path.isEmpty()) {
