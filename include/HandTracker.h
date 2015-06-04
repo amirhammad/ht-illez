@@ -34,7 +34,7 @@ class PoseRecognition;
 class HandTracker {
 
 public:
-	explicit HandTracker(bool debug = false);
+	explicit HandTracker();
 	~HandTracker();
 
 	/**
@@ -147,7 +147,7 @@ public:
 	};
 private:
 	Data m_data;
-	const bool m_bDebug;
+	bool m_bDebug;
 	mutable TemporaryResult m_temp;
 	long m_lastImageId;
 };

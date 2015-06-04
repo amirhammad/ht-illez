@@ -23,6 +23,7 @@
 #include "HandTracker.h"
 #include "Util.h"
 #include "WindowManager.h"
+#include "Settings.h"
 
 #include <vector>
 #include <limits>
@@ -422,10 +423,10 @@ void HandTracker::findFingers(cv::Mat &binaryFingersMask,
 	fingersContours = contoursNoWrist;
 }
 
-HandTracker::HandTracker(bool debug)
-	: m_bDebug(debug)
-	, m_lastImageId(-100)
+HandTracker::HandTracker()
+	: m_lastImageId(-100)
 {
+	m_bDebug = Settings::instance()->value("HandTracker::m_bDebug").toBool();
 }
 
 HandTracker::~HandTracker()

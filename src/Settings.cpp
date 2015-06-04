@@ -33,7 +33,8 @@
 namespace iez {
 
 const QList<QPair<QString, QVariant>> Settings::defaultsList ({
-	{"PoseRecognition::m_poseCount", 12}
+	{"PoseRecognition::m_poseCount", 12},
+	{"HandTracker::m_bDebug", false}
 });
 
 Settings::Settings()

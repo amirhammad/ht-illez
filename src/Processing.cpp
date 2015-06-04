@@ -41,7 +41,6 @@ Processing::Processing(QObject *parent)
 ,	m_primaryImageSource(0)
 ,	m_secondaryImageSource(0)
 ,	m_calculateHandTracker(false)
-,	m_handTracker(false)
 {
 	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
 
