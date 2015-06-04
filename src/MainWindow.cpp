@@ -127,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	m_paused = false;
 
-	showMaximized();
+	show();
 }
 
 
