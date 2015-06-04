@@ -575,6 +575,11 @@ bool PoseRecognition::loadMLP(QString prefix, OpenNN::MultilayerPerceptron &mlp)
 	return true;
 }
 
+QVector<double> PoseRecognition::constructFeatureQVector(const cv::Point palmCenter, const float palmRadius, const wristpair_t &wrist, const QList<cv::Point> &fingertips)
+{
+    return QVector<double>::fromStdVector(constructFeatureVector(palmCenter, palmRadius, wrist, fingertips));
+}
+
 OpenNN::Matrix<double> PoseRecognition::convertToMatrix(const QList<Data> &db)
 {
 	OpenNN::Matrix<double> mat(db.size(), NN_INPUT_VECTOR_SIZE + POSE_END);

@@ -24,6 +24,7 @@
 #include <opencv2/opencv.hpp>
 #include "Types.h"
 #include <QList>
+#include <QVector>
 
 namespace iez {
 
@@ -140,6 +141,7 @@ public:
 		QList<cv::Point> fingertipsNonSorted;
 
 		cv::Mat result;
+		QVector<double> fingertipsNormalized;
 
 	};
 private:
