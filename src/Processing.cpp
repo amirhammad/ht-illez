@@ -36,9 +36,10 @@
 //using namespace cv;
 namespace iez {
 
-Processing::Processing(ImageSource *imgsrc, QObject *parent)
+Processing::Processing(QObject *parent)
 :	QObject(parent)
-,	m_imageSource(imgsrc)
+,	m_primaryImageSource(0)
+,	m_secondaryImageSource(0)
 ,	m_calculateHandTracker(false)
 ,	m_handTracker(false)
 {
@@ -47,7 +48,6 @@ Processing::Processing(ImageSource *imgsrc, QObject *parent)
 	m_thread = new QThread(QCoreApplication::instance()->thread());
 	moveToThread(m_thread);
 
-	connect(imgsrc, SIGNAL(frameReceived()), this, SLOT(process()), Qt::QueuedConnection);
 	connect(this, SIGNAL(got_learnNew(int)), this, SLOT(on_poseDatabaseAppend(int)));
 	connect(this, SIGNAL(got_train(iez::PoseRecognition::TrainArgs)), this, SLOT(on_train(iez::PoseRecognition::TrainArgs)));
 	m_thread->start();
@@ -75,13 +75,13 @@ void Processing::process(bool secondarySource)
 	QMutexLocker l(&m_processMutex);
 	const ImageSource *src;
 	if (secondarySource) {
-		if (m_secondarySource) {
-			src = m_secondarySource.data();
+		if (m_secondaryImageSource) {
+			src = m_secondaryImageSource.data();
 		} else {
 			Q_ASSERT("secondary source not initialized");
 		}
 	} else {
-		src = m_imageSource;
+		src = m_primaryImageSource;
 	}
 	const cv::Mat &depth = src->getDepthMat();
 	const cv::Mat &rgb = src->getColorMat();
@@ -93,7 +93,7 @@ void Processing::process(bool secondarySource)
 
 //	WindowManager::getInstance()->imShow("Original", bgr);
 
-	m_handTracker.process(bgr, depth, m_imageSource->getSequence());
+	m_handTracker.process(bgr, depth, m_primaryImageSource->getSequence());
 	const HandTracker::Data handTrackerData = m_handTracker.data();
 
 	QVariantList poseResultList = m_pose.categorize(handTrackerData.palmCenter(),
@@ -164,9 +164,17 @@ PoseRecognition *Processing::pose()
 	return &m_pose;
 }
 
-void Processing::setSecondarySource(ImageSource *secondarySource)
+void Processing::setPrimaryImageSource(ImageSource *primaryImageSource)
 {
-	m_secondarySource = secondarySource;
+	Q_ASSERT(primaryImageSource);
+
+	m_primaryImageSource = primaryImageSource;
+	connect(m_primaryImageSource, SIGNAL(frameReceived()), this, SLOT(process()), Qt::QueuedConnection);
+}
+
+void Processing::setSecondaryImageSource(ImageSource *secondaryImageSource)
+{
+	m_secondaryImageSource = secondaryImageSource;
 }
 
 bool Processing::handTrackerTemporaryResult(HandTracker::TemporaryResult &temporaryResult) const

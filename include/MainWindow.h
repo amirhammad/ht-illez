@@ -126,7 +126,6 @@ private slots:
 	void on_recorderAttach();
 	void on_openRecord();
 	void on_buildVideo(QString path = QString());
-	void on_buildProcessing();
 	void on_exportProcessData();
 	void on_poseUpdated(QVariantList);
 

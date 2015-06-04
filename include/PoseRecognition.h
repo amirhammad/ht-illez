@@ -37,10 +37,6 @@ namespace iez {
 
 class PoseRecognition {
 public:
-	enum {
-		POSE_END = 12
-	};
-
 	PoseRecognition();
 	~PoseRecognition();
 
@@ -96,6 +92,7 @@ public:
                                                     const float palmRadius,
                                                     const wristpair_t &wrist,
                                                     const QList<cv::Point> &fingertips);
+	int poseCount() const;
 private:
 	int calculateOutput(OpenNN::Vector<double> featureVector) const;
 
@@ -113,7 +110,7 @@ private:
 															const wristpair_t &wrist,
 															const QList<cv::Point> &fingertips);
 
-	static OpenNN::Matrix<double> convertToMatrix(const QList<Data> &db);
+	OpenNN::Matrix<double> convertToMatrix(const QList<Data> &db);
 
 	QList<Data> m_database;
 	OpenNN::Matrix<double> m_matrix;
@@ -122,6 +119,8 @@ private:
 
 	mutable QMutex m_nnMutex;
 	mutable QMutex m_dbMutex;
+
+	uint m_poseCount;
 };
 
 }

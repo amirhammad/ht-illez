@@ -21,3 +21,20 @@
 
 
 #pragma once
+#include <QObject>
+
+namespace iez {
+class SettingsDialog;
+class MainWindow;
+class Starter : public QObject {
+Q_OBJECT
+public:
+	Starter();
+	~Starter();
+
+private:
+	MainWindow *m_mainWindow;
+public slots:
+	void on_settingsLoaded();
+};
+}

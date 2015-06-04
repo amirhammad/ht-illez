@@ -23,6 +23,7 @@
 #include "PoseRecognition.h"
 #include "Util.h"
 #include "PoseResultAnalyzer.h"
+#include "Settings.h"
 
 #include <opennn.h>
 #include <container.h>
@@ -119,6 +120,7 @@ PoseRecognition::PoseRecognition()
 {
 	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
 	m_neuralNetwork = 0;
+	m_poseCount = Settings::instance()->value("PoseRecognition::m_poseCount").toUInt();
 }
 
 PoseRecognition::~PoseRecognition()
@@ -240,7 +242,7 @@ void PoseRecognition::neuralNetworkTrain(TrainArgs args)
 	for (int i = 0; i < NN_INPUT_VECTOR_SIZE; i++) {
 		variablesPointer->set_use(i, Variables::Input);
 	}
-	for (int i = 0; i < POSE_END; i++) {
+	for (int i = 0; i < poseCount(); i++) {
 		variablesPointer->set_name(NN_INPUT_VECTOR_SIZE + i, QString("output_").append(QString::number(i)).toStdString());
 		variablesPointer->set_use(NN_INPUT_VECTOR_SIZE + i, Variables::Target);
 	}
@@ -260,7 +262,7 @@ void PoseRecognition::neuralNetworkTrain(TrainArgs args)
 		if (m_neuralNetwork) {
 			delete m_neuralNetwork;
 		}
-		m_neuralNetwork = new NeuralNetwork(NN_INPUT_VECTOR_SIZE, args.hiddenNeuronCount, POSE_END);
+		m_neuralNetwork = new NeuralNetwork(NN_INPUT_VECTOR_SIZE, args.hiddenNeuronCount, poseCount());
 		m_neuralNetwork->randomize_parameters_normal(-0.01, 0.01);
 
 		Inputs* inputs_pointer = m_neuralNetwork->get_inputs_pointer();
@@ -577,20 +579,25 @@ bool PoseRecognition::loadMLP(QString prefix, OpenNN::MultilayerPerceptron &mlp)
 
 QVector<double> PoseRecognition::constructFeatureQVector(const cv::Point palmCenter, const float palmRadius, const wristpair_t &wrist, const QList<cv::Point> &fingertips)
 {
-    return QVector<double>::fromStdVector(constructFeatureVector(palmCenter, palmRadius, wrist, fingertips));
+	return QVector<double>::fromStdVector(constructFeatureVector(palmCenter, palmRadius, wrist, fingertips));
+}
+
+int PoseRecognition::poseCount() const
+{
+	return m_poseCount;
 }
 
 OpenNN::Matrix<double> PoseRecognition::convertToMatrix(const QList<Data> &db)
 {
-	OpenNN::Matrix<double> mat(db.size(), NN_INPUT_VECTOR_SIZE + POSE_END);
+	OpenNN::Matrix<double> mat(db.size(), NN_INPUT_VECTOR_SIZE + poseCount());
 	// convert To Matrix
 	int index = 0;
 	foreach (Data data, db) {
-		OpenNN::Vector<double> k(NN_INPUT_VECTOR_SIZE + POSE_END, 0);
+		OpenNN::Vector<double> k(NN_INPUT_VECTOR_SIZE + poseCount(), 0);
 		Q_ASSERT(data.input.size() == NN_INPUT_VECTOR_SIZE);
 		qCopy(data.input.begin(), data.input.end(), k.begin());
 
-		Q_ASSERT(data.output >= 0 && data.output < POSE_END);
+		Q_ASSERT(data.output >= 0 && data.output < poseCount());
 		k[NN_INPUT_VECTOR_SIZE + data.output] = 1;
 
 		mat.set_row(index++, k);

@@ -31,6 +31,7 @@
 #include "ImageSourceOpenNI.h"
 #include "ImageRecorder.h"
 #include "Util.h"
+#include "Settings.h"
 
 #include <QToolBar>
 #include <QDebug>
@@ -61,6 +62,7 @@ namespace iez {
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 ,	m_secondaryImageSource(new ImageSourceArtificial())
 ,	m_imageRecorder(new ImageRecorder())
+,	m_processing(new Processing(0))
 {
 	qRegisterMetaType<iez::PoseRecognition::TrainArgs>();
 
@@ -71,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	setMinimumWidth(400);
 	m_databaseTable = new QTableWidget(this);
 
-	m_neuralNetworkResultWidget = new NeuralNetworkResultWidget(this);
+	m_neuralNetworkResultWidget = new NeuralNetworkResultWidget(m_processing->pose()->poseCount(), this);
 
 	QTabWidget *tabWidget = new QTabWidget(this);
 	tabWidget->addTab(m_databaseTable, "Database");
@@ -87,7 +89,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	QMenu *fileMenu = new QMenu("&File", this);
 	fileMenu->addAction(QIcon(), "&Open record", this, SLOT(on_openRecord()), QKeySequence(Qt::CTRL + Qt::Key_O));
 	fileMenu->addAction(QIcon(), "Open &camera", this, SLOT(on_buildVideo()), QKeySequence(Qt::ALT + Qt::Key_C));
-	fileMenu->addAction(QIcon(), "Open &processing", this, SLOT(on_buildProcessing()), QKeySequence(Qt::ALT + Qt::Key_P));
 	fileMenu->addSeparator();
 	fileMenu->addAction(QIcon(), "Initialize recorder", this, SLOT(on_recorderAttach()));
 	fileMenu->addSeparator();
@@ -125,6 +126,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 	// Handle window manager key events
 	QObject::connect(WindowManager::getInstance(), SIGNAL(keyPressed(int)), this, SLOT(keyEvent(int)), Qt::QueuedConnection);
 
+	QObject::connect(m_processing, SIGNAL(got_poseUpdated(QVariantList)), this, SLOT(on_poseUpdated(QVariantList)), Qt::QueuedConnection);
+	QObject::connect(m_processing, SIGNAL(got_trainingFinished()), this, SLOT(on_trainingFinished()), Qt::QueuedConnection);
+
 	m_paused = false;
 
 	show();
@@ -157,7 +161,7 @@ void MainWindow::buildNNTeachDialog()
 	layout->addWidget(textLabel);
 
 	QComboBox *classComboBox = new QComboBox(dialog);
-	for (int i = 0; i < PoseRecognition::POSE_END; i++) {
+	for (int i = 0; i < m_processing->pose()->poseCount(); i++) {
 		classComboBox->addItem(PoseRecognition::poseToString(i));
 	}
 	layout->addWidget(classComboBox);
@@ -386,28 +390,8 @@ void MainWindow::on_buildVideo(QString path)
 
 	if (m_video) {
 		QObject::connect(this, SIGNAL(got_pause(bool)), m_video, SLOT(pause(bool)), Qt::QueuedConnection);
+		m_processing->setPrimaryImageSource(m_video);
 	}
-}
-
-void MainWindow::on_buildProcessing()
-{
-	if (!m_video) {
-		QMessageBox::information(this, "Error", "video not ready, using processing without image source");
-	}
-
-	if (m_processing) {
-		QObject::disconnect(m_processing, SIGNAL(got_poseUpdated(QVariantList)), this, SLOT(on_poseUpdated(QVariantList)));
-		delete m_processing;
-	}
-
-	if (m_video) {
-		m_processing = new iez::Processing(m_video, 0);
-	} else {
-		m_processing = new iez::Processing(m_secondaryImageSource, 0);
-	}
-	loadPoseDatabaseToTable();
-	QObject::connect(m_processing, SIGNAL(got_poseUpdated(QVariantList)), this, SLOT(on_poseUpdated(QVariantList)), Qt::QueuedConnection);
-	QObject::connect(m_processing, SIGNAL(got_trainingFinished()), this, SLOT(on_trainingFinished()), Qt::QueuedConnection);
 }
 
 void MainWindow::on_exportProcessData()
@@ -415,7 +399,7 @@ void MainWindow::on_exportProcessData()
 	CHECK_PROCESSING();
 	CHECK_VIDEO();
 
-	m_processing->setSecondarySource(m_secondaryImageSource);
+	m_processing->setSecondaryImageSource(m_secondaryImageSource);
 	m_secondaryImageSource->setColorMat(m_video->getColorMat());
 	m_secondaryImageSource->setDepthMat(m_video->getDepthMat());
 
@@ -439,15 +423,15 @@ void MainWindow::on_poseUpdated(QVariantList list)
 	if (list.empty()) {
 		return;
 	}
-	Q_ASSERT(list.size() == PoseRecognition::POSE_END + 1);
-	QVector<float> neuronOutputs(PoseRecognition::POSE_END);
+	Q_ASSERT(list.size() == m_processing->pose()->poseCount() + 1);
+	QVector<float> neuronOutputs(m_processing->pose()->poseCount());
 	for (int i = 0; i < neuronOutputs.size(); i++) {
 		bool ok = true;
 		neuronOutputs[i] = list[i].toFloat(&ok);
 		Q_ASSERT(ok);
 	}
 	bool ok = true;
-	int winner = list[PoseRecognition::POSE_END].toInt(&ok);
+	int winner = list[m_processing->pose()->poseCount()].toInt(&ok);
 	Q_ASSERT(ok);
 	m_neuralNetworkResultWidget->setNeurons(neuronOutputs, winner);
 }
@@ -608,13 +592,15 @@ void PoseTrainDialog::on_accepted()
 	emit got_accepted(result);
 }
 
-NeuralNetworkResultWidget::NeuralNetworkResultWidget(QWidget *parent)
-	: QWidget(parent)
+NeuralNetworkResultWidget::NeuralNetworkResultWidget(int poseCount, QWidget *parent)
+	: m_poseCount(poseCount)
+	, QWidget(parent)
+
 {
 	QHBoxLayout *mainLayout = new QHBoxLayout(this);
 	QGridLayout *neuronLayout = new QGridLayout();
-	m_neuronVector.resize(PoseRecognition::POSE_END);
-	for (int i = 0; i < PoseRecognition::POSE_END; i++) {
+	m_neuronVector.resize(m_poseCount);
+	for (int i = 0; i < m_poseCount; i++) {
 		m_neuronVector[i] = new QProgressBar(this);
 		m_neuronVector[i]->setMinimum(0);
 		m_neuronVector[i]->setMaximum(100);
@@ -642,8 +628,8 @@ NeuralNetworkResultWidget::~NeuralNetworkResultWidget()
 
 void NeuralNetworkResultWidget::setNeurons(QVector<float> neurons, int winner)
 {
-	Q_ASSERT(neurons.size() == PoseRecognition::POSE_END);
-	for (int i = 0; i < PoseRecognition::POSE_END; i++) {
+	Q_ASSERT(neurons.size() == m_poseCount);
+	for (int i = 0; i < m_poseCount; i++) {
 		m_neuronVector[i]->setValue(scaleNeuronToInt(neurons[i]));
 	}
 	m_winnerLabel->setText(QString::number(winner));

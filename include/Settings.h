@@ -24,6 +24,7 @@
 #include <QVariant>
 #include <QMutex>
 #include <QHash>
+#include <QDialog>
 
 class QSettings;
 class QString;
@@ -35,7 +36,7 @@ public:
 	static Settings *instance();
 	void setValue(const QString &key, const QVariant &value);
 	QVariant value(const QString &key) const;
-
+	QStringList allKeys() const;
 private:
 	static const QList<QPair<QString, QVariant>> defaultsList;
 
@@ -47,7 +48,17 @@ private:
 
 	mutable QMutex m_mutex;
 	QSettings *m_settings;
-	QHash<QString, QVariant> m_defaults;
+};
+
+class SettingsDialog : public QDialog {
+Q_OBJECT
+public:
+	SettingsDialog();
+	~SettingsDialog(){}
+private:
+	Settings *m_settings;
+private slots:
+	void on_accepted();
 };
 
 }
