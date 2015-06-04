@@ -26,6 +26,8 @@ using namespace iez;
 	{
 		return cv::Point((pt1.x*ratio12 + pt2.x*(1 - ratio12)), (pt1.y*ratio12 + pt2.y*(1 - ratio12)));
 	}
+	iez::Settings *iez::Settings::instance() {return 0;}
+	QVariant iez::Settings::value(const QString &key) const {return 0;}
 
 #include <gtest/gtest.h>
 
