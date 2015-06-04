@@ -83,8 +83,8 @@ void Processing::process(bool secondarySource)
 	} else {
 		src = m_imageSource;
 	}
-	const cv::Mat &depth = m_imageSource->getDepthMat();
-	const cv::Mat &rgb = m_imageSource->getColorMat();
+	const cv::Mat &depth = src->getDepthMat();
+	const cv::Mat &rgb = src->getColorMat();
 	cv::Mat bgr;
 	cv::cvtColor(rgb, bgr,cv::COLOR_RGB2BGR);
 
