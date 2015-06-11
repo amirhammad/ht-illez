@@ -165,7 +165,18 @@ void PoseRecognition::poseDatabaseLoad(QString path)
 {
 	QMutexLocker l(&m_dbMutex);
 
-	m_database = loadDatabaseFromFile(path);
+	auto db = loadDatabaseFromFile(path);
+	m_database.clear();
+	bool isError = false;
+	for (int i = 0; db.size(); i++) {
+		if (db[i].output >= 0 && db[i].output < poseCount()) {
+			m_database.push_back(db[i]);
+			isError = true;
+		}
+	}
+	if (isError) {
+		qDebug("database trimmed");
+	}
 	if (m_database.size() != 0) {
 		m_matrix = convertToMatrix(m_database);
 	} else {
