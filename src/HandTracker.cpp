@@ -269,26 +269,19 @@ QList<cv::Point> HandTracker::findFingertip(const cv::RotatedRect &rotRect,
 	rotRect.points(rectPoints);
 
 	const float rectWidth = std::min(rotRect.size.width, rotRect.size.height);
+
 	// find fingertips
-	struct compare1 {
-		compare1(cv::Point palmCenter)
-		:	m_palmCenter(palmCenter){
-
-		}
-
-		int operator()(cv::Point2f p1, cv::Point2f p2) {
-			float p1d = Util::pointDistance(p1, m_palmCenter);
-			float p2d = Util::pointDistance(p2, m_palmCenter);
-			return p1d < p2d;
-		}
-		cv::Point m_palmCenter;
+	auto compare = [&] (const cv::Point2f &a, const cv::Point2f &b) {
+		float aDist = Util::pointDistance(a, palmCenter);
+		float bDist = Util::pointDistance(b, palmCenter);
+		return aDist < bDist;
 	};
 
 	std::vector<cv::Point2f> rectPointsVector(4);
 	for (int i = 0; i < 4; i++) {
 		rectPointsVector[i] = rectPoints[i];
 	}
-	qSort(rectPointsVector.begin(), rectPointsVector.end(), compare1(palmCenter));
+	qSort(rectPointsVector.begin(), rectPointsVector.end(), compare);
 
 
 	int fingerCount = rectWidth/(palmRadius*FINGER_MAXWIDTH_FACTOR) + 1;
