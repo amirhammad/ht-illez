@@ -188,16 +188,10 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 	}
 
 
-	/// comparator for PQ
-	// Comparator for findWrist
-	struct C1 {
-	public:
-		explicit C1(QVector<float> vector):m_vector(vector){}
-	private:
-		QVector<float> m_vector;
-	public:
+	/// comparator
+	auto compare = [&distanceToNeighbor] (int a, int b) {
 		/// greater
-		bool operator()(int a, int b) const {return m_vector[a] > m_vector[b]; }
+		return distanceToNeighbor[a] > distanceToNeighbor[b];
 	};
 
 	QList<int> wristPairCandidatesOrdered;
@@ -205,7 +199,7 @@ bool HandTracker::findWrist(const std::vector<cv::Point> &palmContour,
 
 	for (int i = 0; i < distanceToNeighbor.size(); i++) wristPairCandidatesOrdered.append(i);
 
-	qSort(wristPairCandidatesOrdered.begin(), wristPairCandidatesOrdered.end(), C1(distanceToNeighbor));
+	qSort(wristPairCandidatesOrdered.begin(), wristPairCandidatesOrdered.end(), compare);
 
 	/// Find wrist(out of 5 got in previous algorithm step) nearest to previously saved wrist
 
