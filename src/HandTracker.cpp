@@ -678,37 +678,26 @@ void HandTracker::process(const cv::Mat &bgr, const cv::Mat &depth, const int im
 void HandTracker::orderFingertipsByAngle(wristpair_t wrist, QList<cv::Point> &fingertips)
 {
 	const cv::Point2f wristMiddlePoint = Util::pointMean(wrist.first, wrist.second);
+	const float offset = atan2f(wrist.second.y - wrist.first.y,
+						wrist.second.x - wrist.first.x);
 	// sort by angle
-	struct compare {
-		compare(cv::Point palmCenter, float offs)
-		:	m_palmCenter(palmCenter)
-		,	m_offs(offs) {
 
+	auto getAngle = [&offset, &wristMiddlePoint] (const cv::Point &point) -> float {
+		const float dy = point.y - wristMiddlePoint.y;
+		const float dx = point.x - wristMiddlePoint.x;
+		const float angle = atan2f(dy, dx) - offset;
+		if (angle < -M_PI) {
+			return angle + 2.f*M_PI;
+		} else {
+			return angle;
 		}
-
-		float getAngle(cv::Point point) const {
-			const float dy = point.y - m_palmCenter.y;
-			const float dx = point.x - m_palmCenter.x;
-			const float angle = atan2f(dy, dx) - (m_offs);
-			if (angle < -M_PI) {
-				return angle + 2*M_PI;
-			} else {
-				return angle;
-			}
-		}
-
-		bool operator() (cv::Point a, cv::Point b) {
-			return getAngle(a) < getAngle(b);
-		}
-
-		const cv::Point m_palmCenter;
-		const float m_offs;
 	};
 
-	const float offs = atan2f(wrist.second.y - wrist.first.y,
-						wrist.second.x - wrist.first.x);
+	auto compare = [&getAngle] (const cv::Point &a, const cv::Point &b) {
+		return getAngle(a) < getAngle(b);
+	};
 
-	qSort(fingertips.begin(), fingertips.end(), compare(cv::Point(wristMiddlePoint.x, wristMiddlePoint.y), offs));
+	qSort(fingertips.begin(), fingertips.end(), compare);
 }
 
 
