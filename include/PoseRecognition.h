@@ -94,6 +94,7 @@ public:
                                                     const QList<cv::Point> &fingertips);
 	int poseCount() const;
 private:
+	void checkMatrix(int minOccurence) const;
 	int calculateOutput(OpenNN::Vector<double> featureVector) const;
 
 	static bool loadLayer(QFile &fBias,

@@ -232,6 +232,7 @@ void PoseRecognition::neuralNetworkTrain(TrainArgs args)
 	DataSet dataSet;
 
 	dataSet.set(m_matrix);
+	checkMatrix(3);
 
 	// Variables
 
@@ -594,6 +595,24 @@ QVector<double> PoseRecognition::constructFeatureQVector(const cv::Point palmCen
 int PoseRecognition::poseCount() const
 {
 	return m_poseCount;
+}
+
+void PoseRecognition::checkMatrix(int minOccurence) const
+{
+	// We assume m_database ~ m_matrix (todo: use only one variable)
+	Q_ASSERT(m_database.size() == m_matrix.get_rows_number());
+	QHash<int, int> histogram;
+	for (auto &f : m_database) {
+		histogram[f.output]++;
+	}
+	for (int i = 0; i < poseCount(); i++) {
+		if (histogram[i] < minOccurence) {
+			std::cout << "WARNING: pose " << i << " could be trained incorrectly (only "
+					  << histogram[i] << " samples) "
+					  << std::endl;
+		}
+	}
+	std::cout << "MIN_OCCURENCE=" << minOccurence << std::endl;
 }
 
 OpenNN::Matrix<double> PoseRecognition::convertToMatrix(const QList<Data> &db)
